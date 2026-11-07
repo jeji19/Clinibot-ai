@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CliniBot AI — Clinic Reception Assistant</title>
+<meta name="description" content="A multilingual AI receptionist demo for clinics.">
+<style>
+:root{--navy:#10243a;--teal:#20b8a6;--muted:#66788a;--bg:#f4f8fb;--line:#e4ebf1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font:16px/1.55 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
+header{display:flex;justify-content:space-between;align-items:center;padding:20px max(5vw,20px);background:white;border-bottom:1px solid var(--line)}
+.brand{font-size:22px;font-weight:800;letter-spacing:-.6px}.brand span{color:var(--teal)}
+.pill{font-size:12px;color:#087f72;background:#e4f8f4;border-radius:30px;padding:7px 12px;font-weight:700}
+main{max-width:1100px;margin:52px auto;padding:0 22px;display:grid;grid-template-columns:1.05fr .95fr;gap:42px;align-items:center}
+h1{font-size:clamp(38px,5vw,60px);line-height:1.05;letter-spacing:-2px;margin:14px 0 20px}
+.lead{font-size:18px;color:var(--muted);max-width:540px}.tag{color:#0b8f81;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;font-size:12px}
+.features{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
+.feature{background:white;border:1px solid var(--line);padding:15px;border-radius:14px;font-size:14px;color:#45596b}
+.panel{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 60px #10243a12;overflow:hidden}
+.panelhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.panelhead strong{font-size:15px}.online{font-size:12px;color:#0a967f}
+.messages{height:330px;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;padding:12px 14px;border-radius:15px;font-size:14px;white-space:pre-wrap}
+.bot{background:#f0f6f8;align-self:flex-start}.user{background:#daf6f0;align-self:flex-end}
+.composer{padding:14px;border-top:1px solid var(--line);display:flex;gap:8px}
+input{min-width:0;flex:1;border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;outline-color:var(--teal)}
+button{border:0;background:var(--teal);color:white;font-weight:700;border-radius:12px;padding:0 18px;cursor:pointer}
+button:disabled{opacity:.55;cursor:wait}
+.note{font-size:11px;color:#8392a0;padding:0 18px 16px}
+footer{text-align:center;color:#8493a1;font-size:12px;padding:26px}
+@media(max-width:800px){main{grid-template-columns:1fr;margin:30px auto;gap:28px}.features{grid-template-columns:1fr 1fr}h1{letter-spacing:-1px}}
+</style></head>
+<body>
+<header><div class="brand">CliniBot<span> AI</span></div><div class="pill">AI RECEPTION DEMO</div></header>
+<main>
+<section>
+<div class="tag">A smarter first hello</div>
+<h1>Your clinic's front desk, available around the clock.</h1>
+<p class="lead">A multilingual assistant that answers approved clinic FAQs and collects appointment requests — while leaving medical decisions to qualified staff.</p>
+<div class="features">
+<div class="feature">🌍 Arabic, English, Russian, German and more</div>
+<div class="feature">💬 Natural-language conversations</div>
+<div class="feature">📅 Appointment request collection</div>
+<div class="feature">🛡️ Medical questions escalated to staff</div>
+</div>
+</section>
+<section class="panel">
+<div class="panelhead"><strong>Try the CliniBot assistant</strong><span class="online">● Demo online</span></div>
+<div class="messages" id="messages">
+<div class="msg bot">Hello! I'm the CliniBot AI demo assistant. Ask me a general question about clinic reception, or say hello in your preferred language.</div>
+</div>
+<form class="composer" id="chatForm"><input id="messageInput" maxlength="1200" placeholder="Type a message…" autocomplete="off" required><button id="sendBtn">Send</button></form>
+<div class="note">Demo only. Do not enter patient names, contact details, symptoms, medical records or other sensitive information. No real appointments are booked.</div>
+</section>
+</main>
+<footer>CliniBot AI · Independent product demo · Not a medical service</footer>
+<script>
+const form=document.getElementById('chatForm'), input=document.getElementById('messageInput'), messages=document.getElementById('messages'), send=document.getElementById('sendBtn');
+function bubble(text,who){const el=document.createElement('div');el.className='msg '+who;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
+form.addEventListener('submit',async e=>{
+ e.preventDefault();const message=input.value.trim();if(!message)return;
+ bubble(message,'user');input.value='';send.disabled=true;send.textContent='…';
+ const waiting=bubble('Thinking…','bot');
+ try{
+  const r=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
+  const data=await r.json();waiting.remove();
+  if(!r.ok)throw new Error(data.error||'The assistant is temporarily unavailable.');
+  bubble(data.reply||'Sorry, I could not prepare a reply.','bot');
+ }catch(err){waiting.remove();bubble(err.message||'Connection error. Please try again.','bot')}
+ finally{send.disabled=false;send.textContent='Send';input.focus()}
+});
+</script>
+</body></html>

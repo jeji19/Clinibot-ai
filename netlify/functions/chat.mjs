@@ -1,1 +1,106 @@
+export default async (req) => {
+  const headers = {
+    "Content-Type": "application/json",
+    "Cache-Control": "no-store"
+  };
 
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({ error: "Method not allowed" }),
+      { status: 405, headers }
+    );
+  }
+
+  const apiKey = process.env.GEMINI_API_KEY;
+
+  if (!apiKey) {
+    return new Response(
+      JSON.stringify({ error: "API key is missing" }),
+      { status: 503, headers }
+    );
+  }
+
+  try {
+    const body = await req.json();
+    const message = body.message?.trim();
+
+    if (!message || message.length > 1200) {
+      return new Response(
+        JSON.stringify({ error: "Invalid message" }),
+        { status: 400, headers }
+      );
+    }
+
+    const instructions = `
+You are CliniBot AI, a multilingual clinic receptionist demo.
+Reply in the same language as the visitor.
+Be friendly, professional and concise.
+Never invent clinic prices, services, opening hours or appointments.
+Never diagnose, prescribe medication or recommend treatment.
+Refer medical questions to qualified clinic staff.
+For emergencies, advise contacting local emergency services.
+Do not ask for patient names, phone numbers or medical records.
+This is a demo, not a real clinic. No appointments are actually booked.
+`;
+
+    const response = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": apiKey
+        },
+        body: JSON.stringify({
+          system_instruction: {
+            parts: [{ text: instructions }]
+          },
+          contents: [{
+            role: "user",
+            parts: [{ text: message }]
+          }],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 450
+          }
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error("Gemini error:", response.status);
+
+      return new Response(
+        JSON.stringify({
+          error: "AI service temporarily unavailable"
+        }),
+        { status: 502, headers }
+      );
+    }
+
+    const reply = data.candidates?.[0]?.content?.parts
+      ?.map(p => p.text || "")
+      .join("");
+
+    if (!reply) {
+      throw new Error("Empty AI response");
+    }
+
+    return new Response(
+      JSON.stringify({ reply }),
+      { status: 200, headers }
+    );
+
+  } catch (error) {
+    console.error("Chat function error:", error.message);
+
+    return new Response(
+      JSON.stringify({
+        error: "Something went wrong. Please try again."
+      }),
+      { status: 500, headers }
+    );
+  }
+};

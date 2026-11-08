@@ -85,7 +85,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   const hasFrench = /[àâçéèêëîïôùûüÿœ]/i.test(message);
   const lang = hasArabic ? "ar" : hasRussian ? "ru" : hasGerman ? "de" : hasFrench ? "fr" : "en";
   const words = {
-    greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\b?\s*[!.؟。]*$/i.test(text.trim()),
+    greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\s*[!.؟。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),
     hours: /(opening hours|business hours|working hours|when.*open|when.*close|hours|ساعات العمل|مواعيد العمل|متى.*تفتح|متى.*تغلق|دوام|время работы|часы работы|когда.*откры|öffnungszeiten|wann.*geöffnet|horaires|heures d'ouverture|ouverture)/i.test(text),
     about: /(about (the )?clinic|clinic description|tell me about|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)

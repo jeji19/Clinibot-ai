@@ -89,6 +89,25 @@ async function handleAppointment(request, env) {
       console.error("Supabase insert failed", response.status, detail.slice(0, 500));
       return json({ error: `Database rejected the request (HTTP ${response.status}, code ${code}).` }, 502);
     }
+    // Send a manager notification when email settings are configured. Email failure must not undo a saved booking request.
+    if (env.RESEND_API_KEY && env.RESEND_TO_EMAIL) {
+      try {
+        const emailResponse = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { "Authorization": "Bearer " + env.RESEND_API_KEY, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            from: "CliniBot AI <onboarding@resend.dev>",
+            to: [env.RESEND_TO_EMAIL],
+            subject: "New CliniBot appointment request",
+            text: `A new appointment request was received.\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
+          }),
+          signal: AbortSignal.timeout(10000)
+        });
+        if (!emailResponse.ok) console.error("Resend notification failed", emailResponse.status, (await emailResponse.text()).slice(0, 400));
+      } catch (emailError) {
+        console.error("Resend notification error", emailError?.message);
+      }
+    }
     return json({ success: true, message: "Your appointment request was received. The clinic team must confirm availability." }, 201);
   } catch (error) {
     console.error("Appointment error", error?.message);

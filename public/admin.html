@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CliniBot AI — Clinic Dashboard</title>
+<style>
+:root{--navy:#10243a;--teal:#20b8a6;--muted:#66788a;--bg:#f4f8fb;--line:#e4ebf1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:white;border-bottom:1px solid var(--line);padding:18px max(5vw,20px);display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:21px;font-weight:800}.brand span{color:var(--teal)}
+main{max-width:1100px;margin:36px auto;padding:0 20px}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 12px 40px #10243a0c}
+h1{margin:0 0 6px;font-size:27px}p{color:var(--muted);margin:0 0 20px}
+label{display:block;font-weight:650;font-size:13px;margin:12px 0 6px}
+input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit}
+button,select{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:650;cursor:pointer}
+button{background:var(--teal);color:white}button.secondary{background:#edf3f6;color:var(--navy)}
+button:disabled{opacity:.55;cursor:wait}
+#login{max-width:420px;margin:55px auto}#status{font-size:13px;color:var(--muted);margin-top:12px;min-height:20px}
+.error{color:#b42318!important}.success{color:#087f72!important}
+.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:22px 0}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:700px}
+th,td{text-align:left;padding:13px 10px;border-bottom:1px solid var(--line);font-size:13px}
+th{color:var(--muted);font-weight:700;background:#fbfcfd}
+td select{border:1px solid var(--line);background:white;padding:7px}
+.hidden{display:none!important}.empty{padding:28px;text-align:center;color:var(--muted)}
+.small{font-size:12px;color:var(--muted)}
+@media(max-width:600px){.panel{padding:17px}main{margin:22px auto}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header><div class="brand">CliniBot<span> AI</span> <span style="color:#66788a;font-size:13px;font-weight:600">/ Dashboard</span></div><button id="logout" class="secondary hidden">Log out</button></header>
+<main>
+<section id="login" class="panel">
+<h1>Manager sign in</h1><p>Sign in to view and manage your clinic's appointment requests.</p>
+<form id="loginForm">
+<label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+<label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+<div style="margin-top:18px"><button id="loginButton" type="submit">Sign in</button></div>
+<div id="loginStatus" role="status"></div>
+</form>
+</section>
+<section id="dashboard" class="hidden">
+<div class="toolbar"><div><h1>Appointment requests</h1><div class="small">Only requests assigned to your clinic are shown.</div></div><button id="refresh" class="secondary">Refresh</button></div>
+<div class="panel"><div id="tableStatus" class="small" role="status"></div><div class="table-wrap"><table><thead><tr><th>Received</th><th>Service</th><th>Preferred date</th><th>Preferred time</th><th>Language</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div><div id="empty" class="empty hidden">No appointment requests yet.</div></div>
+</section>
+</main>
+<script>
+const loginSection=document.getElementById('login'), dashboard=document.getElementById('dashboard');
+const loginForm=document.getElementById('loginForm'), loginStatus=document.getElementById('loginStatus');
+const loginButton=document.getElementById('loginButton'), logoutButton=document.getElementById('logout');
+const rows=document.getElementById('rows'), tableStatus=document.getElementById('tableStatus'), empty=document.getElementById('empty');
+let accessToken=sessionStorage.getItem('clinibot_admin_token')||'';
+function showDashboard(){loginSection.classList.add('hidden');dashboard.classList.remove('hidden');logoutButton.classList.remove('hidden');loadRequests()}
+function showLogin(){dashboard.classList.add('hidden');loginSection.classList.remove('hidden');logoutButton.classList.add('hidden')}
+async function api(path,options={}){const response=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(accessToken?{Authorization:'Bearer '+accessToken}:{}),...(options.headers||{})}});const data=await response.json().catch(()=>({error:'Invalid server response'}));if(!response.ok)throw new Error(data.error||'Request failed');return data}
+loginForm.addEventListener('submit',async e=>{e.preventDefault();loginButton.disabled=true;loginStatus.className='';loginStatus.textContent='Signing in…';try{const data=await api('/api/admin/login',{method:'POST',body:JSON.stringify({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value})});accessToken=data.access_token;sessionStorage.setItem('clinibot_admin_token',accessToken);loginForm.reset();loginStatus.textContent='';showDashboard()}catch(err){loginStatus.className='error';loginStatus.textContent=err.message}finally{loginButton.disabled=false}});
+async function loadRequests(){tableStatus.textContent='Loading…';rows.replaceChildren();empty.classList.add('hidden');try{const data=await api('/api/admin/appointments');for(const item of data.appointments||[]){const tr=document.createElement('tr');const values=[item.created_at?new Date(item.created_at).toLocaleString():'—',item.service||'—',item.preferred_date||'—',item.preferred_time||'—',item.language||'—'];for(const value of values){const td=document.createElement('td');td.textContent=value;tr.appendChild(td)}const td=document.createElement('td');const select=document.createElement('select');for(const status of ['new','confirmed','rejected','completed']){const option=document.createElement('option');option.value=status;option.textContent=status[0].toUpperCase()+status.slice(1);select.appendChild(option)}select.value=item.status||'new';select.addEventListener('change',async()=>{select.disabled=true;try{await api('/api/admin/appointment-status',{method:'POST',body:JSON.stringify({id:item.id,status:select.value})});tableStatus.textContent='Status updated.'}catch(err){tableStatus.textContent=err.message;select.value=item.status||'new'}finally{select.disabled=false}});td.appendChild(select);tr.appendChild(td);rows.appendChild(tr)}empty.classList.toggle('hidden',(data.appointments||[]).length>0);tableStatus.textContent=(data.appointments||[]).length+' request(s)';}catch(err){tableStatus.textContent=err.message;if(err.message.toLowerCase().includes('auth')||err.message.toLowerCase().includes('token')||err.message.toLowerCase().includes('jwt')){accessToken='';sessionStorage.removeItem('clinibot_admin_token');showLogin()}}}
+document.getElementById('refresh').addEventListener('click',loadRequests);
+logoutButton.addEventListener('click',()=>{accessToken='';sessionStorage.removeItem('clinibot_admin_token');rows.replaceChildren();showLogin()});
+if(accessToken)showDashboard();
+</script>
+</body></html>

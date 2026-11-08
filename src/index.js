@@ -25,7 +25,6 @@ const json = (data, status = 200) => new Response(JSON.stringify(data), {
 
 async function handleChat(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
-  if (!env.GEMINI_API_KEY) return json({ error: "AI service is not configured." }, 503);
   if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return json({ error: "Clinic information service is not configured." }, 503);
   }
@@ -79,6 +78,22 @@ async function handleChat(request, env) {
 
 function detectClinicLanguage(message) {
   return /[\u0400-\u04FF]/.test(String(message || "")) ? "ru" : "en";
+}
+
+function detectClinicMedicalIntent(message) {
+  const text = String(message || "").toLowerCase();
+  const lang = detectClinicLanguage(text);
+  const emergency = /(chest pain|can't breathe|cannot breathe|difficulty breathing|severe bleeding|unconscious|stroke symptoms|сильная боль в груди|не могу дышать|трудно дышать|сильное кровотечение|потерял сознание|потеря сознания)/i.test(text);
+  const medicalConcern = /(rash|rashes|acne|pimples|spots on (my )?face|skin irritation|itch|itching|swelling|pain|fever|infection|wound|burn|allergy|allergic reaction|hair loss|mole|lesion|symptom|symptoms|what treatment should i use|what procedure.*(recommend|suggest)|which procedure.*(recommend|suggest)|what do you recommend for me|высыпани|сыпь|прыщ|акне|угр|раздражени|зуд|чешется|отёк|отек|боль|температур|инфекц|рана|ожог|аллерги|выпадение волос|родинк|симптом|какую процедуру.*(посовет|рекоменд)|что мне.*(посовет|рекоменд)|что подойдёт|что подойдет)/i.test(text);
+  if (!emergency && !medicalConcern) return null;
+  if (lang === "ru") {
+    return emergency
+      ? "Ваше состояние может требовать срочной медицинской помощи. Пожалуйста, немедленно обратитесь в местную службу экстренной помощи или ближайшее отделение неотложной помощи. ИИ-ассистент не может оценивать такие симптомы."
+      : "Понимаю. По описанию симптомов нельзя безопасно подобрать процедуру онлайн. Рекомендуем обратиться к квалифицированному специалисту клиники для оценки состояния и выбора подходящего решения. ИИ-ассистент не ставит диагнозы и не назначает лечение. Вы можете отправить запрос на консультацию через кнопку «Request an appointment».";
+  }
+  return emergency
+    ? "Your symptoms may require urgent medical attention. Please contact local emergency services or go to the nearest emergency department now. The AI assistant cannot assess emergencies."
+    : "I understand your concern. It would not be safe to recommend a procedure based on a chat message. Please consult a qualified clinic professional who can assess your situation and discuss suitable options. The AI assistant cannot diagnose conditions or prescribe treatment. You can request a consultation using the “Request an appointment” button.";
 }
 
 function detectClinicAppointmentIntent(message) {
@@ -201,11 +216,23 @@ function detectClinicFaqReply(message, clinicInfo) {
   return lines.join("\n");
 }
 
+    const medicalReply = detectClinicMedicalIntent(message);
+    if (medicalReply) return json({ reply: medicalReply, handled_without_ai: true });
+
     const appointmentReply = detectClinicAppointmentIntent(message);
     if (appointmentReply) return json({ reply: appointmentReply, handled_without_ai: true });
 
     const faqReply = detectClinicFaqReply(message, clinicInfo);
     if (faqReply) return json({ reply: faqReply, handled_without_ai: true });
+
+    if (!env.GEMINI_API_KEY) {
+      const language = detectClinicLanguage(message);
+      const fallback = {
+        ru: "Я могу помочь с опубликованной информацией об услугах, ценах и часах работы. Для других вопросов, пожалуйста, обратитесь к команде клиники.",
+        en: "I can help with published information about services, prices and opening hours. For other questions, please contact the clinic team."
+      };
+      return json({ reply: fallback[language] || fallback.en, handled_without_ai: true });
+    }
 
     const instructions = `
 You are CliniBot AI, a polished, helpful and professional virtual receptionist for beauty, dermatology and dental clinics worldwide.

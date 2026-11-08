@@ -1,3 +1,4 @@
+
 export default async (req) => {
   const headers = {
     "Content-Type": "application/json",
@@ -14,6 +15,8 @@ export default async (req) => {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
+    console.error("GEMINI_API_KEY is missing");
+
     return new Response(
       JSON.stringify({ error: "API key is missing" }),
       { status: 503, headers }
@@ -67,11 +70,15 @@ This is a demo, not a real clinic. No appointments are actually booked.
       }
     );
 
-    const data = await response.json();
+    // Read Google's response body only once
+    const responseText = await response.text();
 
     if (!response.ok) {
-const errorDetails = await response.text();
-console.error("Gemini error:", response.status, errorDetails);
+      console.error(
+        "Gemini error:",
+        response.status,
+        responseText
+      );
 
       return new Response(
         JSON.stringify({
@@ -81,11 +88,14 @@ console.error("Gemini error:", response.status, errorDetails);
       );
     }
 
+    const data = JSON.parse(responseText);
+
     const reply = data.candidates?.[0]?.content?.parts
       ?.map(p => p.text || "")
       .join("");
 
     if (!reply) {
+      console.error("Empty AI response:", responseText);
       throw new Error("Empty AI response");
     }
 

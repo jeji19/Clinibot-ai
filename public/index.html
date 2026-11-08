@@ -83,6 +83,7 @@ button:hover{background:#a88953}
 <div class="chat-booking">
 <button type="button" id="chatBookingToggle" aria-expanded="false">Request an appointment</button>
 <form id="chatBookingForm" hidden>
+  <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label for="chatWebsite">Leave this field empty</label><input id="chatWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
 <div class="booking-grid">
 <div class="field"><label for="chatPatientName">Full name</label><input id="chatPatientName" maxlength="100" autocomplete="name" placeholder="Your full name" required></div>
 <div class="field"><label for="chatPatientPhone">Phone number</label><input id="chatPatientPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 555 123 4567" pattern="[+0-9()\s.-]{6,30}" required></div>
@@ -102,6 +103,7 @@ button:hover{background:#a88953}
 <h2>Request an appointment</h2>
 <p>Send your preferred service, date and time to the clinic. This is a request only; the clinic must confirm availability.</p>
 <form id="bookingForm">
+ <div aria-hidden="true" style="position:absolute;left:-10000px;width:1px;height:1px;overflow:hidden"><label for="bookingWebsite">Leave this field empty</label><input id="bookingWebsite" name="website" type="text" tabindex="-1" autocomplete="off"></div>
 <div class="booking-grid">
 <div class="field"><label for="patientName">Full name</label><input id="patientName" name="patient_name" maxlength="100" autocomplete="name" placeholder="Your full name" required></div>
 <div class="field"><label for="patientPhone">Phone number</label><input id="patientPhone" name="patient_phone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 555 123 4567" pattern="[+0-9()\s.-]{6,30}" required></div>
@@ -151,7 +153,7 @@ chatBookingToggle.addEventListener('click',()=>{
 });
 chatBookingForm.addEventListener('submit',async e=>{
  e.preventDefault();chatBookingStatus.className='';chatBookingStatus.textContent='Sending…';chatBookingSubmit.disabled=true;
- const payload={clinic_slug:clinicSlugForApp,patient_name:document.getElementById('chatPatientName').value.trim(),patient_phone:document.getElementById('chatPatientPhone').value.trim(),service:document.getElementById('chatService').value.trim(),preferred_date:chatBookingDate.value,preferred_time:document.getElementById('chatTime').value.trim(),language:document.getElementById('chatLanguage').value};
+ const payload={website:document.getElementById('chatWebsite').value,clinic_slug:clinicSlugForApp,patient_name:document.getElementById('chatPatientName').value.trim(),patient_phone:document.getElementById('chatPatientPhone').value.trim(),service:document.getElementById('chatService').value.trim(),preferred_date:chatBookingDate.value,preferred_time:document.getElementById('chatTime').value.trim(),language:document.getElementById('chatLanguage').value};
  try{
   const response=await fetch(appointmentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();
@@ -170,7 +172,7 @@ dateField.min=new Date().toISOString().slice(0,10);
 bookingForm.addEventListener('submit',async e=>{
  e.preventDefault();bookingStatus.className='';bookingStatus.textContent='Sending request…';bookingButton.disabled=true;
  const clinicSlug=new URLSearchParams(location.search).get('clinic')||'my-clinic';
- const payload={clinic_slug:clinicSlug,patient_name:document.getElementById('patientName').value.trim(),patient_phone:document.getElementById('patientPhone').value.trim(),service:document.getElementById('service').value.trim(),preferred_date:dateField.value,preferred_time:document.getElementById('preferredTime').value.trim(),language:document.getElementById('language').value};
+ const payload={website:document.getElementById('bookingWebsite').value,clinic_slug:clinicSlug,patient_name:document.getElementById('patientName').value.trim(),patient_phone:document.getElementById('patientPhone').value.trim(),service:document.getElementById('service').value.trim(),preferred_date:dateField.value,preferred_time:document.getElementById('preferredTime').value.trim(),language:document.getElementById('language').value};
  try{
   const response=await fetch(appointmentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();

@@ -83,7 +83,7 @@ function detectClinicLanguage(message) {
 function detectClinicMedicalIntent(message) {
   const text = String(message || "").toLowerCase();
   const lang = detectClinicLanguage(text);
-  const emergency = /(chest pain|can't breathe|cannot breathe|difficulty breathing|severe bleeding|unconscious|stroke symptoms|сильная боль в груди|не могу дышать|трудно дышать|сильное кровотечение|потерял сознание|потеря сознания)/i.test(text);
+  const emergency = /(chest pain|can't breathe|cannot breathe|difficulty breathing|shortness of breath|severe bleeding|heavy bleeding|unconscious|fainting|stroke symptoms|severe allergic reaction|анафилакси|сильная боль в груди|не могу дышать|трудно дышать|затруднённое дыхание|затрудненное дыхание|одышка|сильное кровотечение|обильное кровотечение|потерял сознание|потеря сознания|обморок)/i.test(text);
   const medicalConcern = /(rash|rashes|acne|pimples|spots on (my )?face|skin irritation|itch|itching|swelling|pain|fever|infection|wound|burn|allergy|allergic reaction|hair loss|mole|lesion|symptom|symptoms|what treatment should i use|what procedure.*(recommend|suggest)|which procedure.*(recommend|suggest)|what do you recommend for me|высыпани|сыпь|прыщ|акне|угр|раздражени|зуд|чешется|отёк|отек|боль|температур|инфекц|рана|ожог|аллерги|выпадение волос|родинк|симптом|какую процедуру.*(посовет|рекоменд)|что мне.*(посовет|рекоменд)|что подойдёт|что подойдет)/i.test(text);
   if (!emergency && !medicalConcern) return null;
   if (lang === "ru") {

@@ -311,7 +311,11 @@ async function handleAppointment(request, env) {
     const requestedLanguage = typeof body.language === "string" ? body.language.trim() : "en";
     const language = ["en", "ru"].includes(requestedLanguage) ? requestedLanguage : "en";
     const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "";
-    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
+    const validDate = (() => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(preferred_date)) return false;
+      const parsed = new Date(preferred_date + "T00:00:00Z");
+      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === preferred_date;
+    })();
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
       return json({ error: "This clinic link is invalid. Please open the clinic's correct booking link." }, 400);
     }
@@ -337,6 +341,21 @@ async function handleAppointment(request, env) {
     }
     const clinic = clinics[0];
     if (!clinic) return json({ error: "This clinic link is unavailable or inactive." }, 404);
+
+    // Accept only services currently published by this clinic.
+    const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
+    settingsUrl.searchParams.set("select", "services");
+    settingsUrl.searchParams.set("clinic_id", "eq." + clinic.id);
+    settingsUrl.searchParams.set("limit", "1");
+    const settingsResponse = await fetch(settingsUrl, { headers: serviceHeaders, signal: AbortSignal.timeout(12000) });
+    const settingsRows = await settingsResponse.json().catch(() => []);
+    if (!settingsResponse.ok || !Array.isArray(settingsRows)) {
+      console.error("Appointment service lookup failed", settingsResponse.status);
+      return json({ error: "Could not verify the selected service. Please try again later." }, 502);
+    }
+    const publishedServices = Array.isArray(settingsRows[0]?.services) ? settingsRows[0].services : [];
+    const selectedService = publishedServices.find(item => typeof item?.name === "string" && item.name.trim().toLowerCase() === service.toLowerCase());
+    if (!selectedService) return json({ error: "Please select a service currently offered by this clinic." }, 400);
 
     const insertResponse = await fetch(new URL("/rest/v1/appointment_requests", env.SUPABASE_URL), {
       method: "POST",

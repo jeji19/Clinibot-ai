@@ -48,7 +48,7 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 </style>
 </head>
 <body>
-<header><div class="wrap nav"><a class="brand" href="/landing.html"><span class="brand-mark">✧</span><span>CliniBot AI<small>Your intelligent clinic assistant</small></span></a><nav class="navlinks"><a href="#features">Features</a><a href="#why">Why CliniBot</a><a href="#how">How it works</a><a class="button" href="mailto:albizrahemran@gmail.com?subject=CliniBot%20AI%20clinic%20demo">Book a demo ↗</a></nav></div></header>
+<header><div class="wrap nav"><a class="brand" href="/landing.html"><span class="brand-mark">✧</span><span>CliniBot AI<small>Your intelligent clinic assistant</small></span></a><nav class="navlinks"><a href="#features">Features</a><a href="#why">Why CliniBot</a><a href="#how">How it works</a><select id="siteLanguage" aria-label="Select website language" style="padding:9px 10px;border:1px solid #ffffff80;border-radius:5px;background:#142238;color:#fff;font:12px inherit"><option value="en">EN</option><option value="ar">العربية</option><option value="ru">RU</option><option value="de">DE</option><option value="fr">FR</option><option value="es">ES</option></select><a class="button" href="mailto:albizrahemran@gmail.com?subject=CliniBot%20AI%20clinic%20demo">Book a demo ↗</a></nav></div></header>
 <main>
 <section class="hero"><div class="wrap hero-grid">
 <div><div class="eyebrow">The future of clinic communication</div><h1>A warmer welcome.<br>A <em>smarter</em> clinic.</h1><p class="hero-copy">Meet the AI receptionist that helps your clinic answer patient questions, collect appointment requests and stay responsive — day and night.</p><div class="actions"><a class="button" href="mailto:albizrahemran@gmail.com?subject=CliniBot%20AI%20clinic%20demo">Discover CliniBot <span>↗</span></a><a class="button outline" href="/?clinic=Clinibot-demo-2026-x93k">Explore live demo <span>▷</span></a></div><div class="micro"><span>✦</span> Built for modern clinics · Your team stays in control</div></div>
@@ -87,6 +87,167 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 <section class="band"><div class="wrap band-inner"><div><div class="kicker" style="color:#e4c28e">Let's talk about your clinic</div><h2>Make every first hello count.</h2><p>Explore the live demo and see how CliniBot could support your clinic's front desk.</p></div><a class="button" href="mailto:albizrahemran@gmail.com?subject=CliniBot%20AI%20clinic%20demo">Request a personal demo ↗</a></div></section>
 </main>
 <footer><div class="wrap"><span class="footer-brand">CliniBot AI</span><span>© 2026 CliniBot AI · Independent software demo · Not a medical service</span></div></footer>
+
+
+<script>
+(() => {
+ const select=document.getElementById('siteLanguage');
+ if(!select)return;
+ const translations={
+ ar:{
+ 'Features':'المميزات','Why CliniBot':'لماذا CliniBot','How it works':'كيف يعمل','Book a demo ↗':'احجز عرضاً تجريبياً ↗',
+ 'The future of clinic communication':'مستقبل التواصل مع العيادات','A warmer welcome.':'ترحيب أكثر دفئاً.','smarter':'أكثر ذكاءً',' clinic.':' للعيادة.',
+ 'Meet the AI receptionist that helps your clinic answer patient questions, collect appointment requests and stay responsive — day and night.':'تعرّف على موظف الاستقبال الذكي الذي يساعد عيادتك على الإجابة عن أسئلة المرضى واستقبال طلبات المواعيد على مدار الساعة.',
+ 'Discover CliniBot':'اكتشف CliniBot','Explore live demo':'جرّب العرض المباشر','Built for modern clinics · Your team stays in control':'مصمم للعيادات الحديثة · فريقك يبقى صاحب القرار',
+ 'CliniBot assistant':'مساعد CliniBot','Online':'متصل','A conversation, made simple':'محادثة سهلة وبسيطة',
+ 'Hello! Welcome to our clinic. How can I help you today?':'مرحباً! أهلاً بك في عيادتنا. كيف يمكنني مساعدتك اليوم؟',
+ "I'd like to book a consultation.":'أرغب بحجز استشارة.','Of course. Which service are you interested in?':'بالتأكيد. ما الخدمة التي ترغب بها؟',
+ 'Skin consultation':'استشارة جلدية','Laser consultation':'استشارة ليزر','Other':'أخرى','Can I request a time?':'هل يمكنني طلب موعد؟',
+ 'Absolutely. I can collect your preferred date and contact details for our team.':'بالتأكيد. يمكنني تسجيل التاريخ الذي تفضله وبيانات التواصل ليتمكن فريقنا من متابعتك.',
+ 'Illustrative conversation':'مثال توضيحي للمحادثة','Human-confirmed appointments':'المواعيد يؤكدها فريق العيادة',
+ 'Always available online':'متاح دائماً عبر الإنترنت','Language conversations':'محادثات بلغات متعددة','Appointment requests':'طلبات المواعيد','Clinical decisions stay human':'القرارات الطبية تبقى بيد المختصين',
+ 'Thoughtfully designed for clinics':'مصمم بعناية للعيادات','Every patient deserves a prompt, clear answer.':'كل مريض يستحق إجابة واضحة وسريعة.',
+ 'From the first question to the appointment request, CliniBot helps make every interaction feel effortless.':'من أول سؤال حتى طلب الموعد، يساعد CliniBot على جعل التواصل أسهل وأكثر سلاسة.',
+ 'Natural conversations':'محادثات طبيعية','A welcoming assistant that responds in a clear, professional and conversational way.':'مساعد ودود يجيب بوضوح واحترافية وبأسلوب حواري.',
+ 'Multilingual support':'دعم متعدد اللغات','Communicate with patients in supported languages, including Arabic, English, Russian, German and French.':'تواصل مع المرضى بلغات متعددة، منها العربية والإنكليزية والروسية والألمانية والفرنسية.',
+ 'Appointment requests':'طلبات المواعيد','Collect patient contact details and preferred times for your team to review and confirm.':'اجمع بيانات المرضى والأوقات المفضلة ليقوم فريقك بمراجعتها وتأكيدها.',
+ "Your clinic's information":'معلومات عيادتك','Give answers based on your configured services, clinic details and opening hours.':'إجابات مبنية على خدمات عيادتك وتفاصيلها وساعات عملها المحددة.',
+ 'Instant team alerts':'تنبيهات فورية للفريق','Notify your clinic team by email when a new appointment request is submitted.':'إشعار فريق العيادة بالبريد الإلكتروني عند وصول طلب موعد جديد.',
+ 'Simple management':'إدارة سهلة','Review incoming requests and patient contact details from a dedicated dashboard.':'راجع الطلبات الواردة وبيانات تواصل المرضى من لوحة تحكم مخصصة.',
+ 'A better first impression':'انطباع أول أفضل','Technology that feels personal.':'تقنية بطابع إنساني.','Patients want clear information and an easy way to reach your clinic. CliniBot helps your team stay available while preserving the personal care that matters.':'يحتاج المرضى إلى معلومات واضحة وطريقة سهلة للتواصل مع العيادة. يساعد CliniBot فريقك على البقاء متاحاً مع الحفاظ على الرعاية الشخصية.',
+ 'Consistent answers from clinic-approved information':'إجابات متسقة من معلومات معتمدة من العيادة',
+ 'Appointment requests ready for team review':'طلبات مواعيد جاهزة لمراجعة الفريق',
+ 'Clinical judgment remains with qualified professionals':'التقييم الطبي يبقى للمختصين المؤهلين',
+ 'A dedicated view for managing new requests':'واجهة مخصصة لإدارة الطلبات الجديدة',
+ 'Getting started':'البدء','Three simple steps to a smarter front desk.':'ثلاث خطوات بسيطة لاستقبال أكثر ذكاءً.',
+ "Start with your clinic's information. CliniBot takes care of the first conversation.":'ابدأ بإضافة معلومات عيادتك، وسيتولى CliniBot المحادثة الأولى.',
+ 'Personalize your clinic':'خصص إعدادات عيادتك','Add your clinic details, approved services and opening hours.':'أضف تفاصيل العيادة والخدمات المعتمدة وساعات العمل.',
+ 'Share your assistant':'شارك مساعدك','Give patients a simple link to ask questions and send appointment requests.':'امنح المرضى رابطاً بسيطاً لطرح الأسئلة وإرسال طلبات المواعيد.',
+ 'Stay in the loop':'ابقَ على اطلاع','Your team reviews each request and contacts the patient to confirm availability.':'يراجع فريقك كل طلب ويتواصل مع المريض لتأكيد التوفر.',
+ 'A personal introduction':'تعرّف علينا','See what CliniBot can do for your clinic.':'اكتشف ما يمكن أن يقدمه CliniBot لعيادتك.',
+ "Tell us a little about your clinic. We'll get in touch to arrange a personal walkthrough and answer your questions.":'أخبرنا قليلاً عن عيادتك، وسنتواصل معك لترتيب عرض شخصي والإجابة عن أسئلتك.',
+ 'Personal product walkthrough':'عرض شخصي للمنتج','See appointment requests and the clinic dashboard':'تعرّف على طلبات المواعيد ولوحة تحكم العيادة','No commitment required':'دون أي التزام',
+ 'Request your free demo':'اطلب عرضك المجاني','Clinic name *':'اسم العيادة *','Your name *':'اسمك *','Work email *':'البريد الإلكتروني للعمل *','WhatsApp / phone':'واتساب / الهاتف',
+ 'Clinic specialty':'اختصاص العيادة','Choose a specialty':'اختر الاختصاص','Dermatology':'الأمراض الجلدية','Aesthetic / cosmetic clinic':'عيادة تجميل','Dental clinic':'عيادة أسنان','Plastic surgery':'جراحة تجميلية',
+ 'Request my free demo ↗':'اطلب عرضاً مجانياً ↗','By submitting, you agree that CliniBot AI may contact you about your demo request.':'بإرسال الطلب، توافق على أن يتواصل معك CliniBot AI بخصوص العرض التجريبي.',
+ "Let's talk about your clinic":'لنتحدث عن عيادتك','Make every first hello count.':'اجعل أول تواصل بداية مميزة.',
+ "Explore the live demo and see how CliniBot could support your clinic's front desk.":'جرّب العرض المباشر واكتشف كيف يمكن لـ CliniBot دعم استقبال عيادتك.',
+ 'Request a personal demo ↗':'اطلب عرضاً شخصياً ↗','Independent software demo · Not a medical service':'عرض تجريبي لبرنامج مستقل · ليس خدمة طبية',
+ 'Sending your request…':'جارٍ إرسال طلبك…','Sending…':'جارٍ الإرسال…',"Thank you! Your demo request has been sent. We'll be in touch soon.":'شكراً لك! تم إرسال طلب العرض التجريبي. سنتواصل معك قريباً.',
+ 'Could not send your request. Please try again.':'تعذر إرسال طلبك. يرجى المحاولة مجدداً.','Something went wrong. Please try again.':'حدث خطأ ما. يرجى المحاولة مجدداً.'
+ },
+ ru:{
+ 'Features':'Возможности','Why CliniBot':'Почему CliniBot','How it works':'Как это работает','Book a demo ↗':'Заказать демо ↗',
+ 'The future of clinic communication':'Будущее общения с клиникой','A warmer welcome.':'Более тёплый приём.','smarter':'Умнее',' clinic.':' клиника.',
+ 'Meet the AI receptionist that helps your clinic answer patient questions, collect appointment requests and stay responsive — day and night.':'ИИ-администратор помогает клинике отвечать на вопросы пациентов и принимать заявки на запись круглосуточно.',
+ 'Discover CliniBot':'Узнать о CliniBot','Explore live demo':'Открыть демо','Built for modern clinics · Your team stays in control':'Для современных клиник · Ваша команда сохраняет контроль',
+ 'CliniBot assistant':'Ассистент CliniBot','Online':'В сети','A conversation, made simple':'Простой диалог',
+ 'Hello! Welcome to our clinic. How can I help you today?':'Здравствуйте! Добро пожаловать в нашу клинику. Чем могу помочь?',
+ "I'd like to book a consultation.":'Я хотел(а) бы записаться на консультацию.','Of course. Which service are you interested in?':'Конечно. Какая услуга вас интересует?',
+ 'Skin consultation':'Консультация дерматолога','Laser consultation':'Лазерная консультация','Other':'Другое','Can I request a time?':'Можно выбрать время?',
+ 'Absolutely. I can collect your preferred date and contact details for our team.':'Конечно. Я могу записать желаемую дату и ваши контакты для нашей команды.',
+ 'Illustrative conversation':'Пример диалога','Human-confirmed appointments':'Запись подтверждает сотрудник',
+ 'Always available online':'Всегда доступен онлайн','Language conversations':'Общение на разных языках','Appointment requests':'Заявки на запись','Clinical decisions stay human':'Медицинские решения остаются за специалистами',
+ 'Thoughtfully designed for clinics':'Создано специально для клиник','Every patient deserves a prompt, clear answer.':'Каждый пациент заслуживает быстрого и понятного ответа.',
+ 'From the first question to the appointment request, CliniBot helps make every interaction feel effortless.':'От первого вопроса до заявки на запись CliniBot делает общение простым и удобным.',
+ 'Natural conversations':'Естественное общение','A welcoming assistant that responds in a clear, professional and conversational way.':'Доброжелательный ассистент отвечает понятно, профессионально и естественно.',
+ 'Multilingual support':'Поддержка нескольких языков','Communicate with patients in supported languages, including Arabic, English, Russian, German and French.':'Общайтесь с пациентами на разных языках, включая арабский, английский, русский, немецкий и французский.',
+ 'Collect patient contact details and preferred times for your team to review and confirm.':'Собирайте контакты пациентов и удобное время для проверки и подтверждения вашей командой.',
+ "Your clinic's information":'Информация вашей клиники','Give answers based on your configured services, clinic details and opening hours.':'Ответы основаны на услугах, данных и часах работы вашей клиники.',
+ 'Instant team alerts':'Мгновенные уведомления','Notify your clinic team by email when a new appointment request is submitted.':'Отправляйте команде уведомления по электронной почте о новых заявках.',
+ 'Simple management':'Удобное управление','Review incoming requests and patient contact details from a dedicated dashboard.':'Просматривайте заявки и контакты пациентов в отдельной панели.',
+ 'A better first impression':'Лучшее первое впечатление','Technology that feels personal.':'Технологии с человеческим подходом.','Patients want clear information and an easy way to reach your clinic. CliniBot helps your team stay available while preserving the personal care that matters.':'Пациентам нужна понятная информация и простой способ связаться с клиникой. CliniBot помогает команде оставаться на связи, сохраняя персональный подход.',
+ 'Consistent answers from clinic-approved information':'Ответы на основе информации, одобренной клиникой',
+ 'Appointment requests ready for team review':'Заявки на запись для проверки командой',
+ 'Clinical judgment remains with qualified professionals':'Медицинские решения принимают квалифицированные специалисты',
+ 'A dedicated view for managing new requests':'Отдельная панель для новых заявок',
+ 'Getting started':'Начало работы','Three simple steps to a smarter front desk.':'Три простых шага к умной регистратуре.',
+ "Start with your clinic's information. CliniBot takes care of the first conversation.":'Добавьте информацию о клинике — CliniBot начнёт общение с пациентом.',
+ 'Personalize your clinic':'Настройте клинику','Add your clinic details, approved services and opening hours.':'Добавьте данные клиники, услуги и часы работы.',
+ 'Share your assistant':'Поделитесь ассистентом','Give patients a simple link to ask questions and send appointment requests.':'Предоставьте пациентам ссылку для вопросов и заявок на запись.',
+ 'Stay in the loop':'Будьте в курсе','Your team reviews each request and contacts the patient to confirm availability.':'Команда проверяет каждую заявку и связывается с пациентом для подтверждения.',
+ 'A personal introduction':'Личное знакомство','See what CliniBot can do for your clinic.':'Узнайте, что CliniBot может сделать для вашей клиники.',
+ "Tell us a little about your clinic. We'll get in touch to arrange a personal walkthrough and answer your questions.":'Расскажите немного о клинике. Мы свяжемся с вами, чтобы провести демонстрацию и ответить на вопросы.',
+ 'Personal product walkthrough':'Персональная демонстрация','See appointment requests and the clinic dashboard':'Знакомство с заявками и панелью клиники','No commitment required':'Без обязательств',
+ 'Request your free demo':'Запросить бесплатное демо','Clinic name *':'Название клиники *','Your name *':'Ваше имя *','Work email *':'Рабочая почта *','WhatsApp / phone':'WhatsApp / телефон',
+ 'Clinic specialty':'Специализация клиники','Choose a specialty':'Выберите специализацию','Dermatology':'Дерматология','Aesthetic / cosmetic clinic':'Косметологическая клиника','Dental clinic':'Стоматологическая клиника','Plastic surgery':'Пластическая хирургия',
+ 'Request my free demo ↗':'Запросить демо ↗','By submitting, you agree that CliniBot AI may contact you about your demo request.':'Отправляя форму, вы соглашаетесь на связь с вами по поводу демо.',
+ "Let's talk about your clinic":'Давайте обсудим вашу клинику','Make every first hello count.':'Пусть первое приветствие запомнится.',
+ "Explore the live demo and see how CliniBot could support your clinic's front desk.":'Посмотрите демо и узнайте, как CliniBot поможет вашей клинике.',
+ 'Request a personal demo ↗':'Запросить персональное демо ↗','Independent software demo · Not a medical service':'Демонстрация программного обеспечения · Не медицинская услуга'
+ },
+ de:{
+ 'Features':'Funktionen','Why CliniBot':'Warum CliniBot','How it works':'So funktioniert es','Book a demo ↗':'Demo buchen ↗',
+ 'The future of clinic communication':'Die Zukunft der Klinikkommunikation','A warmer welcome.':'Ein herzlicherer Empfang.','smarter':'Eine',' clinic.':' Klinik.','Discover CliniBot':'CliniBot entdecken','Explore live demo':'Live-Demo ansehen',
+ 'CliniBot assistant':'CliniBot-Assistent','Online':'Online','A conversation, made simple':'Einfach kommunizieren','Natural conversations':'Natürliche Gespräche','Multilingual support':'Mehrsprachige Unterstützung',
+ 'Appointment requests':'Terminanfragen',"Your clinic's information":'Ihre Klinikdaten','Instant team alerts':'Sofortige Team-Benachrichtigungen','Simple management':'Einfache Verwaltung',
+ 'A better first impression':'Ein besserer erster Eindruck','Technology that feels personal.':'Technologie mit persönlicher Note.','Getting started':'Erste Schritte',
+ 'A personal introduction':'Persönliche Vorstellung','See what CliniBot can do for your clinic.':'Entdecken Sie CliniBot für Ihre Klinik.','Request your free demo':'Kostenlose Demo anfordern',
+ 'Clinic name *':'Name der Klinik *','Your name *':'Ihr Name *','Work email *':'Geschäftliche E-Mail *','WhatsApp / phone':'WhatsApp / Telefon','Clinic specialty':'Fachgebiet der Klinik',
+ 'Choose a specialty':'Fachgebiet auswählen','Dermatology':'Dermatologie','Aesthetic / cosmetic clinic':'Ästhetische Klinik','Dental clinic':'Zahnklinik','Plastic surgery':'Plastische Chirurgie',
+ 'Request my free demo ↗':'Kostenlose Demo anfordern ↗','Personal product walkthrough':'Persönliche Produktvorstellung','No commitment required':'Unverbindlich',
+ "Let's talk about your clinic":'Sprechen wir über Ihre Klinik','Make every first hello count.':'Jeder erste Kontakt zählt.','Request a personal demo ↗':'Persönliche Demo anfordern ↗'
+ },
+ fr:{
+ 'Features':'Fonctionnalités','Why CliniBot':'Pourquoi CliniBot','How it works':'Comment ça marche','Book a demo ↗':'Réserver une démo ↗',
+ 'The future of clinic communication':'L’avenir de la communication des cliniques','A warmer welcome.':'Un accueil plus chaleureux.','smarter':'plus intelligente',' clinic.':' clinique.',
+ 'Discover CliniBot':'Découvrir CliniBot','Explore live demo':'Voir la démo','CliniBot assistant':'Assistant CliniBot','Online':'En ligne',
+ 'A conversation, made simple':'Une conversation simplifiée','Natural conversations':'Conversations naturelles','Multilingual support':'Assistance multilingue',
+ 'Appointment requests':'Demandes de rendez-vous',"Your clinic's information":'Les informations de votre clinique','Instant team alerts':'Alertes instantanées','Simple management':'Gestion simplifiée',
+ 'A better first impression':'Une meilleure première impression','Technology that feels personal.':'Une technologie humaine.','Getting started':'Pour commencer',
+ 'A personal introduction':'Une présentation personnalisée','See what CliniBot can do for your clinic.':'Découvrez ce que CliniBot peut apporter à votre clinique.','Request your free demo':'Demander une démo gratuite',
+ 'Clinic name *':'Nom de la clinique *','Your name *':'Votre nom *','Work email *':'E-mail professionnel *','WhatsApp / phone':'WhatsApp / téléphone','Clinic specialty':'Spécialité de la clinique',
+ 'Choose a specialty':'Choisir une spécialité','Dermatology':'Dermatologie','Aesthetic / cosmetic clinic':'Clinique esthétique','Dental clinic':'Clinique dentaire','Plastic surgery':'Chirurgie plastique',
+ 'Request my free demo ↗':'Demander ma démo gratuite ↗','Personal product walkthrough':'Présentation personnalisée','No commitment required':'Sans engagement',
+ "Let's talk about your clinic":'Parlons de votre clinique','Make every first hello count.':'Faites de chaque premier contact un moment fort.','Request a personal demo ↗':'Demander une démo personnalisée ↗'
+ },
+ es:{
+ 'Features':'Funciones','Why CliniBot':'Por qué CliniBot','How it works':'Cómo funciona','Book a demo ↗':'Reservar una demo ↗',
+ 'The future of clinic communication':'El futuro de la comunicación clínica','A warmer welcome.':'Una bienvenida más cercana.','smarter':'más inteligente',' clinic.':' clínica.',
+ 'Discover CliniBot':'Descubrir CliniBot','Explore live demo':'Ver demo en vivo','CliniBot assistant':'Asistente CliniBot','Online':'En línea',
+ 'A conversation, made simple':'Una conversación sencilla','Natural conversations':'Conversaciones naturales','Multilingual support':'Soporte multilingüe',
+ 'Appointment requests':'Solicitudes de cita',"Your clinic's information":'Información de su clínica','Instant team alerts':'Alertas instantáneas','Simple management':'Gestión sencilla',
+ 'A better first impression':'Una mejor primera impresión','Technology that feels personal.':'Tecnología con un toque personal.','Getting started':'Primeros pasos',
+ 'A personal introduction':'Una presentación personal','See what CliniBot can do for your clinic.':'Descubra lo que CliniBot puede hacer por su clínica.','Request your free demo':'Solicite su demo gratuita',
+ 'Clinic name *':'Nombre de la clínica *','Your name *':'Su nombre *','Work email *':'Correo profesional *','WhatsApp / phone':'WhatsApp / teléfono','Clinic specialty':'Especialidad de la clínica',
+ 'Choose a specialty':'Elija una especialidad','Dermatology':'Dermatología','Aesthetic / cosmetic clinic':'Clínica estética','Dental clinic':'Clínica dental','Plastic surgery':'Cirugía plástica',
+ 'Request my free demo ↗':'Solicitar mi demo gratuita ↗','Personal product walkthrough':'Presentación personalizada','No commitment required':'Sin compromiso',
+ "Let's talk about your clinic":'Hablemos de su clínica','Make every first hello count.':'Haga que cada primer saludo cuente.','Request a personal demo ↗':'Solicitar una demo personal ↗'
+ }
+ };
+ const originals=new WeakMap();
+ function apply(lang){
+  const dict=translations[lang]||{};
+  document.documentElement.lang=lang;
+  document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  document.querySelectorAll('body *').forEach(el=>{
+   if(el.children.length===0 && el.textContent.trim()){
+    if(!originals.has(el))originals.set(el,el.textContent);
+    const raw=originals.get(el), key=raw.trim();
+    if(dict[key])el.textContent=raw.replace(key,dict[key]);
+   }
+   ['placeholder','aria-label'].forEach(attr=>{
+    if(el.hasAttribute(attr)){
+     const key=attr+'|'+(el.getAttribute(attr));
+     if(!el.dataset['original'+attr])el.dataset['original'+attr]=el.getAttribute(attr);
+     const original=el.dataset['original'+attr];
+     if(dict[original])el.setAttribute(attr,dict[original]);
+    }
+   });
+  });
+  document.querySelectorAll('#leadSpecialty option').forEach(opt=>{
+   if(!opt.dataset.originalText)opt.dataset.originalText=opt.textContent;
+   const key=opt.dataset.originalText.trim();
+   if(dict[key])opt.textContent=dict[key];
+  });
+  try{localStorage.setItem('clinibot-site-language',lang)}catch(e){}
+ }
+ select.addEventListener('change',()=>apply(select.value));
+ let saved='en';try{saved=localStorage.getItem('clinibot-site-language')||'en'}catch(e){}
+ if(!translations[saved]&&saved!=='en')saved='en';
+ select.value=saved;apply(saved);
+})();
+</script>
 
 <script>
 (() => {

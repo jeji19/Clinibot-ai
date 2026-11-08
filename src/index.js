@@ -221,8 +221,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   return lines.join("\n");
 }
 
-    const medicalReply = detectClinicMedicalIntent(message);
-    if (medicalReply) return json({ reply: medicalReply, handled_without_ai: true });
+
 
     const appointmentReply = detectClinicAppointmentIntent(message);
     if (appointmentReply) return json({ reply: appointmentReply, handled_without_ai: true });

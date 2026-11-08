@@ -193,7 +193,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   if (words.about) {
     lines.push("**" + labels.about + ":**");
     const description = String(clinicInfo.description || "").trim();
-    const demoDescription = /^demo clinic for testing clinibot ai\\.?$/i.test(description);
+    const demoDescription = /^demo clinic for testing clinibot ai\.?$/i.test(description);
     lines.push(lang === "ru" && demoDescription ? "Демонстрационная клиника для тестирования CliniBot AI." : description || labels.unavailable);
   }
   if (!lines.length) return null;

@@ -71,7 +71,7 @@ async function handleAppointment(request, env) {
     const preferred_time = typeof body.preferred_time === "string" ? body.preferred_time.trim() : "";
     const language = typeof body.language === "string" ? body.language.trim() : "en";
     const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "";
-    const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
+    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
       return json({ error: "This clinic link is invalid. Please open the clinic's correct booking link." }, 400);
     }

@@ -11,6 +11,7 @@ export default {
     if (url.pathname === "/api/superadmin/overview") return handleSuperAdminOverview(request, env);
     if (url.pathname === "/api/superadmin/demo-requests") return handleSuperAdminDemoRequests(request, env);
     if (url.pathname === "/api/superadmin/demo-request-status") return handleSuperAdminDemoRequestStatus(request, env);
+    if (url.pathname === "/api/superadmin/demo-request-delete") return handleSuperAdminDemoRequestDelete(request, env);
     if (url.pathname === "/api/superadmin/clinics") return handleSuperAdminCreateClinic(request, env);
     if (url.pathname === "/api/superadmin/members") return handleSuperAdminAddMember(request, env);
     return env.ASSETS.fetch(request);
@@ -584,6 +585,36 @@ async function handleSuperAdminDemoRequestStatus(request, env) {
   } catch (error) {
     console.error("Demo request status error", error?.message);
     return json({ error: "Demo request update service is temporarily unavailable." }, 500);
+  }
+}
+
+async function handleSuperAdminDemoRequestDelete(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  try {
+    const admin = await verifySuperAdmin(request, env);
+    if (!admin) return json({ error: "Super Admin authorization required." }, 403);
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Demo request storage is not configured." }, 503);
+    const body = await request.json();
+    const id = (typeof body.id === "string" || typeof body.id === "number") ? String(body.id).trim() : "";
+    const validId = id.length > 0 && id.length <= 128 && /^[a-zA-Z0-9_-]+$/.test(id);
+    if (!validId) return json({ error: "Invalid demo request." }, 400);
+    const key = env.SUPABASE_SERVICE_ROLE_KEY;
+    const deleteUrl = new URL("/rest/v1/demo_requests", env.SUPABASE_URL);
+    deleteUrl.searchParams.set("id", "eq." + id);
+    const response = await fetch(deleteUrl, {
+      method: "DELETE",
+      headers: { "apikey": key, "Authorization": "Bearer " + key, "Prefer": "return=representation" },
+      signal: AbortSignal.timeout(15000)
+    });
+    const data = await response.json().catch(() => []);
+    if (!response.ok || !Array.isArray(data) || data.length === 0) {
+      console.error("Demo request delete failed", response.status, JSON.stringify(data).slice(0, 300));
+      return json({ error: "Could not delete this demo request." }, response.ok ? 404 : 502);
+    }
+    return json({ success: true });
+  } catch (error) {
+    console.error("Demo request delete error", error?.message);
+    return json({ error: "Demo request delete service is temporarily unavailable." }, 500);
   }
 }
 

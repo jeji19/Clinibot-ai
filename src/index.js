@@ -78,17 +78,30 @@ async function handleChat(request, env) {
 
 
 function detectClinicLanguage(message) {
-  const text = String(message || "").toLowerCase();
-  if (/[\\u0600-\\u06FF]/.test(text)) return "ar";
-  if (/[\\u0400-\\u04FF]/.test(text)) return "ru";
-  if (/[äöüß]/i.test(text)) return "de";
-  if (/[àâçéèêëîïôùûüÿœ]/i.test(text)) return "fr";
+  const text = String(message || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Detect Arabic and Cyrillic by script, not by escaped text patterns.
+  if (/[\u0600-\u06FF]/.test(text)) return "ar";
+  if (/[\u0400-\u04FF]/.test(text)) return "ru";
+
   const tokens = new Set(text.match(/[a-z]+/g) || []);
-  const frenchMarkers = ["quels","quelles","sont","vos","horaires","ouverture","proposez","propose","vous","voudrais","rendez","prendre","clinique","tarifs","combien","bonjour","salut","je","une","des","les","avec","pour"];
-  const germanMarkers = ["ich","mochte","moechte","einen","termin","vereinbaren","welche","bitte","danke","guten","tag","ihre","und","wie"];
+  const frenchMarkers = [
+    "bonjour","salut","bonsoir","merci","je","voudrais","veux","souhaite",
+    "prendre","rendez","vous","quels","quelles","sont","vos","horaires",
+    "ouverture","ouverts","ouverte","fermee","ferme","proposez","proposent",
+    "services","tarifs","prix","combien","cout","clinique","consultation",
+    "consultations","gratuite","gratuit","disponible","disponibles","aujourd"
+  ];
+  const germanMarkers = [
+    "hallo","guten","tag","guten","morgen","abend","danke","bitte","ich",
+    "mochte","moechte","will","wurde","einen","eine","einem","termin",
+    "vereinbaren","buchen","offnungszeiten","zeiten","preise","kosten",
+    "dienstleistungen","leistungen","behandlung","behandlungen","klinik",
+    "beratung","beratungen","kostenlos","kostenlose","verfugbar","sind",
+    "haben","ihre","wann","welche","wie"
+  ];
   const frenchScore = frenchMarkers.filter(word => tokens.has(word)).length;
   const germanScore = germanMarkers.filter(word => tokens.has(word)).length;
-  if (frenchScore >= 2 && frenchScore >= germanScore) return "fr";
+  if (frenchScore >= 2 && frenchScore > germanScore) return "fr";
   if (germanScore >= 2) return "de";
   return "en";
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CliniBot AI — Clinic Reception Assistant</title>
-<meta name="description" content="A multilingual AI receptionist demo for clinics.">
+<meta name="description" content="A multilingual AI receptionist for clinics.">
 <style>
 :root{--navy:#10243a;--teal:#20b8a6;--muted:#66788a;--bg:#f4f8fb;--line:#e4ebf1}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font:16px/1.55 Inter,system-ui,-apple-system,Segoe UI,sans-serif}
@@ -15,19 +15,28 @@ h1{font-size:clamp(38px,5vw,60px);line-height:1.05;letter-spacing:-2px;margin:14
 .lead{font-size:18px;color:var(--muted);max-width:540px}.tag{color:#0b8f81;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;font-size:12px}
 .features{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px}
 .feature{background:white;border:1px solid var(--line);padding:15px;border-radius:14px;font-size:14px;color:#45596b}
-.panel{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 60px #10243a12;overflow:hidden}
+.panel,.booking-panel{background:white;border:1px solid var(--line);border-radius:22px;box-shadow:0 18px 60px #10243a12;overflow:hidden}
 .panelhead{padding:18px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
 .panelhead strong{font-size:15px}.online{font-size:12px;color:#0a967f}
 .messages{height:330px;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px}
 .msg{max-width:88%;padding:12px 14px;border-radius:15px;font-size:14px;white-space:pre-wrap}
 .bot{background:#f0f6f8;align-self:flex-start}.user{background:#daf6f0;align-self:flex-end}
 .composer{padding:14px;border-top:1px solid var(--line);display:flex;gap:8px}
-input{min-width:0;flex:1;border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;outline-color:var(--teal)}
-button{border:0;background:var(--teal);color:white;font-weight:700;border-radius:12px;padding:0 18px;cursor:pointer}
+input,select{min-width:0;width:100%;border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;outline-color:var(--teal);background:white;color:var(--navy)}
+button{border:0;background:var(--teal);color:white;font-weight:700;border-radius:12px;padding:12px 18px;cursor:pointer}
 button:disabled{opacity:.55;cursor:wait}
 .note{font-size:11px;color:#8392a0;padding:0 18px 16px}
-footer{text-align:center;color:#8493a1;font-size:12px;padding:26px}
+.booking-wrap{max-width:760px;margin:0 auto 50px;padding:0 22px}
+.booking-panel{padding:24px}
+.booking-panel h2{margin:0 0 6px;font-size:24px}
+.booking-panel p{color:var(--muted);margin:0 0 18px}
+.booking-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field label{display:block;font-size:13px;font-weight:700;margin:0 0 6px}
+.booking-actions{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
+#bookingStatus{font-size:13px;color:var(--muted)}
+#bookingStatus.success{color:#087f72}#bookingStatus.error{color:#b42318}
 @media(max-width:800px){main{grid-template-columns:1fr;margin:30px auto;gap:28px}.features{grid-template-columns:1fr 1fr}h1{letter-spacing:-1px}}
+@media(max-width:520px){.booking-grid{grid-template-columns:1fr}.booking-panel{padding:18px}}
 </style></head>
 <body>
 <header><div class="brand">CliniBot<span> AI</span></div><div class="pill">AI RECEPTION DEMO</div></header>
@@ -49,9 +58,25 @@ footer{text-align:center;color:#8493a1;font-size:12px;padding:26px}
 <div class="msg bot">Hello! I'm the CliniBot AI demo assistant. Ask me a general question about clinic reception, or say hello in your preferred language.</div>
 </div>
 <form class="composer" id="chatForm"><input id="messageInput" maxlength="1200" placeholder="Type a message…" autocomplete="off" required><button id="sendBtn">Send</button></form>
-<div class="note">Demo only. Do not enter patient names, contact details, symptoms, medical records or other sensitive information. No real appointments are booked.</div>
+<div class="note">Do not enter patient names, contact details, symptoms, medical records or other sensitive information.</div>
 </section>
 </main>
+<section class="booking-wrap">
+<div class="booking-panel">
+<h2>Request an appointment</h2>
+<p>Send your preferred service, date and time to the clinic. This is a request only; the clinic must confirm availability.</p>
+<form id="bookingForm">
+<div class="booking-grid">
+<div class="field"><label for="service">Service</label><input id="service" name="service" maxlength="120" placeholder="e.g. Botox consultation" required></div>
+<div class="field"><label for="preferredDate">Preferred date</label><input id="preferredDate" name="preferred_date" type="date" required></div>
+<div class="field"><label for="preferredTime">Preferred time</label><input id="preferredTime" name="preferred_time" maxlength="40" placeholder="e.g. 5:00 PM" required></div>
+<div class="field"><label for="language">Preferred language</label><select id="language" name="language"><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="fr">Français</option></select></div>
+</div>
+<div class="booking-actions"><button id="bookingButton" type="submit">Send appointment request</button><span id="bookingStatus" role="status" aria-live="polite"></span></div>
+</form>
+<div class="note" style="padding:14px 0 0">Only submit non-sensitive booking preferences. Do not include medical details.</div>
+</div>
+</section>
 <footer>CliniBot AI · Independent product demo · Not a medical service</footer>
 <script>
 const form=document.getElementById('chatForm'), input=document.getElementById('messageInput'), messages=document.getElementById('messages'), send=document.getElementById('sendBtn');
@@ -62,26 +87,41 @@ form.addEventListener('submit',async e=>{
  const waiting=bubble('Thinking…','bot');
  try{
   const r=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
-  const raw = await r.text();
-waiting.remove();
-
-let data;
-
-try {
-  data = JSON.parse(raw);
-} catch {
-  throw new Error(
-    `Server response error (HTTP ${r.status}): ${raw.slice(0, 300)}`
-  );
-}
-
-if (!r.ok) {
-  throw new Error(data.error || 'AI service unavailable');
-}
-
-bubble(data.reply || 'Empty AI response', 'bot');
+  const raw=await r.text();waiting.remove();let data;
+  try{data=JSON.parse(raw)}catch{throw new Error(`Server response error (HTTP ${r.status}): ${raw.slice(0,300)}`)}
+  if(!r.ok)throw new Error(data.error||'AI service unavailable');
+  bubble(data.reply||'Empty AI response','bot');
  }catch(err){waiting.remove();bubble(err.message||'Connection error. Please try again.','bot')}
  finally{send.disabled=false;send.textContent='Send';input.focus()}
+});
+const bookingForm=document.getElementById('bookingForm');
+const bookingButton=document.getElementById('bookingButton');
+const bookingStatus=document.getElementById('bookingStatus');
+const dateField=document.getElementById('preferredDate');
+dateField.min=new Date().toISOString().slice(0,10);
+bookingForm.addEventListener('submit',async e=>{
+ e.preventDefault();
+ bookingStatus.className='';bookingStatus.textContent='Sending request…';
+ bookingButton.disabled=true;
+ const payload={
+  service:document.getElementById('service').value.trim(),
+  preferred_date:dateField.value,
+  preferred_time:document.getElementById('preferredTime').value.trim(),
+  language:document.getElementById('language').value
+ };
+ try{
+  const response=await fetch('/.netlify/functions/appointment',{
+   method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
+  });
+  const result=await response.json();
+  if(!response.ok||!result.success)throw new Error(result.error||'Could not send request.');
+  bookingStatus.className='success';
+  bookingStatus.textContent='Request sent. The clinic must confirm your appointment.';
+  bookingForm.reset();dateField.min=new Date().toISOString().slice(0,10);
+ }catch(error){
+  bookingStatus.className='error';
+  bookingStatus.textContent=error.message||'Connection error. Please try again.';
+ }finally{bookingButton.disabled=false}
 });
 </script>
 </body></html>

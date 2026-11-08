@@ -560,9 +560,10 @@ async function handleSuperAdminDemoRequestStatus(request, env) {
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Demo request storage is not configured." }, 503);
     const body = await request.json();
     const id = (typeof body.id === "string" || typeof body.id === "number") ? String(body.id).trim() : "";
-    const status = typeof body.status === "string" ? body.status : "";
-    const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id) || /^[1-9][0-9]*$/.test(id);
+    const status = typeof body.status === "string" ? body.status.trim().toLowerCase() : "";
+    const validId = id.length > 0 && id.length <= 128 && /^[a-zA-Z0-9_-]+$/.test(id);
     if (!validId || !["new", "contacted", "converted", "closed"].includes(status)) {
+      console.error("Invalid demo status update payload", { idType: typeof body.id, idLength: id.length, status });
       return json({ error: "Invalid demo request or status." }, 400);
     }
     const key = env.SUPABASE_SERVICE_ROLE_KEY;

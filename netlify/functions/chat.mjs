@@ -15,10 +15,8 @@ export default async (req) => {
   const apiKey = process.env.GEMINI_API_KEY;
 
   if (!apiKey) {
-    console.error("GEMINI_API_KEY is missing");
-
     return new Response(
-      JSON.stringify({ error: "API key is missing" }),
+      JSON.stringify({ error: "AI service is not configured" }),
       { status: 503, headers }
     );
   }
@@ -29,24 +27,72 @@ export default async (req) => {
 
     if (!message || message.length > 1200) {
       return new Response(
-        JSON.stringify({ error: "Invalid message" }),
+        JSON.stringify({ error: "Please enter a valid message." }),
         { status: 400, headers }
       );
     }
 
     const instructions = `
-You are CliniBot AI, a multilingual clinic receptionist demo.
-Reply in the same language as the visitor.
-Be friendly, professional and concise.
-Never invent clinic prices, services, opening hours or appointments.
-Never diagnose, prescribe medication or recommend treatment.
-Refer medical questions to qualified clinic staff.
-For emergencies, advise contacting local emergency services.
-Do not ask for patient names, phone numbers or medical records.
-This is a demo, not a real clinic. No appointments are actually booked.
+You are CliniBot AI, a professional virtual receptionist
+for beauty, dermatology and dental clinics worldwide.
+
+YOUR PERSONALITY:
+- Be friendly, natural, welcoming and professional.
+- Behave like an experienced human receptionist.
+- Give useful, direct answers.
+- Avoid repetitive greetings.
+- Never sound robotic.
+- Do not repeatedly mention that you are a demo.
+
+LANGUAGE:
+- Always respond in the same language as the user's latest message.
+- Support Arabic, English, Russian, German and French.
+- In Arabic, use natural, fluent Arabic.
+- In Russian, use natural professional Russian.
+- Never switch languages unless requested.
+
+YOUR RESPONSIBILITIES:
+1. Welcome visitors.
+2. Explain clinic services when verified information exists.
+3. Answer general customer service questions.
+4. Help visitors submit appointment requests.
+5. Ask which service they are interested in.
+6. Ask for their preferred day and time.
+7. Explain the next steps clearly.
+
+APPOINTMENTS:
+- You can collect appointment preferences.
+- You cannot access a real clinic calendar.
+- Never claim that an appointment is confirmed.
+- Explain that the clinic team must confirm availability.
+
+CLINIC INFORMATION:
+- No specific clinic database is currently connected.
+- Never invent services, prices, doctors, opening hours or availability.
+- If asked about unknown information, politely explain that the clinic team can confirm it.
+
+MEDICAL SAFETY:
+- Never diagnose diseases.
+- Never prescribe medication.
+- Never recommend a medical procedure as personally suitable.
+- Refer medical questions to qualified clinic staff.
+- For emergencies, advise contacting local emergency services.
+
+PRIVACY:
+- Do not request passwords, payment details or medical records.
+- Collect only information necessary for a basic appointment request.
+
+RESPONSE STYLE:
+- Keep answers concise and helpful.
+- Answer the actual question first.
+- Ask one relevant follow-up question when needed.
+- Do not repeat the same introduction in every message.
+
+Your mission is to provide an excellent clinic reception experience.
 `;
 
-    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
 
     const requestOptions = {
       method: "POST",
@@ -58,47 +104,41 @@ This is a demo, not a real clinic. No appointments are actually booked.
         system_instruction: {
           parts: [{ text: instructions }]
         },
-        contents: [{
-          role: "user",
-          parts: [{ text: message }]
-        }],
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: message }]
+          }
+        ],
         generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 450
+          temperature: 0.6,
+          maxOutputTokens: 500
         }
       })
     };
 
     let response = await fetch(url, {
       ...requestOptions,
-      signal: AbortSignal.timeout(10000)
+      signal: AbortSignal.timeout(12000)
     });
 
     if (response.status === 503 || response.status === 429) {
-      console.log("Gemini busy. Retrying once...");
-
-      await new Promise(resolve =>
-        setTimeout(resolve, 1000)
-      );
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       response = await fetch(url, {
         ...requestOptions,
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(12000)
       });
     }
 
     const responseText = await response.text();
 
     if (!response.ok) {
-      console.error(
-        "Gemini error:",
-        response.status,
-        responseText
-      );
+      console.error("Gemini error:", response.status, responseText);
 
       return new Response(
         JSON.stringify({
-          error: `Gemini HTTP ${response.status}: ${responseText.slice(0, 700)}`
+          error: `AI service error (${response.status}). Please try again.`
         }),
         { status: 502, headers }
       );
@@ -107,11 +147,11 @@ This is a demo, not a real clinic. No appointments are actually booked.
     const data = JSON.parse(responseText);
 
     const reply = data.candidates?.[0]?.content?.parts
-      ?.map(p => p.text || "")
-      .join("");
+      ?.map(part => part.text || "")
+      .join("")
+      .trim();
 
     if (!reply) {
-      console.error("Empty AI response:", responseText);
       throw new Error("Empty AI response");
     }
 
@@ -121,11 +161,11 @@ This is a demo, not a real clinic. No appointments are actually booked.
     );
 
   } catch (error) {
-    console.error("Chat function error:", error.message);
+    console.error("CliniBot error:", error.message);
 
     return new Response(
       JSON.stringify({
-        error: "Something went wrong: " + error.message
+        error: "Sorry, the service is temporarily unavailable. Please try again."
       }),
       { status: 500, headers }
     );

@@ -27,7 +27,7 @@ export default async (req) => {
     const language = ["en", "ru"].includes(body.language) ? body.language : "en";
     const clinicSlug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "";
     const validDate = (() => {
-      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(preferredDate)) return false;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate)) return false;
       const parsed = new Date(preferredDate + "T00:00:00Z");
       return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === preferredDate;
     })();
@@ -35,9 +35,9 @@ export default async (req) => {
       return json({ error: "This clinic link is invalid." }, 400);
     }
     if (!patientName || patientName.length > 100 ||
-        !/^[+0-9()\\s.-]{6,30}$/.test(patientPhone) ||
+        !/^[+0-9()\s.-]{6,30}$/.test(patientPhone) ||
         !service || service.length > 120 || !validDate ||
-        !/^(?:[01]\\d|2[0-3]):[0-5]\\d$/.test(preferredTime)) {
+        !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(preferredTime)) {
       return json({ error: "Please provide your name, a valid phone number, service, date and preferred time." }, 400);
     }
 

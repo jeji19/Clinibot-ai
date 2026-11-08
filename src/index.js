@@ -387,7 +387,7 @@ async function handleAppointment(request, env) {
             from: "CliniBot AI <onboarding@resend.dev>",
             to: [recipient],
             subject: `New CliniBot appointment request — ${clinic.name}`,
-            text: `A new appointment request was received for ${clinic.name}.\\nPatient: ${patient_name}\\nPhone: ${patient_phone}\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
+            text: `A new appointment request was received for ${clinic.name}.\nPatient: ${patient_name}\nPhone: ${patient_phone}\nService: ${service}\nPreferred date: ${preferred_date}\nPreferred time: ${preferred_time}\nLanguage: ${language}\nStatus: new\nPlease review it in your CliniBot dashboard.`
           }),
           signal: AbortSignal.timeout(10000)
         });
@@ -474,9 +474,9 @@ async function handleDemoRequest(request, env) {
             to: [env.RESEND_TO_EMAIL],
             reply_to: email,
             subject: "New CliniBot demo request — " + clinic,
-            text: "A new CliniBot AI demo request was submitted.\\n\\nClinic: " + clinic +
-              "\\nContact: " + contact + "\\nEmail: " + email + "\\nPhone / WhatsApp: " + (phone || "Not provided") +
-              "\\nSpecialty: " + (specialty || "Not provided") + "\\n\\nPlease contact this clinic to arrange a product demo."
+            text: "A new CliniBot AI demo request was submitted.\n\nClinic: " + clinic +
+              "\nContact: " + contact + "\nEmail: " + email + "\nPhone / WhatsApp: " + (phone || "Not provided") +
+              "\nSpecialty: " + (specialty || "Not provided") + "\n\nPlease contact this clinic to arrange a product demo."
           }),
           signal: AbortSignal.timeout(12000)
         });

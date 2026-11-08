@@ -90,19 +90,42 @@ Never diagnose, prescribe medication, or recommend a medical procedure as person
 Do not request passwords, payment details, medical records, symptoms or other sensitive information. Keep answers concise and helpful.
 `;
 
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: instructions }] },
-        contents: [{ role: "user", parts: [{ text: message }] }],
-        generationConfig: { temperature: 0.3, maxOutputTokens: 900 }
-      }),
-      signal: AbortSignal.timeout(20000)
-    });
+    const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
+    const geminiPayload = {
+      system_instruction: { parts: [{ text: instructions }] },
+      contents: [{ role: "user", parts: [{ text: message }] }],
+      generationConfig: { temperature: 0.3, maxOutputTokens: 900 }
+    };
+    let response;
+    // Retry one time for temporary rate limits and upstream server errors.
+    for (let attempt = 0; attempt < 2; attempt++) {
+      response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+        body: JSON.stringify(geminiPayload),
+        signal: AbortSignal.timeout(20000)
+      });
+      if (response.ok || ![429, 500, 502, 503, 504].includes(response.status) || attempt === 1) break;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
     if (!response.ok) {
-      console.error("Gemini error", response.status, (await response.text()).slice(0, 500));
-      return json({ error: `AI service error (${response.status}). Please try again.` }, 502);
+      const upstreamError = (await response.text()).slice(0, 500);
+      console.error("Gemini error", response.status, upstreamError);
+      if (response.status === 429 || response.status >= 500) {
+        const language = /[\\u0600-\\u06FF]/.test(message) ? "ar"
+          : /[\\u0400-\\u04FF]/.test(message) ? "ru"
+          : /[\\u00C0-\\u024F]/.test(message) ? "fr"
+          : /[\\u00DF\\u1E00-\\u1EFF]/.test(message) ? "de" : "en";
+        const fallback = {
+          ar: "أعتذر، المساعد الذكي مشغول مؤقتاً. يمكنك متابعة طلب الموعد من زر «طلب موعد» أدناه، وسيقوم فريق العيادة بمراجعة طلبك وتأكيد التوفر.",
+          ru: "Извините, ИИ-помощник временно недоступен. Вы можете отправить запрос на запись через кнопку «Request an appointment» ниже. Клиника проверит доступность и подтвердит запись.",
+          de: "Entschuldigung, der KI-Assistent ist vorübergehend nicht verfügbar. Sie können Ihre Terminanfrage über die Schaltfläche „Request an appointment“ unten senden. Die Klinik prüft die Verfügbarkeit und bestätigt den Termin.",
+          fr: "Désolé, l’assistant IA est temporairement indisponible. Vous pouvez envoyer une demande via le bouton « Request an appointment » ci-dessous. La clinique vérifiera les disponibilités et confirmera le rendez-vous.",
+          en: "Sorry, the AI assistant is temporarily busy. You can still submit an appointment request using the “Request an appointment” button below. The clinic team will check availability and confirm your request."
+        };
+        return json({ reply: fallback[language] || fallback.en, temporary_issue: true });
+      }
+      return json({ error: "The AI service is temporarily unavailable. Please try again later." }, 502);
     }
     const data = await response.json();
     const reply = data.candidates?.[0]?.content?.parts?.map(p => p.text || "").join("").trim();

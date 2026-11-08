@@ -115,6 +115,8 @@ async function handleAppointment(request, env) {
   }
   try {
     const body = await request.json();
+    const patient_name = typeof body.patient_name === "string" ? body.patient_name.trim() : "";
+    const patient_phone = typeof body.patient_phone === "string" ? body.patient_phone.trim() : "";
     const service = typeof body.service === "string" ? body.service.trim() : "";
     const preferred_date = typeof body.preferred_date === "string" ? body.preferred_date.trim() : "";
     const preferred_time = typeof body.preferred_time === "string" ? body.preferred_time.trim() : "";
@@ -124,8 +126,8 @@ async function handleAppointment(request, env) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
       return json({ error: "This clinic link is invalid. Please open the clinic's correct booking link." }, 400);
     }
-    if (!service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
-      return json({ error: "Please provide a service, a valid date and a preferred time." }, 400);
+    if (!patient_name || patient_name.length > 100 || !/^[+0-9()\\s.-]{6,30}$/.test(patient_phone) || !service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
+      return json({ error: "Please provide your name, a valid phone number, service, date and preferred time." }, 400);
     }
 
     // Resolve the clinic on the server. Never trust a clinic_id supplied by the browser.
@@ -154,7 +156,7 @@ async function handleAppointment(request, env) {
         "Content-Type": "application/json",
         "Prefer": "return=minimal"
       },
-      body: JSON.stringify({ clinic_id: clinic.id, service, preferred_date, preferred_time, language, status: "new" }),
+      body: JSON.stringify({ clinic_id: clinic.id, patient_name, patient_phone, service, preferred_date, preferred_time, language, status: "new" }),
       signal: AbortSignal.timeout(15000)
     });
     if (!insertResponse.ok) {
@@ -177,7 +179,7 @@ async function handleAppointment(request, env) {
             from: "CliniBot AI <onboarding@resend.dev>",
             to: [recipient],
             subject: `New CliniBot appointment request — ${clinic.name}`,
-            text: `A new appointment request was received for ${clinic.name}.\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
+            text: `A new appointment request was received for ${clinic.name}.\\nPatient: ${patient_name}\\nPhone: ${patient_phone}\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
           }),
           signal: AbortSignal.timeout(10000)
         });
@@ -241,7 +243,7 @@ async function handleAdminAppointments(request, env) {
   try {
     const token = await authorizedAdmin(request, env);
     if (!token) return json({ error: "Please sign in again." }, 401);
-    const url = new URL("/rest/v1/appointment_requests?select=id,created_at,service,preferred_date,preferred_time,language,status&order=created_at.desc&limit=100", env.SUPABASE_URL);
+    const url = new URL("/rest/v1/appointment_requests?select=id,created_at,patient_name,patient_phone,service,preferred_date,preferred_time,language,status&order=created_at.desc&limit=100", env.SUPABASE_URL);
     const response = await fetch(url, { headers: { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token }, signal: AbortSignal.timeout(15000) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {

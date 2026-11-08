@@ -128,7 +128,7 @@ async function loadDemoRequests(){
    const phoneDigits=String(lead.phone||'').replace(/\D/g,'');
    if(phoneDigits.length>=7){
     const whatsapp=document.createElement('a');
-    const waMessage='Hello '+String(lead.contact_name||'')+', this is CliniBot AI. Thank you for requesting a demo for '+String(lead.clinic_name||'your clinic')+'. When would be a good time to arrange a quick introduction?';
+    const waMessage='Hello '+String(lead.contact_name||'')+',\n\nThank you for requesting a free CliniBot AI demo for '+String(lead.clinic_name||'your clinic')+'.\n\nCliniBot AI helps clinics respond to patient enquiries, share service information, and collect appointment requests around the clock, while your team stays in control of confirming bookings.\n\nI would be happy to show you how it could work for your clinic in a short 10–15 minute demo. Would you be available sometime this week?\n\nBest regards,\nCliniBot AI';
     whatsapp.href='https://wa.me/'+phoneDigits+'?text='+encodeURIComponent(waMessage);
     whatsapp.target='_blank';whatsapp.rel='noopener noreferrer';whatsapp.textContent='WhatsApp';
     whatsapp.style.cssText='display:inline-block;background:#168b55;color:white;text-decoration:none;border-radius:10px;padding:7px 10px;font-size:12px;font-weight:650;margin:0 6px 6px 0';

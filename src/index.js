@@ -112,7 +112,7 @@ function detectClinicFaqReply(message, clinicInfo) {
     greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\s*[!.؟。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),
     hours: /(opening hours|business hours|working hours|when.*open|when.*close|hours|ساعات العمل|مواعيد العمل|متى.*تفتح|متى.*تغلق|دوام|время работы|часы работы|когда.*откры|öffnungszeiten|wann.*geöffnet|horaires|heures d'ouverture|ouverture)/i.test(text),
-    about: /(about (the )?clinic|clinic description|tell me about|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)
+    about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)
   };
   const labels = {
     ar: { welcome: "أهلاً وسهلاً بك في", services: "الخدمات المتاحة وأسعارها", hours: "ساعات العمل", about: "نبذة عن العيادة", free: "مجاني", unavailable: "لم تنشر العيادة هذه المعلومات بعد." },
@@ -123,10 +123,21 @@ function detectClinicFaqReply(message, clinicInfo) {
   }[lang];
   const lines = [];
   if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
+  const normalizedMessage = text.replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+  const requestedService = clinicInfo.services.find(service => {
+    const name = String(service.name || "").toLowerCase();
+    const normalizedName = name.replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+    const tokens = normalizedName.split(/\\s+/).filter(token => token.length > 2);
+    const directMatch = normalizedName && normalizedMessage.includes(normalizedName);
+    const tokenMatch = tokens.length > 0 && tokens.some(token => normalizedMessage.includes(token));
+    const laserAlias = /\\b(laser|لیزر|лазер)\\b/i.test(text) && /laser|لیزر|лазер/i.test(name);
+    return directMatch || tokenMatch || laserAlias;
+  });
   if (words.greeting || words.services) {
     lines.push("**" + labels.services + ":**");
-    if (clinicInfo.services.length) {
-      for (const service of clinicInfo.services) {
+    const selectedServices = words.services && requestedService ? [requestedService] : clinicInfo.services;
+    if (selectedServices.length) {
+      for (const service of selectedServices) {
         const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : String(service.price);
         lines.push("- " + service.name + ": " + price);
       }
@@ -198,11 +209,11 @@ Do not request passwords, payment details, medical records, symptoms or other se
           : /[\\u00C0-\\u024F]/.test(message) ? "fr"
           : /[\\u00DF\\u1E00-\\u1EFF]/.test(message) ? "de" : "en";
         const fallback = {
-          ar: "أعتذر، المساعد الذكي مشغول مؤقتاً. يمكنك متابعة طلب الموعد من زر «طلب موعد» أدناه، وسيقوم فريق العيادة بمراجعة طلبك وتأكيد التوفر.",
-          ru: "Извините, ИИ-помощник временно недоступен. Вы можете отправить запрос на запись через кнопку «Request an appointment» ниже. Клиника проверит доступность и подтвердит запись.",
-          de: "Entschuldigung, der KI-Assistent ist vorübergehend nicht verfügbar. Sie können Ihre Terminanfrage über die Schaltfläche „Request an appointment“ unten senden. Die Klinik prüft die Verfügbarkeit und bestätigt den Termin.",
-          fr: "Désolé, l’assistant IA est temporairement indisponible. Vous pouvez envoyer une demande via le bouton « Request an appointment » ci-dessous. La clinique vérifiera les disponibilités et confirmera le rendez-vous.",
-          en: "Sorry, the AI assistant is temporarily busy. You can still submit an appointment request using the “Request an appointment” button below. The clinic team will check availability and confirm your request."
+          ar: "أعتذر، المساعد الذكي غير متاح مؤقتاً. يمكنني مساعدتك بمعلومات الخدمات والأسعار وساعات العمل، أو يمكنك إرسال طلب موعد من زر «طلب موعد» أدناه.",
+          ru: "Извините, ИИ-помощник временно недоступен. Я могу помочь с информацией об услугах, ценах и часах работы. Запрос на запись можно отправить через кнопку «Request an appointment» ниже.",
+          de: "Entschuldigung, der KI-Assistent ist vorübergehend nicht verfügbar. Ich kann Ihnen Informationen zu Leistungen, Preisen und Öffnungszeiten geben. Eine Terminanfrage können Sie über „Request an appointment“ unten senden.",
+          fr: "Désolé, l’assistant IA est temporairement indisponible. Je peux vous renseigner sur les services, les tarifs et les horaires. Vous pouvez envoyer une demande via le bouton « Request an appointment » ci-dessous.",
+          en: "Sorry, the AI assistant is temporarily unavailable. I can help with services, prices and opening hours. You can also submit an appointment request using the “Request an appointment” button below."
         };
         return json({ reply: fallback[language] || fallback.en, temporary_issue: true });
       }

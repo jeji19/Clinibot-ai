@@ -41,7 +41,7 @@ td select{border:1px solid var(--line);background:white;padding:7px}
 </form>
 </section>
 <section id="dashboard" class="hidden">
-<div class="toolbar"><div><h1>Appointment requests</h1><div class="small">Only requests assigned to your clinic are shown.</div></div><button id="refresh" class="secondary">Refresh</button></div>
+<div class="toolbar"><div><h1>Appointment requests</h1><div class="small">Only requests assigned to your clinic are shown.</div></div><div style="display:flex;gap:8px;flex-wrap:wrap"><a href="/settings.html" style="text-decoration:none;background:#20b8a6;color:white;padding:10px 14px;border-radius:10px;font-weight:650">Clinic settings</a><button id="refresh" class="secondary">Refresh</button></div></div>
 <div class="panel"><div id="tableStatus" class="small" role="status"></div><div class="table-wrap"><table><thead><tr><th>Received</th><th>Service</th><th>Preferred date</th><th>Preferred time</th><th>Language</th><th>Status</th></tr></thead><tbody id="rows"></tbody></table></div><div id="empty" class="empty hidden">No appointment requests yet.</div></div>
 </section>
 </main>

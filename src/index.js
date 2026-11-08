@@ -73,97 +73,66 @@ async function handleChat(request, env) {
       description: settings.description || "",
       services: Array.isArray(settings.services) ? settings.services : [],
       opening_hours: settings.opening_hours && typeof settings.opening_hours === "object" ? settings.opening_hours : {},
-      default_language: settings.default_language || "en"
+      default_language: ["en", "ru"].includes(settings.default_language) ? settings.default_language : "en"
     };
 
 
 function detectClinicLanguage(message) {
-  const text = String(message || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  // Detect Arabic and Cyrillic by script, not by escaped text patterns.
-  if (/[\u0600-\u06FF]/.test(text)) return "ar";
-  if (/[\u0400-\u04FF]/.test(text)) return "ru";
-
-  const tokens = new Set(text.match(/[a-z]+/g) || []);
-  const frenchMarkers = [
-    "bonjour","salut","bonsoir","merci","je","voudrais","veux","souhaite",
-    "prendre","rendez","vous","quels","quelles","sont","vos","horaires",
-    "ouverture","ouverts","ouverte","fermee","ferme","proposez","proposent",
-    "services","tarifs","prix","combien","cout","clinique","consultation",
-    "consultations","gratuite","gratuit","disponible","disponibles","aujourd"
-  ];
-  const germanMarkers = [
-    "hallo","guten","tag","guten","morgen","abend","danke","bitte","ich",
-    "mochte","moechte","will","wurde","einen","eine","einem","termin",
-    "vereinbaren","buchen","offnungszeiten","zeiten","preise","kosten",
-    "dienstleistungen","leistungen","behandlung","behandlungen","klinik",
-    "beratung","beratungen","kostenlos","kostenlose","verfugbar","sind",
-    "haben","ihre","wann","welche","wie"
-  ];
-  const frenchScore = frenchMarkers.filter(word => tokens.has(word)).length;
-  const germanScore = germanMarkers.filter(word => tokens.has(word)).length;
-  if (frenchScore >= 2 && frenchScore > germanScore) return "fr";
-  if (germanScore >= 2) return "de";
-  return "en";
+  return /[\\u0400-\\u04FF]/.test(String(message || "")) ? "ru" : "en";
 }
 
 function detectClinicAppointmentIntent(message) {
-  const text = message.toLowerCase().trim();
+  const text = String(message || "").toLowerCase().trim();
+  const lang = detectClinicLanguage(text);
   const patterns = {
-    ar: /(بدي احجز|اريد الحجز|أريد الحجز|احجز لي|حجز موعد|حجز|موعد|مواعيد|استشارة)/i,
-    ru: /(записаться|запись на приём|запись на прием|хочу записаться|записать меня|записаться на консультацию)/i,
-    de: /(termin buchen|termin vereinbaren|ich möchte einen termin|ich moechte einen termin|einen termin buchen|termin machen)/i,
-    fr: /(prendre rendez-vous|rendez-vous|je voudrais réserver|je veux réserver|réserver une consultation)/i,
+    ru: /(записаться|запись на приём|запись на прием|хочу записаться|запишите меня|записаться на консультацию)/i,
     en: /(book an? (appointment|consultation)|make an? appointment|schedule an? appointment|i want to book|i'd like to book|i would like to book|booking an? appointment|reserve an? appointment)/i
   };
-  const lang = detectClinicLanguage(message);
-  const match = patterns[lang].test(text) || (lang !== "en" && patterns.en.test(text));
-  if (!match) return null;
-  return {
-    ar: "بكل سرور! لإرسال طلب الموعد، اضغط على زر «Request an appointment» واختر الخدمة والتاريخ والوقت وأدخل بيانات التواصل. سيقوم فريق العيادة بمراجعة الطلب وتأكيد الموعد معك.",
-    ru: "С удовольствием! Чтобы отправить запрос на запись, нажмите кнопку «Request an appointment», выберите услугу, дату и время и укажите контактные данные. Клиника проверит запрос и подтвердит запись.",
-    de: "Gerne! Um eine Terminanfrage zu senden, klicken Sie auf „Request an appointment“, wählen Sie Leistung, Datum und Uhrzeit und geben Sie Ihre Kontaktdaten ein. Das Team der Klinik prüft die Anfrage und bestätigt den Termin.",
-    fr: "Avec plaisir ! Pour envoyer une demande de rendez-vous, cliquez sur « Request an appointment », choisissez le service, la date et l’heure, puis indiquez vos coordonnées. L’équipe de la clinique vérifiera la demande et confirmera le rendez-vous.",
-    en: "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm the appointment."
-  }[lang];
+  if (!patterns[lang].test(text)) return null;
+  return lang === "ru"
+    ? "Конечно! Чтобы отправить запрос на запись, нажмите кнопку «Request an appointment», выберите услугу, дату и время и укажите контактные данные. Клиника проверит запрос и подтвердит запись."
+    : "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm the appointment.";
 }
 
 function detectClinicFaqReply(message, clinicInfo) {
-  const text = message.toLowerCase();
-  const lang = detectClinicLanguage(message);
+  const text = String(message || "").toLowerCase();
+  const lang = detectClinicLanguage(text);
   const words = {
-    greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\s*[!.؟。]*$/i.test(text.trim()),
-    services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),
-    freeConsultations: /(free\s+(consultation|consultations|consult|consults)|are\s+(the\s+)?consultations?\s+free|do you offer\s+(free\s+)?consultations?|استشارات?\s+(مجانية|مجاني)|مجاني(?:ة)?\s+استشارات?|бесплатн\w*\s+консультац|консультац\w*\s+бесплатн\w*|kostenlos\w*\s+beratung|beratung\w*\s+kostenlos\w*|consultations?\s+gratuit\w*|gratuit\w*\s+consultations?)/i.test(text),
-    hours: /(opening hours|business hours|working hours|when.*open|when.*close|are you (open|closed)|is (the )?(clinic|office) (open|closed)|open on (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|what time.*(open|close)|what are your hours|hours|ساعات العمل|مواعيد العمل|متى.*تفتح|متى.*تغلق|هل.*(مفتوح|فاتح)|دوام|время работы|часы работы|когда.*откры|вы работаете|работаете ли|öffnungszeiten|wann.*geöffnet|haben sie.*geöffnet|horaires|heures d'ouverture|êtes-vous ouvert|vous êtes ouverts|ouverture)/i.test(text),
-    about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)
+    greeting: /^(hi|hello|hey|здравствуйте|привет|добрый день|доброе утро|добрый вечер)\\s*[!.?。]*$/i.test(text.trim()),
+    services: /(service|services|treatment|treatments|price|prices|cost|how much|услуг|цены|стоимость|сколько стоит|процедур)/i.test(text),
+    freeConsultations: /(free\\s+(consultation|consultations|consult|consults)|are\\s+(the\\s+)?consultations?\\s+free|do you offer\\s+(free\\s+)?consultations?|бесплатн\\w*\\s+консультац|консультац\\w*\\s+бесплатн\\w*)/i.test(text),
+    hours: /(opening hours|business hours|working hours|when.*open|when.*close|are you (open|closed)|is (the )?(clinic|office) (open|closed)|open on (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|what time.*(open|close)|what are your hours|hours|время работы|часы работы|когда.*откры|вы работаете|работаете ли|график работы)/i.test(text),
+    about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|о клинике|расскажите о клинике|информация о клинике)/i.test(text)
   };
-  const labels = {
-    ar: { welcome: "أهلاً وسهلاً بك في", services: "الخدمات المتاحة وأسعارها", freeConsultations: "الاستشارات المجانية", noFreeConsultations: "لا توجد استشارات مجانية مدرجة حالياً.", hours: "ساعات العمل", about: "نبذة عن العيادة", free: "مجاني", unavailable: "لم تنشر العيادة هذه المعلومات بعد." },
-    ru: { welcome: "Добро пожаловать в", services: "Доступные услуги и цены", freeConsultations: "Бесплатные консультации", noFreeConsultations: "Бесплатные консультации пока не указаны.", hours: "Часы работы", about: "О клинике", free: "Бесплатно", unavailable: "Клиника пока не опубликовала эту информацию." },
-    de: { welcome: "Willkommen bei", services: "Verfügbare Leistungen und Preise", freeConsultations: "Kostenlose Beratungen", noFreeConsultations: "Kostenlose Beratungen sind derzeit nicht aufgeführt.", hours: "Öffnungszeiten", about: "Über die Klinik", free: "Kostenlos", unavailable: "Die Klinik hat diese Informationen noch nicht veröffentlicht." },
-    fr: { welcome: "Bienvenue chez", services: "Services disponibles et tarifs", freeConsultations: "Consultations gratuites", noFreeConsultations: "Aucune consultation gratuite n'est actuellement indiquée.", hours: "Horaires d'ouverture", about: "À propos de la clinique", free: "Gratuit", unavailable: "La clinique n'a pas encore publié ces informations." },
-    en: { welcome: "Welcome to", services: "Available services and prices", freeConsultations: "Free consultations", noFreeConsultations: "No free consultations are currently listed.", hours: "Opening hours", about: "About the clinic", free: "Free", unavailable: "The clinic has not published this information yet." }
-  }[lang];
+  const labels = lang === "ru" ? {
+    welcome: "Добро пожаловать в", services: "Доступные услуги и цены",
+    freeConsultations: "Бесплатные консультации",
+    noFreeConsultations: "Бесплатные консультации пока не указаны.",
+    hours: "Часы работы", about: "О клинике", free: "Бесплатно",
+    unavailable: "Клиника пока не опубликовала эту информацию."
+  } : {
+    welcome: "Welcome to", services: "Available services and prices",
+    freeConsultations: "Free consultations",
+    noFreeConsultations: "No free consultations are currently listed.",
+    hours: "Opening hours", about: "About the clinic", free: "Free",
+    unavailable: "The clinic has not published this information yet."
+  };
   const lines = [];
   if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
   const normalizeWords = value => String(value || "").toLowerCase()
-    .replace(/[^a-z0-9\u0600-\u06FF\u0400-\u04FF]+/g, " ").trim();
+    .replace(/[^a-z0-9\\u0400-\\u04FF]+/g, " ").trim();
   const normalizedMessage = normalizeWords(text);
-  const messageTokens = new Set(normalizedMessage.split(/\s+/));
-  const genericServiceWords = new Set(["consultation", "consultations", "consult", "service", "services", "treatment", "treatments", "price", "prices", "cost", "how", "much", "the", "for", "is", "are", "of", "only", "what", "does", "do", "you", "your"]);
+  const messageTokens = new Set(normalizedMessage.split(/\\s+/));
+  const genericServiceWords = new Set(["consultation", "consultations", "consult", "service", "services", "treatment", "treatments", "price", "prices", "cost", "how", "much", "the", "for", "is", "are", "of", "only", "what", "does", "do", "you", "your", "услуга", "услуги", "цена", "цены", "стоимость", "консультация", "консультации"]);
   const requestedService = clinicInfo.services.find(service => {
-    const name = normalizeWords(service.name);
-    const tokens = name.split(/\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
+    const tokens = normalizeWords(service.name).split(/\\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
     return tokens.some(token => messageTokens.has(token));
   });
   if (words.freeConsultations) {
     lines.push("**" + labels.freeConsultations + ":**");
     const freeServices = clinicInfo.services.filter(service => Number(service.price) === 0);
-    if (freeServices.length) {
-      for (const service of freeServices) lines.push("- " + service.name + ": " + labels.free);
-    } else {
-      lines.push(labels.noFreeConsultations);
-    }
+    if (freeServices.length) for (const service of freeServices) lines.push("- " + service.name + ": " + labels.free);
+    else lines.push(labels.noFreeConsultations);
   }
   if (words.greeting || words.services) {
     lines.push("**" + labels.services + ":**");
@@ -178,33 +147,25 @@ function detectClinicFaqReply(message, clinicInfo) {
   if (words.hours) {
     const entries = Object.entries(clinicInfo.opening_hours || {});
     const dayAliases = [
-      { day: "Monday", aliases: ["monday", "mon", "الاثنين", "الإثنين", "понедельник", "montag", "lundi"] },
-      { day: "Tuesday", aliases: ["tuesday", "tue", "tues", "الثلاثاء", "вторник", "dienstag", "mardi"] },
-      { day: "Wednesday", aliases: ["wednesday", "wed", "الأربعاء", "среда", "mittwoch", "mercredi"] },
-      { day: "Thursday", aliases: ["thursday", "thu", "thur", "الخميس", "четверг", "donnerstag", "jeudi"] },
-      { day: "Friday", aliases: ["friday", "fri", "الجمعة", "пятница", "freitag", "vendredi"] },
-      { day: "Saturday", aliases: ["saturday", "sat", "السبت", "суббота", "samstag", "samedi"] },
-      { day: "Sunday", aliases: ["sunday", "sun", "الأحد", "الاحد", "воскресенье", "sonntag", "dimanche"] }
+      { day: "Monday", aliases: ["monday", "mon", "понедельник"] },
+      { day: "Tuesday", aliases: ["tuesday", "tue", "tues", "вторник"] },
+      { day: "Wednesday", aliases: ["wednesday", "wed", "среда"] },
+      { day: "Thursday", aliases: ["thursday", "thu", "thur", "четверг"] },
+      { day: "Friday", aliases: ["friday", "fri", "пятница"] },
+      { day: "Saturday", aliases: ["saturday", "sat", "суббота"] },
+      { day: "Sunday", aliases: ["sunday", "sun", "воскресенье"] }
     ];
     const requestedDay = dayAliases.find(item => item.aliases.some(alias => messageTokens.has(normalizeWords(alias))));
     if (requestedDay) {
       const opening = entries.find(([day]) => {
         const normalizedDay = normalizeWords(day);
-        return normalizedDay === normalizeWords(requestedDay.day) ||
-          requestedDay.aliases.some(alias => normalizedDay === normalizeWords(alias));
+        return normalizedDay === normalizeWords(requestedDay.day) || requestedDay.aliases.some(alias => normalizedDay === normalizeWords(alias));
       });
       if (opening) {
         lines.push("**" + labels.hours + ":**");
         lines.push("- " + opening[0] + ": " + opening[1]);
       } else {
-        const closed = {
-          ar: "العيادة مغلقة يوم " + requestedDay.day + ".",
-          ru: "Клиника закрыта в " + requestedDay.day + ".",
-          de: "Die Klinik ist am " + requestedDay.day + " geschlossen.",
-          fr: "La clinique est fermée le " + requestedDay.day + ".",
-          en: "We are closed on " + requestedDay.day + "."
-        };
-        lines.push(closed[lang] || closed.en);
+        lines.push(lang === "ru" ? "Клиника закрыта в " + requestedDay.day + "." : "We are closed on " + requestedDay.day + ".");
       }
     } else {
       lines.push("**" + labels.hours + ":**");
@@ -217,8 +178,8 @@ function detectClinicFaqReply(message, clinicInfo) {
     lines.push(clinicInfo.description || labels.unavailable);
   }
   if (!lines.length) return null;
-  if (words.greeting) lines.push(lang === "ar" ? "كيف يمكنني مساعدتك اليوم؟" : lang === "ru" ? "Чем я могу вам помочь?" : lang === "de" ? "Wie kann ich Ihnen heute helfen?" : lang === "fr" ? "Comment puis-je vous aider aujourd'hui ?" : "How can I help you today?");
-  return lines.join("\n");
+  if (words.greeting) lines.push(lang === "ru" ? "Чем я могу вам помочь?" : "How can I help you today?");
+  return lines.join("\\n");
 }
 
     const appointmentReply = detectClinicAppointmentIntent(message);
@@ -229,7 +190,7 @@ function detectClinicFaqReply(message, clinicInfo) {
 
     const instructions = `
 You are CliniBot AI, a polished, helpful and professional virtual receptionist for beauty, dermatology and dental clinics worldwide.
-Always reply in the same language as the user's latest message. Support Arabic, English, Russian, German and French.
+Always reply in English or Russian only. If the message is in Russian, reply in natural professional Russian; otherwise reply in English.
 Sound like a real, attentive receptionist: warm, clear, natural and conversational, never robotic, repetitive, overly formal or salesy.
 Answer the exact question first. Keep most answers to 1–3 short sentences. Use a short list only when it makes the answer easier to understand. Avoid unnecessary introductions, repeated greetings, excessive bold formatting and generic filler.
 If the question is ambiguous, ask just one short clarifying question. Do not make the user repeat information they have already provided.
@@ -267,15 +228,9 @@ Do not request passwords, payment details, medical records, symptoms or other se
       const upstreamError = (await response.text()).slice(0, 500);
       console.error("Gemini error", response.status, upstreamError);
       if (response.status === 429 || response.status >= 500) {
-        const language = /[\\u0600-\\u06FF]/.test(message) ? "ar"
-          : /[\\u0400-\\u04FF]/.test(message) ? "ru"
-          : /[\\u00C0-\\u024F]/.test(message) ? "fr"
-          : /[\\u00DF\\u1E00-\\u1EFF]/.test(message) ? "de" : "en";
+        const language = detectClinicLanguage(message);
         const fallback = {
-          ar: "أعتذر، المساعد الذكي غير متاح مؤقتاً. يمكنني مساعدتك بمعلومات الخدمات والأسعار وساعات العمل، أو يمكنك إرسال طلب موعد من زر «طلب موعد» أدناه.",
           ru: "Извините, ИИ-помощник временно недоступен. Я могу помочь с информацией об услугах, ценах и часах работы. Запрос на запись можно отправить через кнопку «Request an appointment» ниже.",
-          de: "Entschuldigung, der KI-Assistent ist vorübergehend nicht verfügbar. Ich kann Ihnen Informationen zu Leistungen, Preisen und Öffnungszeiten geben. Eine Terminanfrage können Sie über „Request an appointment“ unten senden.",
-          fr: "Désolé, l’assistant IA est temporairement indisponible. Je peux vous renseigner sur les services, les tarifs et les horaires. Vous pouvez envoyer une demande via le bouton « Request an appointment » ci-dessous.",
           en: "Sorry, the AI assistant is temporarily unavailable. I can help with services, prices and opening hours. You can also submit an appointment request using the “Request an appointment” button below."
         };
         return json({ reply: fallback[language] || fallback.en, temporary_issue: true });
@@ -303,7 +258,8 @@ async function handleAppointment(request, env) {
     const service = typeof body.service === "string" ? body.service.trim() : "";
     const preferred_date = typeof body.preferred_date === "string" ? body.preferred_date.trim() : "";
     const preferred_time = typeof body.preferred_time === "string" ? body.preferred_time.trim() : "";
-    const language = typeof body.language === "string" ? body.language.trim() : "en";
+    const requestedLanguage = typeof body.language === "string" ? body.language.trim() : "en";
+    const language = ["en", "ru"].includes(requestedLanguage) ? requestedLanguage : "en";
     const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "";
     const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
@@ -597,7 +553,7 @@ async function handleAdminSettings(request, env) {
 
     const body = await request.json();
     const description = typeof body.description === "string" ? body.description.trim().slice(0, 2000) : "";
-    const default_language = typeof body.default_language === "string" && ["en","ar","ru","de","fr"].includes(body.default_language) ? body.default_language : "en";
+    const default_language = typeof body.default_language === "string" && ["en","ru"].includes(body.default_language) ? body.default_language : "en";
     if (!Array.isArray(body.services) || body.services.length > 50) return json({ error: "Add up to 50 valid services." }, 400);
     const services = [];
     for (const item of body.services) {

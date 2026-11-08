@@ -24,7 +24,7 @@ export async function onRequestPost({ request, env }) {
     const requestedLanguage = typeof body.language === "string" ? body.language.trim() : "en";
     const language = ["en", "ru"].includes(requestedLanguage) ? requestedLanguage : "en";
 
-    const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(preferredDate)
+    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferredDate)
       && !Number.isNaN(Date.parse(preferredDate + "T00:00:00Z"));
 
     if (!service || service.length > 120 || !validDate || !preferredTime || preferredTime.length > 40 || !["en", "ru"].includes(language)) {

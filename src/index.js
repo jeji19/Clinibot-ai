@@ -316,6 +316,10 @@ async function handleAppointment(request, env) {
   }
   try {
     const body = await request.json();
+    // Honeypot: quietly discard automated booking submissions.
+    if (typeof body.website === "string" && body.website.trim()) {
+      return json({ success: true, message: "Your appointment request was received." }, 201);
+    }
     const patient_name = typeof body.patient_name === "string" ? body.patient_name.trim() : "";
     const patient_phone = typeof body.patient_phone === "string" ? body.patient_phone.trim() : "";
     const service = typeof body.service === "string" ? body.service.trim() : "";

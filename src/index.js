@@ -837,7 +837,7 @@ async function handleSuperAdminCreateClinic(request, env) {
     if (name.length < 2 || name.length > 100) return json({ error: "Clinic name must be 2–100 characters." }, 400);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 60) return json({ error: "Use lowercase letters, numbers and hyphens for the clinic URL." }, 400);
     if (!["basic", "pro", "premium"].includes(plan)) return json({ error: "Invalid plan." }, 400);
-    if (notification_email && !/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(notification_email)) return json({ error: "Enter a valid notification email." }, 400);
+    if (notification_email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(notification_email)) return json({ error: "Enter a valid notification email." }, 400);
     const response = await fetch(new URL("/rest/v1/clinics", env.SUPABASE_URL), {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + admin.token, "Prefer": "return=representation" },

@@ -67,9 +67,11 @@ export default async (req) => {
 
     if (!response.ok) {
       const details = await response.text();
+      let dbCode = "unknown";
+      try { dbCode = JSON.parse(details).code || dbCode; } catch {}
       console.error("Supabase insert failed:", response.status, details);
       return new Response(
-        JSON.stringify({ error: "We could not save your request. Please try again later." }),
+        JSON.stringify({ error: `Database rejected the request (HTTP ${response.status}, code ${dbCode}).` }),
         { status: 502, headers }
       );
     }

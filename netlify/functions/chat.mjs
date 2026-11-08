@@ -70,7 +70,8 @@ This is a demo, not a real clinic. No appointments are actually booked.
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("Gemini error:", response.status);
+const errorDetails = await response.text();
+console.error("Gemini error:", response.status, errorDetails);
 
       return new Response(
         JSON.stringify({

@@ -362,6 +362,15 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
  'Something went wrong. Please try again.':'Se ha producido un error. Inténtelo de nuevo.'
  }
  };
+
+ const extraTranslations = {
+ ar: {'Multi':'متعدد اللغات','Smart':'ذكي','Human-led':'بإشراف بشري','Your clinic name':'اسم عيادتك','Full name':'الاسم الكامل','Leave this empty':'اترك هذا الحقل فارغاً','Bright modern clinical workspace':'مساحة عمل سريرية حديثة ومشرقة','The intelligent front desk for modern clinics':'موظف الاستقبال الذكي للعيادات الحديثة','CliniBot AI helps clinics answer routine questions and collect appointment requests around the clock.':'يساعد CliniBot AI العيادات على الإجابة عن الأسئلة المتكررة واستقبال طلبات المواعيد على مدار الساعة.','© 2026 CliniBot AI · Independent software demo · Not a medical service':'© 2026 CliniBot AI · عرض تجريبي لبرنامج مستقل · ليس خدمة طبية'},
+ ru: {'Multi':'Многоязычный','Smart':'Умный','Human-led':'Под контролем специалистов','Your clinic name':'Название вашей клиники','Full name':'Полное имя','Leave this empty':'Оставьте это поле пустым','Bright modern clinical workspace':'Светлое современное медицинское пространство','The intelligent front desk for modern clinics':'Интеллектуальный администратор для современных клиник','CliniBot AI helps clinics answer routine questions and collect appointment requests around the clock.':'CliniBot AI помогает клиникам отвечать на типовые вопросы и принимать заявки на запись круглосуточно.','© 2026 CliniBot AI · Independent software demo · Not a medical service':'© 2026 CliniBot AI · Демонстрация независимого ПО · Не медицинская услуга'},
+ de: {'Multi':'Mehrsprachig','Smart':'Intelligent','Human-led':'Menschlich betreut','Your clinic name':'Name Ihrer Klinik','Full name':'Vollständiger Name','Leave this empty':'Dieses Feld leer lassen','Bright modern clinical workspace':'Heller, moderner klinischer Arbeitsbereich','The intelligent front desk for modern clinics':'Der intelligente Empfang für moderne Kliniken','CliniBot AI helps clinics answer routine questions and collect appointment requests around the clock.':'CliniBot AI unterstützt Kliniken dabei, häufige Fragen zu beantworten und rund um die Uhr Terminanfragen entgegenzunehmen.','© 2026 CliniBot AI · Independent software demo · Not a medical service':'© 2026 CliniBot AI · Unabhängige Software-Demo · Kein medizinischer Dienst'},
+ fr: {'Multi':'Multilingue','Smart':'Intelligent','Human-led':'Supervisé par une équipe','Your clinic name':'Nom de votre clinique','Full name':'Nom complet','Leave this empty':'Laissez ce champ vide','Bright modern clinical workspace':'Espace clinique moderne et lumineux','The intelligent front desk for modern clinics':'L’accueil intelligent des cliniques modernes','CliniBot AI helps clinics answer routine questions and collect appointment requests around the clock.':'CliniBot AI aide les cliniques à répondre aux questions courantes et à recueillir les demandes de rendez-vous 24 h/24.','© 2026 CliniBot AI · Independent software demo · Not a medical service':'© 2026 CliniBot AI · Démonstration d’un logiciel indépendant · Pas un service médical'},
+ es: {'Multi':'Multilingüe','Smart':'Inteligente','Human-led':'Supervisado por personas','Your clinic name':'Nombre de su clínica','Full name':'Nombre completo','Leave this empty':'Deje este campo vacío','Bright modern clinical workspace':'Espacio clínico moderno y luminoso','The intelligent front desk for modern clinics':'La recepción inteligente para clínicas modernas','CliniBot AI helps clinics answer routine questions and collect appointment requests around the clock.':'CliniBot AI ayuda a las clínicas a responder preguntas frecuentes y recibir solicitudes de cita las 24 horas.','© 2026 CliniBot AI · Independent software demo · Not a medical service':'© 2026 CliniBot AI · Demostración de software independiente · No es un servicio médico'}
+ };
+ for (const lang of Object.keys(extraTranslations)) Object.assign(translations[lang], extraTranslations[lang]);
  const originals=new WeakMap();
  function apply(lang){
   const dict=translations[lang]||{};
@@ -376,7 +385,7 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
    else node.nodeValue=raw;
   }
   document.querySelectorAll('body *').forEach(el=>{
-   ['placeholder','aria-label'].forEach(attr=>{
+   ['placeholder','aria-label','alt'].forEach(attr=>{
     if(el.hasAttribute(attr)){
      if(!el.dataset['original'+attr])el.dataset['original'+attr]=el.getAttribute(attr);
      const original=el.dataset['original'+attr];
@@ -389,6 +398,11 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
    const key=opt.dataset.originalText.trim();
    if(dict[key])opt.textContent=dict[key];
   });
+  const pageTitle='CliniBot AI — The intelligent front desk for modern clinics';
+  const pageDescription='CliniBot AI helps clinics answer routine questions and collect appointment requests around the clock.';
+  document.title=dict[pageTitle] ? 'CliniBot AI — '+dict[pageTitle] : pageTitle;
+  const description=document.querySelector('meta[name="description"]');
+  if(description)description.setAttribute('content',dict[pageDescription]||pageDescription);
   try{localStorage.setItem('clinibot-site-language',lang)}catch(e){}
  }
  select.addEventListener('change',()=>apply(select.value));

@@ -3,6 +3,7 @@ export default {
     const url = new URL(request.url);
     if (url.pathname === "/api/chat") return handleChat(request, env);
     if (url.pathname === "/api/appointment") return handleAppointment(request, env);
+    if (url.pathname === "/api/demo-request") return handleDemoRequest(request, env);
     if (url.pathname === "/api/admin/login") return handleAdminLogin(request, env);
     if (url.pathname === "/api/admin/appointments") return handleAdminAppointments(request, env);
     if (url.pathname === "/api/admin/settings") return handleAdminSettings(request, env);
@@ -202,6 +203,52 @@ async function handleAppointment(request, env) {
   } catch (error) {
     console.error("Appointment error", error?.message);
     return json({ error: "The appointment service is temporarily unavailable." }, 500);
+  }
+}
+
+
+async function handleDemoRequest(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  if (!env.RESEND_API_KEY || !env.RESEND_TO_EMAIL) {
+    return json({ error: "Demo requests are temporarily unavailable. Please email us directly." }, 503);
+  }
+  try {
+    const body = await request.json();
+    // Honeypot field: silently accept automated submissions without sending email.
+    if (typeof body.website === "string" && body.website.trim()) return json({ success: true }, 200);
+    const clinic = typeof body.clinic_name === "string" ? body.clinic_name.trim() : "";
+    const contact = typeof body.contact_name === "string" ? body.contact_name.trim() : "";
+    const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+    const specialty = typeof body.specialty === "string" ? body.specialty.trim() : "";
+    if (clinic.length < 2 || clinic.length > 100 || contact.length < 2 || contact.length > 100 ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 160 ||
+        phone.length > 30 || specialty.length > 80) {
+      return json({ error: "Please check the required fields and enter a valid email address." }, 400);
+    }
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + env.RESEND_API_KEY, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "CliniBot AI <onboarding@resend.dev>",
+        to: [env.RESEND_TO_EMAIL],
+        reply_to: email,
+        subject: "New CliniBot demo request — " + clinic,
+        text: "A new CliniBot AI demo request was submitted.\n\nClinic: " + clinic +
+          "\nContact: " + contact + "\nEmail: " + email + "\nPhone / WhatsApp: " + (phone || "Not provided") +
+          "\nSpecialty: " + (specialty || "Not provided") + "\n\nPlease contact this clinic to arrange a product demo."
+      }),
+      signal: AbortSignal.timeout(12000)
+    });
+    if (!emailResponse.ok) {
+      const detail = (await emailResponse.text()).slice(0, 300);
+      console.error("Demo request email failed", emailResponse.status, detail);
+      return json({ error: "We couldn't send your request right now. Please try again later." }, 502);
+    }
+    return json({ success: true, message: "Your demo request has been sent." }, 201);
+  } catch (error) {
+    console.error("Demo request error", error?.message);
+    return json({ error: "The demo request service is temporarily unavailable." }, 500);
   }
 }
 

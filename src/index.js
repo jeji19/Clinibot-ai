@@ -111,7 +111,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   const words = {
     greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\s*[!.؟。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),
-    freeConsultations: /(free\\s+(consultation|consultations|consult|consults)|are\\s+(the\\s+)?consultations?\\s+free|do you offer\\s+(free\\s+)?consultations?|استشارات?\\s+(مجانية|مجاني)|مجاني(?:ة)?\\s+استشارات?|бесплатн\\w*\\s+консультац|консультац\\w*\\s+бесплатн\\w*|kostenlos\\w*\\s+beratung|beratung\\w*\\s+kostenlos\\w*|consultations?\\s+gratuit\\w*|gratuit\\w*\\s+consultations?)/i.test(text),
+    freeConsultations: /(free\s+(consultation|consultations|consult|consults)|are\s+(the\s+)?consultations?\s+free|do you offer\s+(free\s+)?consultations?|استشارات?\s+(مجانية|مجاني)|مجاني(?:ة)?\s+استشارات?|бесплатн\w*\s+консультац|консультац\w*\s+бесплатн\w*|kostenlos\w*\s+beratung|beratung\w*\s+kostenlos\w*|consultations?\s+gratuit\w*|gratuit\w*\s+consultations?)/i.test(text),
     hours: /(opening hours|business hours|working hours|when.*open|when.*close|hours|ساعات العمل|مواعيد العمل|متى.*تفتح|متى.*تغلق|دوام|время работы|часы работы|когда.*откры|öffnungszeiten|wann.*geöffnet|horaires|heures d'ouverture|ouverture)/i.test(text),
     about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)
   };
@@ -128,7 +128,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   const requestedService = clinicInfo.services.find(service => {
     const name = String(service.name || "").toLowerCase();
     const normalizedName = name.replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
-    const tokens = normalizedName.split(/\\s+/).filter(token => token.length > 2);
+    const tokens = normalizedName.split(/\s+/).filter(token => token.length > 2);
     const directMatch = normalizedName && normalizedMessage.includes(normalizedName);
     const tokenMatch = tokens.length > 0 && tokens.some(token => normalizedMessage.includes(token));
     const laserAlias = /\\b(laser|لیزر|лазер)\\b/i.test(text) && /laser|لیزر|лазер/i.test(name);
@@ -256,7 +256,7 @@ async function handleAppointment(request, env) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
       return json({ error: "This clinic link is invalid. Please open the clinic's correct booking link." }, 400);
     }
-    if (!patient_name || patient_name.length > 100 || !/^[+0-9()\\s.-]{6,30}$/.test(patient_phone) || !service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
+    if (!patient_name || patient_name.length > 100 || !/^[+0-9()\s.-]{6,30}$/.test(patient_phone) || !service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
       return json({ error: "Please provide your name, a valid phone number, service, date and preferred time." }, 400);
     }
 
@@ -352,7 +352,7 @@ async function handleDemoRequest(request, env) {
     const specialty = typeof body.specialty === "string" ? body.specialty.trim() : "";
     const at = email.indexOf("@");
     const dot = email.lastIndexOf(".");
-    const validEmail = at > 0 && dot > at + 1 && dot < email.length - 1 && !/\\s/.test(email);
+    const validEmail = at > 0 && dot > at + 1 && dot < email.length - 1 && !/\s/.test(email);
     if (clinic.length < 2 || clinic.length > 100) {
       return json({ error: "Please enter a clinic name (2–100 characters)." }, 400);
     }
@@ -757,7 +757,7 @@ async function handleSuperAdminCreateClinic(request, env) {
     if (name.length < 2 || name.length > 100) return json({ error: "Clinic name must be 2–100 characters." }, 400);
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || slug.length > 60) return json({ error: "Use lowercase letters, numbers and hyphens for the clinic URL." }, 400);
     if (!["basic", "pro", "premium"].includes(plan)) return json({ error: "Invalid plan." }, 400);
-    if (notification_email && !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(notification_email)) return json({ error: "Enter a valid notification email." }, 400);
+    if (notification_email && !/^[^\s@]+@[^\s@]+\\.[^\s@]+$/.test(notification_email)) return json({ error: "Enter a valid notification email." }, 400);
     const response = await fetch(new URL("/rest/v1/clinics", env.SUPABASE_URL), {
       method: "POST",
       headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + admin.token, "Prefer": "return=representation" },

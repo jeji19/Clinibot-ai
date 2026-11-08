@@ -100,7 +100,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   const words = {
     greeting: /^(hi|hello|hey|здравствуйте|привет|добрый день|доброе утро|добрый вечер)\s*[!.?。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|услуг|цены|стоимость|сколько стоит|процедур)/i.test(text),
-    freeConsultations: /(free\s+(consultation|consultations|consult|consults)|are\s+(the\s+)?consultations?\s+free|do you offer\s+(free\s+)?consultations?|бесплатн\w*\s+консультац|консультац\w*\s+бесплатн\w*)/i.test(text),
+    freeConsultations: /(free\s+(consultation|consultations|consult|consults)|are\s+(the\s+)?consultations?\s+free|which\s+consultations?\s+(are\s+)?free|what\s+consultations?\s+(are\s+)?free|do you offer\s+(free\s+)?consultations?|бесплатн\w*\s+консультац|консультац\w*\s+бесплатн\w*)/i.test(text),
     hours: /(opening hours|business hours|working hours|when.*open|when.*close|are you (open|closed)|is (the )?(clinic|office) (open|closed)|open on (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|what time.*(open|close)|what are your hours|hours|время работы|часы работы|когда.*откры|вы работаете|работаете ли|график работы)/i.test(text),
     about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|о клинике|расскажите о клинике|информация о клинике)/i.test(text)
   };

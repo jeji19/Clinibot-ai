@@ -2,7 +2,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/chat") return handleChat(request, env);
-    if (url.pathname === "/api/appointment") return handleAppointment(request, env);\n    if (url.pathname === "/api/admin/login") return handleAdminLogin(request, env);\n    if (url.pathname === "/api/admin/appointments") return handleAdminAppointments(request, env);\n    if (url.pathname === "/api/admin/appointment-status") return handleAdminStatus(request, env);
+    if (url.pathname === "/api/appointment") return handleAppointment(request, env);
+    if (url.pathname === "/api/admin/login") return handleAdminLogin(request, env);\n    if (url.pathname === "/api/admin/appointments") return handleAdminAppointments(request, env);\n    if (url.pathname === "/api/admin/appointment-status") return handleAdminStatus(request, env);
     return env.ASSETS.fetch(request);
   }
 };

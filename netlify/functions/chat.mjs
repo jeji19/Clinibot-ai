@@ -46,8 +46,7 @@ Do not ask for patient names, phone numbers or medical records.
 This is a demo, not a real clinic. No appointments are actually booked.
 `;
 
-    const url =
-https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent
+    const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
 
     const requestOptions = {
       method: "POST",
@@ -70,13 +69,11 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generat
       })
     };
 
-    // First attempt
     let response = await fetch(url, {
       ...requestOptions,
       signal: AbortSignal.timeout(10000)
     });
 
-    // Retry once if Google is overloaded
     if (response.status === 503 || response.status === 429) {
       console.log("Gemini busy. Retrying once...");
 
@@ -134,4 +131,3 @@ https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generat
     );
   }
 };
-;

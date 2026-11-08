@@ -23,6 +23,28 @@ section.content{padding:94px 0}.section-head{text-align:center;max-width:720px;m
 footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wrap{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap}.footer-brand{color:#fff;font-weight:700}
 @media(max-width:850px){.hero{min-height:auto;padding:140px 0 65px}.hero-grid{grid-template-columns:1fr;gap:42px}.demo{justify-self:start;width:min(100%,460px)}.cards{grid-template-columns:repeat(2,1fr)}.story{grid-template-columns:1fr}.story-photo{min-height:310px}.story-photo:after{background:linear-gradient(0deg,#eee8de,transparent 35%)}.story-copy{padding:30px 28px 55px}.navlinks{gap:15px}.navlinks>a:not(.button){display:none}}
 @media(max-width:560px){.wrap{width:min(100% - 30px,1160px)}.nav{height:76px}.brand{font-size:20px}.navlinks .button{padding:11px 13px;font-size:11px}.hero h1{font-size:48px}.hero-copy{font-size:15px}.trustgrid{grid-template-columns:repeat(2,1fr)}.trustitem:nth-child(2){border-right:0}.trustitem:nth-child(-n+2){border-bottom:1px solid #ffffff20}.trustitem{padding:18px 8px}.trustitem strong{font-size:20px}.cards,.steps{grid-template-columns:1fr}.content{padding:70px 0!important}.section-head{margin-bottom:32px}.band-inner{align-items:flex-start;flex-direction:column}.band{padding:62px 0}.demo{transform:none}}
+
+.demo-lead{background:#fffdfa;padding:82px 0;border-top:1px solid var(--line)}
+.lead-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:55px;align-items:start}
+.lead-copy h2{font-size:clamp(34px,4vw,48px);font-weight:500;line-height:1.12;margin:13px 0}
+.lead-copy p{color:var(--muted);font-size:14px}
+.lead-points{display:grid;gap:12px;margin-top:24px;color:#555d67;font-size:13px}
+.lead-points span:before{content:"✓";color:#a17e4c;font-weight:700;margin-right:10px}
+.lead-form{background:#f8f5ef;border:1px solid var(--line);padding:30px;border-radius:8px;box-shadow:0 16px 40px #17263b0a}
+.lead-form h3{font:600 23px "Playfair Display",Georgia,serif;margin:0 0 18px}
+.lead-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.lead-field{display:grid;gap:6px}
+.lead-field.full{grid-column:1/-1}
+.lead-field label{font-size:11px;font-weight:700;color:#5e6570}
+.lead-field input,.lead-field select{width:100%;padding:13px 12px;border:1px solid #ded5c8;border-radius:4px;background:#fffdfa;color:var(--ink);font:13px "DM Sans",sans-serif;outline:none}
+.lead-field input:focus,.lead-field select:focus{border-color:#b58d57;box-shadow:0 0 0 3px #c8a36a20}
+.lead-form button{border:0;cursor:pointer;width:100%;margin-top:17px;font-family:inherit}
+.lead-note{font-size:11px;color:#89857d;margin:12px 0 0}
+.lead-status{font-size:13px;margin-top:12px;min-height:20px;color:#276749}
+.lead-status.error{color:#a33}
+.hp-field{position:absolute!important;left:-9999px!important;opacity:0!important}
+@media(max-width:760px){.lead-grid{grid-template-columns:1fr;gap:28px}.lead-form{padding:22px}.lead-fields{grid-template-columns:1fr}.lead-field.full{grid-column:auto}}
+
 </style>
 </head>
 <body>
@@ -43,7 +65,61 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 </div></div></section>
 <section class="story" id="why"><div class="story-photo" role="img" aria-label="Bright modern clinical workspace"></div><div class="story-copy"><div class="kicker">A better first impression</div><h2>Technology that feels personal.</h2><p>Patients want clear information and an easy way to reach your clinic. CliniBot helps your team stay available while preserving the personal care that matters.</p><div class="checks"><div class="check"><b>✓</b> Consistent answers from clinic-approved information</div><div class="check"><b>✓</b> Appointment requests ready for team review</div><div class="check"><b>✓</b> Clinical judgment remains with qualified professionals</div><div class="check"><b>✓</b> A dedicated view for managing new requests</div></div></div></section>
 <section class="content how" id="how"><div class="wrap"><div class="section-head"><div class="kicker">Getting started</div><h2>Three simple steps to a smarter front desk.</h2><p>Start with your clinic's information. CliniBot takes care of the first conversation.</p></div><div class="steps"><div class="step"><div class="step-num">01</div><h3>Personalize your clinic</h3><p>Add your clinic details, approved services and opening hours.</p></div><div class="step"><div class="step-num">02</div><h3>Share your assistant</h3><p>Give patients a simple link to ask questions and send appointment requests.</p></div><div class="step"><div class="step-num">03</div><h3>Stay in the loop</h3><p>Your team reviews each request and contacts the patient to confirm availability.</p></div></div></div></section>
+
+<section class="demo-lead" id="demo-request"><div class="wrap lead-grid">
+<div class="lead-copy"><div class="kicker">A personal introduction</div><h2>See what CliniBot can do for your clinic.</h2><p>Tell us a little about your clinic. We'll get in touch to arrange a personal walkthrough and answer your questions.</p><div class="lead-points"><span>Personal product walkthrough</span><span>See appointment requests and the clinic dashboard</span><span>No commitment required</span></div></div>
+<form class="lead-form" id="demoLeadForm">
+<h3>Request your free demo</h3>
+<div class="lead-fields">
+<div class="lead-field"><label for="leadClinic">Clinic name *</label><input id="leadClinic" name="clinic_name" maxlength="100" required placeholder="Your clinic name"></div>
+<div class="lead-field"><label for="leadContact">Your name *</label><input id="leadContact" name="contact_name" maxlength="100" required placeholder="Full name"></div>
+<div class="lead-field"><label for="leadEmail">Work email *</label><input id="leadEmail" name="email" type="email" maxlength="160" required placeholder="you@clinic.com"></div>
+<div class="lead-field"><label for="leadPhone">WhatsApp / phone</label><input id="leadPhone" name="phone" maxlength="30" placeholder="+1 555 000 0000"></div>
+<div class="lead-field full"><label for="leadSpecialty">Clinic specialty</label><select id="leadSpecialty" name="specialty"><option value="">Choose a specialty</option><option>Dermatology</option><option>Aesthetic / cosmetic clinic</option><option>Dental clinic</option><option>Plastic surgery</option><option>Other</option></select></div>
+<div class="hp-field" aria-hidden="true"><label>Leave this empty<input name="website" tabindex="-1" autocomplete="off"></label></div>
+</div>
+<button class="button" type="submit" id="leadSubmit">Request my free demo ↗</button>
+<p class="lead-note">By submitting, you agree that CliniBot AI may contact you about your demo request.</p>
+<div class="lead-status" id="leadStatus" role="status" aria-live="polite"></div>
+</form>
+</div></section>
+
 <section class="band"><div class="wrap band-inner"><div><div class="kicker" style="color:#e4c28e">Let's talk about your clinic</div><h2>Make every first hello count.</h2><p>Explore the live demo and see how CliniBot could support your clinic's front desk.</p></div><a class="button" href="mailto:albizrahemran@gmail.com?subject=CliniBot%20AI%20clinic%20demo">Request a personal demo ↗</a></div></section>
 </main>
 <footer><div class="wrap"><span class="footer-brand">CliniBot AI</span><span>© 2026 CliniBot AI · Independent software demo · Not a medical service</span></div></footer>
+
+<script>
+(() => {
+  const form = document.getElementById("demoLeadForm");
+  if (!form) return;
+  const button = document.getElementById("leadSubmit");
+  const status = document.getElementById("leadStatus");
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    status.className = "lead-status";
+    status.textContent = "Sending your request…";
+    button.disabled = true;
+    button.textContent = "Sending…";
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const response = await fetch("/api/demo-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || !result.success) throw new Error(result.error || "Could not send your request. Please try again.");
+      form.reset();
+      status.textContent = "Thank you! Your demo request has been sent. We'll be in touch soon.";
+    } catch (error) {
+      status.className = "lead-status error";
+      status.textContent = error.message || "Something went wrong. Please try again.";
+    } finally {
+      button.disabled = false;
+      button.textContent = "Request my free demo ↗";
+    }
+  });
+})();
+</script>
+
 </body></html>

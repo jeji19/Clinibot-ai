@@ -111,15 +111,16 @@ function detectClinicFaqReply(message, clinicInfo) {
   const words = {
     greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\s*[!.؟。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),
+    freeConsultations: /(free\\s+(consultation|consultations|consult|consults)|are\\s+(the\\s+)?consultations?\\s+free|do you offer\\s+(free\\s+)?consultations?|استشارات?\\s+(مجانية|مجاني)|مجاني(?:ة)?\\s+استشارات?|бесплатн\\w*\\s+консультац|консультац\\w*\\s+бесплатн\\w*|kostenlos\\w*\\s+beratung|beratung\\w*\\s+kostenlos\\w*|consultations?\\s+gratuit\\w*|gratuit\\w*\\s+consultations?)/i.test(text),
     hours: /(opening hours|business hours|working hours|when.*open|when.*close|hours|ساعات العمل|مواعيد العمل|متى.*تفتح|متى.*تغلق|دوام|время работы|часы работы|когда.*откры|öffnungszeiten|wann.*geöffnet|horaires|heures d'ouverture|ouverture)/i.test(text),
     about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)
   };
   const labels = {
-    ar: { welcome: "أهلاً وسهلاً بك في", services: "الخدمات المتاحة وأسعارها", hours: "ساعات العمل", about: "نبذة عن العيادة", free: "مجاني", unavailable: "لم تنشر العيادة هذه المعلومات بعد." },
-    ru: { welcome: "Добро пожаловать в", services: "Доступные услуги и цены", hours: "Часы работы", about: "О клинике", free: "Бесплатно", unavailable: "Клиника пока не опубликовала эту информацию." },
-    de: { welcome: "Willkommen bei", services: "Verfügbare Leistungen und Preise", hours: "Öffnungszeiten", about: "Über die Klinik", free: "Kostenlos", unavailable: "Die Klinik hat diese Informationen noch nicht veröffentlicht." },
-    fr: { welcome: "Bienvenue chez", services: "Services disponibles et tarifs", hours: "Horaires d'ouverture", about: "À propos de la clinique", free: "Gratuit", unavailable: "La clinique n'a pas encore publié ces informations." },
-    en: { welcome: "Welcome to", services: "Available services and prices", hours: "Opening hours", about: "About the clinic", free: "Free", unavailable: "The clinic has not published this information yet." }
+    ar: { welcome: "أهلاً وسهلاً بك في", services: "الخدمات المتاحة وأسعارها", freeConsultations: "الاستشارات المجانية", noFreeConsultations: "لا توجد استشارات مجانية مدرجة حالياً.", hours: "ساعات العمل", about: "نبذة عن العيادة", free: "مجاني", unavailable: "لم تنشر العيادة هذه المعلومات بعد." },
+    ru: { welcome: "Добро пожаловать в", services: "Доступные услуги и цены", freeConsultations: "Бесплатные консультации", noFreeConsultations: "Бесплатные консультации пока не указаны.", hours: "Часы работы", about: "О клинике", free: "Бесплатно", unavailable: "Клиника пока не опубликовала эту информацию." },
+    de: { welcome: "Willkommen bei", services: "Verfügbare Leistungen und Preise", freeConsultations: "Kostenlose Beratungen", noFreeConsultations: "Kostenlose Beratungen sind derzeit nicht aufgeführt.", hours: "Öffnungszeiten", about: "Über die Klinik", free: "Kostenlos", unavailable: "Die Klinik hat diese Informationen noch nicht veröffentlicht." },
+    fr: { welcome: "Bienvenue chez", services: "Services disponibles et tarifs", freeConsultations: "Consultations gratuites", noFreeConsultations: "Aucune consultation gratuite n'est actuellement indiquée.", hours: "Horaires d'ouverture", about: "À propos de la clinique", free: "Gratuit", unavailable: "La clinique n'a pas encore publié ces informations." },
+    en: { welcome: "Welcome to", services: "Available services and prices", freeConsultations: "Free consultations", noFreeConsultations: "No free consultations are currently listed.", hours: "Opening hours", about: "About the clinic", free: "Free", unavailable: "The clinic has not published this information yet." }
   }[lang];
   const lines = [];
   if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
@@ -133,6 +134,15 @@ function detectClinicFaqReply(message, clinicInfo) {
     const laserAlias = /\\b(laser|لیزر|лазер)\\b/i.test(text) && /laser|لیزر|лазер/i.test(name);
     return directMatch || tokenMatch || laserAlias;
   });
+  if (words.freeConsultations) {
+    lines.push("**" + labels.freeConsultations + ":**");
+    const freeServices = clinicInfo.services.filter(service => Number(service.price) === 0);
+    if (freeServices.length) {
+      for (const service of freeServices) lines.push("- " + service.name + ": " + labels.free);
+    } else {
+      lines.push(labels.noFreeConsultations);
+    }
+  }
   if (words.greeting || words.services) {
     lines.push("**" + labels.services + ":**");
     const selectedServices = words.services && requestedService ? [requestedService] : clinicInfo.services;

@@ -125,13 +125,13 @@ function detectClinicFaqReply(message, clinicInfo) {
   const lines = [];
   if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
   const normalizeWords = value => String(value || "").toLowerCase()
-    .replace(/[^a-z0-9\\u0600-\\u06FF\\u0400-\\u04FF]+/g, " ").trim();
+    .replace(/[^a-z0-9\u0600-\u06FF\u0400-\u04FF]+/g, " ").trim();
   const normalizedMessage = normalizeWords(text);
-  const messageTokens = new Set(normalizedMessage.split(/\\s+/));
+  const messageTokens = new Set(normalizedMessage.split(/\s+/));
   const genericServiceWords = new Set(["consultation", "consultations", "consult", "service", "services", "treatment", "treatments", "price", "prices", "cost", "how", "much", "the", "for", "is", "are", "of", "only", "what", "does", "do", "you", "your"]);
   const requestedService = clinicInfo.services.find(service => {
     const name = normalizeWords(service.name);
-    const tokens = name.split(/\\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
+    const tokens = name.split(/\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
     return tokens.some(token => messageTokens.has(token));
   });
   if (words.freeConsultations) {

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CliniBot AI — Super Admin</title>
+<style>
+:root{--navy:#10243a;--teal:#20b8a6;--muted:#66788a;--bg:#f4f8fb;--line:#e4ebf1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:white;border-bottom:1px solid var(--line);padding:17px max(5vw,20px);display:flex;justify-content:space-between;align-items:center}
+.brand{font-size:21px;font-weight:800}.brand span{color:var(--teal)}
+main{max-width:1050px;margin:34px auto;padding:0 20px}.panel{background:white;border:1px solid var(--line);border-radius:17px;padding:22px;box-shadow:0 12px 40px #10243a0c}
+h1{font-size:26px;margin:0 0 5px}p,.muted{color:var(--muted)}p{margin:0 0 18px}
+label{display:block;font-weight:650;font-size:13px;margin:12px 0 6px}input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit}
+button{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:650;cursor:pointer;background:var(--teal);color:white}button.secondary{background:#edf3f6;color:var(--navy)}button:disabled{opacity:.6;cursor:wait}
+#login{max-width:420px;margin:55px auto}#message{min-height:22px;margin-top:12px;font-size:13px}.error{color:#b42318}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-bottom:18px}.stat{background:white;border:1px solid var(--line);border-radius:14px;padding:18px}.stat strong{display:block;font-size:27px}.stat span{font-size:13px;color:var(--muted)}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:560px}th,td{text-align:left;padding:13px 10px;border-bottom:1px solid var(--line);font-size:13px}th{color:var(--muted);background:#fbfcfd}
+.hidden{display:none!important}.empty{padding:25px;text-align:center;color:var(--muted)}.note{font-size:12px;margin-top:14px;color:var(--muted)}
+@media(max-width:600px){main{margin:22px auto}.panel{padding:16px}h1{font-size:23px}}
+</style>
+</head>
+<body>
+<header><div class="brand">CliniBot<span> AI</span> <span style="color:#66788a;font-size:13px;font-weight:600">/ Super Admin</span></div><button id="logout" class="secondary hidden">Log out</button></header>
+<main>
+<section id="login" class="panel">
+<h1>Super Admin sign in</h1><p>Sign in with your authorized administrator account.</p>
+<form id="loginForm">
+<label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+<label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+<div style="margin-top:18px"><button id="loginButton" type="submit">Sign in</button></div>
+<div id="message" role="status"></div>
+</form>
+</section>
+<section id="dashboard" class="hidden">
+<div class="toolbar"><div><h1>Platform overview</h1><div class="muted">All clinics and their appointment request totals.</div></div><button id="refresh" class="secondary">Refresh</button></div>
+<div class="stats"><div class="stat"><strong id="clinicCount">—</strong><span>Clinics</span></div><div class="stat"><strong id="requestCount">—</strong><span>Appointment requests (latest 1,000)</span></div></div>
+<div class="panel"><div id="tableMessage" class="muted" role="status">Loading…</div><div class="table-wrap"><table><thead><tr><th>Clinic</th><th>Clinic ID</th><th>Managers</th><th>Total requests</th><th>New requests</th></tr></thead><tbody id="clinicRows"></tbody></table></div><div id="empty" class="empty hidden">No clinics found.</div></div>
+<div class="note">This first version is read-only. Clinic creation, manager accounts, plans and activation controls will be added after access is tested.</div>
+</section>
+</main>
+<script>
+const loginSection=document.getElementById('login'),dashboard=document.getElementById('dashboard');
+const form=document.getElementById('loginForm'),message=document.getElementById('message');
+const loginButton=document.getElementById('loginButton'),logout=document.getElementById('logout');
+const rows=document.getElementById('clinicRows'),tableMessage=document.getElementById('tableMessage'),empty=document.getElementById('empty');
+let token=sessionStorage.getItem('clinibot_admin_token')||'';
+async function api(path,options={}){const response=await fetch(path,{...options,headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{}),...(options.headers||{})}});const data=await response.json().catch(()=>({error:'Invalid server response'}));if(!response.ok)throw new Error(data.error||'Request failed');return data}
+function showDashboard(){loginSection.classList.add('hidden');dashboard.classList.remove('hidden');logout.classList.remove('hidden');loadOverview()}
+function showLogin(){dashboard.classList.add('hidden');loginSection.classList.remove('hidden');logout.classList.add('hidden')}
+form.addEventListener('submit',async e=>{e.preventDefault();loginButton.disabled=true;message.className='';message.textContent='Signing in…';try{const data=await api('/api/admin/login',{method:'POST',body:JSON.stringify({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value})});token=data.access_token;sessionStorage.setItem('clinibot_admin_token',token);form.reset();message.textContent='';showDashboard()}catch(err){message.className='error';message.textContent=err.message}finally{loginButton.disabled=false}});
+async function loadOverview(){tableMessage.textContent='Loading…';rows.replaceChildren();empty.classList.add('hidden');try{const data=await api('/api/superadmin/overview');document.getElementById('clinicCount').textContent=(data.clinics||[]).length;document.getElementById('requestCount').textContent=data.total_requests??0;for(const clinic of data.clinics||[]){const tr=document.createElement('tr');for(const value of [clinic.name||'—',clinic.id||'—',clinic.manager_count??0,clinic.request_count??0,clinic.new_count??0]){const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)}rows.appendChild(tr)}empty.classList.toggle('hidden',(data.clinics||[]).length>0);tableMessage.textContent=(data.clinics||[]).length+' clinic(s) loaded.'}catch(err){tableMessage.textContent=err.message;if(err.message.toLowerCase().includes('sign in')||err.message.toLowerCase().includes('authorized')){token='';sessionStorage.removeItem('clinibot_admin_token');showLogin()}}}
+document.getElementById('refresh').addEventListener('click',loadOverview);
+logout.addEventListener('click',()=>{token='';sessionStorage.removeItem('clinibot_admin_token');rows.replaceChildren();showLogin()});
+if(token)showDashboard();
+</script>
+</body></html>

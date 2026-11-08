@@ -102,7 +102,8 @@ const dateField=document.getElementById('preferredDate');
 dateField.min=new Date().toISOString().slice(0,10);
 bookingForm.addEventListener('submit',async e=>{
  e.preventDefault();bookingStatus.className='';bookingStatus.textContent='Sending request…';bookingButton.disabled=true;
- const payload={service:document.getElementById('service').value.trim(),preferred_date:dateField.value,preferred_time:document.getElementById('preferredTime').value.trim(),language:document.getElementById('language').value};
+ const clinicSlug=new URLSearchParams(location.search).get('clinic')||'my-clinic';
+ const payload={clinic_slug:clinicSlug,service:document.getElementById('service').value.trim(),preferred_date:dateField.value,preferred_time:document.getElementById('preferredTime').value.trim(),language:document.getElementById('language').value};
  try{
   const response=await fetch(appointmentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();

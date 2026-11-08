@@ -35,7 +35,28 @@ button{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:65
 <div class="toolbar"><div><h1>Platform overview</h1><div class="muted">All clinics and their appointment request totals.</div></div><button id="refresh" class="secondary">Refresh</button></div>
 <div class="stats"><div class="stat"><strong id="clinicCount">—</strong><span>Clinics</span></div><div class="stat"><strong id="requestCount">—</strong><span>Appointment requests (latest 1,000)</span></div></div>
 <div class="panel"><div id="tableMessage" class="muted" role="status">Loading…</div><div class="table-wrap"><table><thead><tr><th>Clinic</th><th>Clinic ID</th><th>Managers</th><th>Total requests</th><th>New requests</th></tr></thead><tbody id="clinicRows"></tbody></table></div><div id="empty" class="empty hidden">No clinics found.</div></div>
-<div class="note">This first version is read-only. Clinic creation, manager accounts, plans and activation controls will be added after access is tested.</div>
+<div class="panel" style="margin-top:18px">
+<h2 style="margin:0 0 8px;font-size:20px">Add a clinic</h2>
+<form id="clinicForm">
+<label for="clinicName">Clinic name</label><input id="clinicName" required maxlength="100" placeholder="Example: Aurora Dermatology">
+<label for="clinicSlug">Clinic URL slug</label><input id="clinicSlug" required maxlength="60" pattern="[a-z0-9]+(-[a-z0-9]+)*" placeholder="aurora-dermatology">
+<label for="clinicPlan">Subscription plan</label><select id="clinicPlan" style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit"><option value="basic">Basic</option><option value="pro">Pro</option><option value="premium">Premium</option></select>
+<label for="clinicEmail">Notification email (optional)</label><input id="clinicEmail" type="email" placeholder="manager@example.com">
+<div style="margin-top:16px"><button id="createClinicButton" type="submit">Create clinic</button></div>
+<div id="clinicFormMessage" class="muted" role="status" style="margin-top:10px"></div>
+</form>
+</div>
+<div class="panel" style="margin-top:18px">
+<h2 style="margin:0 0 8px;font-size:20px">Assign a manager to a clinic</h2>
+<p>Create the manager's account first in Supabase → Authentication → Users. Then copy that user's ID and assign it here.</p>
+<form id="memberForm">
+<label for="memberClinic">Clinic</label><select id="memberClinic" required style="width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;font:inherit"><option value="">Select a clinic</option></select>
+<label for="managerUserId">Manager user ID (UUID)</label><input id="managerUserId" required placeholder="Paste the user ID from Supabase Auth">
+<div style="margin-top:16px"><button id="assignManagerButton" type="submit">Assign manager</button></div>
+<div id="memberFormMessage" class="muted" role="status" style="margin-top:10px"></div>
+</form>
+</div>
+<div class="note">Manager accounts are currently created in Supabase Auth, then assigned here. The service-role secret is not used by this version.</div>
 </section>
 </main>
 <script>
@@ -48,7 +69,18 @@ async function api(path,options={}){const response=await fetch(path,{...options,
 function showDashboard(){loginSection.classList.add('hidden');dashboard.classList.remove('hidden');logout.classList.remove('hidden');loadOverview()}
 function showLogin(){dashboard.classList.add('hidden');loginSection.classList.remove('hidden');logout.classList.add('hidden')}
 form.addEventListener('submit',async e=>{e.preventDefault();loginButton.disabled=true;message.className='';message.textContent='Signing in…';try{const data=await api('/api/admin/login',{method:'POST',body:JSON.stringify({email:document.getElementById('email').value.trim(),password:document.getElementById('password').value})});token=data.access_token;sessionStorage.setItem('clinibot_admin_token',token);form.reset();message.textContent='';showDashboard()}catch(err){message.className='error';message.textContent=err.message}finally{loginButton.disabled=false}});
-async function loadOverview(){tableMessage.textContent='Loading…';rows.replaceChildren();empty.classList.add('hidden');try{const data=await api('/api/superadmin/overview');document.getElementById('clinicCount').textContent=(data.clinics||[]).length;document.getElementById('requestCount').textContent=data.total_requests??0;for(const clinic of data.clinics||[]){const tr=document.createElement('tr');for(const value of [clinic.name||'—',clinic.id||'—',clinic.manager_count??0,clinic.request_count??0,clinic.new_count??0]){const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)}rows.appendChild(tr)}empty.classList.toggle('hidden',(data.clinics||[]).length>0);tableMessage.textContent=(data.clinics||[]).length+' clinic(s) loaded.'}catch(err){tableMessage.textContent=err.message;if(err.message.toLowerCase().includes('sign in')||err.message.toLowerCase().includes('authorized')){token='';sessionStorage.removeItem('clinibot_admin_token');showLogin()}}}
+async function loadOverview(){tableMessage.textContent='Loading…';rows.replaceChildren();empty.classList.add('hidden');try{const data=await api('/api/superadmin/overview');document.getElementById('clinicCount').textContent=(data.clinics||[]).length;document.getElementById('requestCount').textContent=data.total_requests??0;for(const clinic of data.clinics||[]){const tr=document.createElement('tr');for(const value of [clinic.name||'—',clinic.id||'—',clinic.manager_count??0,clinic.request_count??0,clinic.new_count??0]){const td=document.createElement('td');td.textContent=String(value);tr.appendChild(td)}rows.appendChild(tr)}const clinicSelect=document.getElementById('memberClinic');const selectedClinic=clinicSelect.value;clinicSelect.replaceChildren(new Option('Select a clinic',''));for(const clinic of data.clinics||[]){clinicSelect.add(new Option(clinic.name+' ('+clinic.plan+')',clinic.id))}if(selectedClinic&&[...clinicSelect.options].some(o=>o.value===selectedClinic))clinicSelect.value=selectedClinic;empty.classList.toggle('hidden',(data.clinics||[]).length>0);tableMessage.textContent=(data.clinics||[]).length+' clinic(s) loaded.'}catch(err){tableMessage.textContent=err.message;if(err.message.toLowerCase().includes('sign in')||err.message.toLowerCase().includes('authorized')){token='';sessionStorage.removeItem('clinibot_admin_token');showLogin()}}}
+
+document.getElementById('clinicForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=document.getElementById('createClinicButton'),msg=document.getElementById('clinicFormMessage');btn.disabled=true;msg.textContent='Creating clinic…';
+ try{const data=await api('/api/superadmin/clinics',{method:'POST',body:JSON.stringify({name:document.getElementById('clinicName').value.trim(),slug:document.getElementById('clinicSlug').value.trim().toLowerCase(),plan:document.getElementById('clinicPlan').value,notification_email:document.getElementById('clinicEmail').value.trim()})});msg.textContent='Clinic created successfully.';e.target.reset();await loadOverview()}
+ catch(err){msg.textContent=err.message}finally{btn.disabled=false}
+});
+document.getElementById('memberForm').addEventListener('submit',async e=>{
+ e.preventDefault();const btn=document.getElementById('assignManagerButton'),msg=document.getElementById('memberFormMessage');btn.disabled=true;msg.textContent='Assigning manager…';
+ try{await api('/api/superadmin/members',{method:'POST',body:JSON.stringify({clinic_id:document.getElementById('memberClinic').value,user_id:document.getElementById('managerUserId').value.trim()})});msg.textContent='Manager assigned successfully.';document.getElementById('managerUserId').value='';await loadOverview()}
+ catch(err){msg.textContent=err.message}finally{btn.disabled=false}
+});
 document.getElementById('refresh').addEventListener('click',loadOverview);
 logout.addEventListener('click',()=>{token='';sessionStorage.removeItem('clinibot_admin_token');rows.replaceChildren();showLogin()});
 if(token)showDashboard();

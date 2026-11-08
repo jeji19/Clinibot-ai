@@ -47,7 +47,7 @@ This is a demo, not a real clinic. No appointments are actually booked.
 `;
 
     const response = await fetch(
-https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent
+"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
       {
         method: "POST",
         headers: {

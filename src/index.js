@@ -559,10 +559,10 @@ async function handleSuperAdminDemoRequestStatus(request, env) {
     if (!admin) return json({ error: "Super Admin authorization required." }, 403);
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Demo request storage is not configured." }, 503);
     const body = await request.json();
-    const id = typeof body.id === "string" ? body.id.trim() : "";
+    const id = (typeof body.id === "string" || typeof body.id === "number") ? String(body.id).trim() : "";
     const status = typeof body.status === "string" ? body.status : "";
-    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuid.test(id) || !["new", "contacted", "converted", "closed"].includes(status)) {
+    const validId = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id) || /^[1-9][0-9]*$/.test(id);
+    if (!validId || !["new", "contacted", "converted", "closed"].includes(status)) {
       return json({ error: "Invalid demo request or status." }, 400);
     }
     const key = env.SUPABASE_SERVICE_ROLE_KEY;

@@ -599,15 +599,16 @@ async function handleAdminStatus(request, env) {
     url.searchParams.set("clinic_id", "eq." + access.clinicId);
     const response = await fetch(url, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token, "Prefer": "return=minimal" },
+      headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token, "Prefer": "return=representation" },
       body: JSON.stringify({ status }),
       signal: AbortSignal.timeout(15000)
     });
+    const updated = await response.json().catch(() => []);
     if (!response.ok) {
-      const detail = await response.text();
-      console.error("Admin update failed", response.status, detail.slice(0, 400));
+      console.error("Admin update failed", response.status, JSON.stringify(updated).slice(0, 400));
       return json({ error: "Could not update this request." }, 502);
     }
+    if (!Array.isArray(updated) || updated.length === 0) return json({ error: "Appointment request not found for this clinic." }, 404);
     return json({ success: true });
   } catch (error) {
     console.error("Admin update error", error?.message);

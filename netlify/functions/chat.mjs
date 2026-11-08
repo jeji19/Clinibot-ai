@@ -82,11 +82,11 @@ This is a demo, not a real clinic. No appointments are actually booked.
       );
 
       return new Response(
-        JSON.stringify({
-          error: "AI service temporarily unavailable"
-        }),
-        { status: 502, headers }
-      );
+  JSON.stringify({
+    error: `Gemini HTTP ${response.status}: ${responseText.slice(0, 700)}`
+  }),
+  { status: 502, headers }
+);
     }
 
     const data = JSON.parse(responseText);

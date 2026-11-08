@@ -26,6 +26,7 @@ input,select{min-width:0;width:100%;border:1px solid var(--line);border-radius:1
 button{border:0;background:var(--teal);color:white;font-weight:700;border-radius:12px;padding:12px 18px;cursor:pointer}
 button:disabled{opacity:.55;cursor:wait}
 .note{font-size:11px;color:#8392a0;padding:0 18px 16px}
+.chat-booking{padding:0 14px 16px}.chat-booking>button{width:100%}.chat-booking form{padding:14px 4px 0}.chat-booking form[hidden]{display:none}.chat-booking .note{padding:10px 0 0}.chat-booking #chatBookingStatus{font-size:12px;color:var(--muted)}
 .booking-wrap{max-width:760px;margin:0 auto 50px;padding:0 22px}
 .booking-panel{padding:24px}
 .booking-panel h2{margin:0 0 6px;font-size:24px}
@@ -57,6 +58,19 @@ button:disabled{opacity:.55;cursor:wait}
 <div class="messages" id="messages"><div class="msg bot">Hello! I'm the CliniBot AI demo assistant. Ask me a general question about clinic reception, or say hello in your preferred language.</div></div>
 <form class="composer" id="chatForm"><input id="messageInput" maxlength="1200" placeholder="Type a message…" autocomplete="off" required><button id="sendBtn">Send</button></form>
 <div class="note">Do not enter patient names, contact details, symptoms, medical records or other sensitive information.</div>
+<div class="chat-booking">
+<button type="button" id="chatBookingToggle" aria-expanded="false">Request an appointment</button>
+<form id="chatBookingForm" hidden>
+<div class="booking-grid">
+<div class="field"><label for="chatService">Service</label><input id="chatService" maxlength="120" placeholder="e.g. Skin consultation" required></div>
+<div class="field"><label for="chatDate">Preferred date</label><input id="chatDate" type="date" required></div>
+<div class="field"><label for="chatTime">Preferred time</label><input id="chatTime" maxlength="40" placeholder="e.g. 10:00 AM" required></div>
+<div class="field"><label for="chatLanguage">Language</label><select id="chatLanguage"><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="fr">Français</option></select></div>
+</div>
+<div class="booking-actions"><button id="chatBookingSubmit" type="submit">Send request</button><span id="chatBookingStatus" role="status" aria-live="polite"></span></div>
+<p class="note">This is a request only. The clinic must confirm availability. Do not enter medical details.</p>
+</form>
+</div>
 </section>
 </main>
 <section class="booking-wrap">
@@ -95,6 +109,32 @@ form.addEventListener('submit',async e=>{
   bubble(data.reply||'Empty AI response','bot');
  }catch(err){waiting.remove();bubble(err.message||'Connection error. Please try again.','bot')}
  finally{send.disabled=false;send.textContent='Send';input.focus()}
+});
+const chatBookingToggle=document.getElementById('chatBookingToggle');
+const chatBookingForm=document.getElementById('chatBookingForm');
+const chatBookingDate=document.getElementById('chatDate');
+const chatBookingStatus=document.getElementById('chatBookingStatus');
+const chatBookingSubmit=document.getElementById('chatBookingSubmit');
+chatBookingDate.min=new Date().toISOString().slice(0,10);
+chatBookingToggle.addEventListener('click',()=>{
+ const opening=chatBookingForm.hidden;
+ chatBookingForm.hidden=!opening;
+ chatBookingToggle.setAttribute('aria-expanded',String(opening));
+ chatBookingToggle.textContent=opening?'Close appointment form':'Request an appointment';
+ if(opening)chatBookingForm.scrollIntoView({behavior:'smooth',block:'nearest'});
+});
+chatBookingForm.addEventListener('submit',async e=>{
+ e.preventDefault();chatBookingStatus.className='';chatBookingStatus.textContent='Sending…';chatBookingSubmit.disabled=true;
+ const payload={clinic_slug:clinicSlugForApp,service:document.getElementById('chatService').value.trim(),preferred_date:chatBookingDate.value,preferred_time:document.getElementById('chatTime').value.trim(),language:document.getElementById('chatLanguage').value};
+ try{
+  const response=await fetch(appointmentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  const result=await response.json();
+  if(!response.ok||!result.success)throw new Error(result.error||'Could not send request.');
+  chatBookingStatus.className='success';chatBookingStatus.textContent='Request sent. The clinic must confirm availability.';
+  bubble('Your appointment request was sent to the clinic. The clinic team must confirm the date and time.','bot');
+  chatBookingForm.reset();chatBookingDate.min=new Date().toISOString().slice(0,10);
+ }catch(error){chatBookingStatus.className='error';chatBookingStatus.textContent=error.message||'Connection error. Please try again.'}
+ finally{chatBookingSubmit.disabled=false}
 });
 const bookingForm=document.getElementById('bookingForm');
 const bookingButton=document.getElementById('bookingButton');

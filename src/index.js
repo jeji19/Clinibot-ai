@@ -86,8 +86,8 @@ function detectClinicAppointmentIntent(message) {
     fr: /(prendre rendez-vous|rendez-vous|je voudrais réserver|je veux réserver|réserver une consultation)/i,
     en: /(book an? (appointment|consultation)|make an? appointment|schedule an? appointment|i want to book|i'd like to book|i would like to book|booking an? appointment|reserve an? appointment)/i
   };
-  const lang = /[\\u0600-\\u06FF]/.test(message) ? "ar"
-    : /[\\u0400-\\u04FF]/.test(message) ? "ru"
+  const lang = /[\u0600-\u06FF]/.test(message) ? "ar"
+    : /[\u0400-\u04FF]/.test(message) ? "ru"
     : /[äöüß]/i.test(message) ? "de"
     : /[àâçéèêëîïôùûüÿœ]/i.test(message) ? "fr" : "en";
   const match = patterns[lang].test(text) || (lang !== "en" && patterns.en.test(text));

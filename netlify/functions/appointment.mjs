@@ -11,7 +11,14 @@ export default async (req) => {
     );
   }
 
-  const supabaseUrl = process.env.SUPABASE_URL?.replace(/\/$/, "");
+  let supabaseUrl = "";
+  try {
+    // Use only the project origin; this prevents accidental /rest/v1 or other
+    // path fragments in the Netlify environment variable from duplicating API paths.
+    supabaseUrl = new URL(process.env.SUPABASE_URL || "").origin;
+  } catch {
+    supabaseUrl = "";
+  }
   const supabaseKey = process.env.SUPABASE_ANON_KEY;
 
   if (!supabaseUrl || !supabaseKey) {

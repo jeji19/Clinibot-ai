@@ -5,6 +5,7 @@ export default {
     if (url.pathname === "/api/appointment") return handleAppointment(request, env);
     if (url.pathname === "/api/admin/login") return handleAdminLogin(request, env);
     if (url.pathname === "/api/admin/appointments") return handleAdminAppointments(request, env);
+    if (url.pathname === "/api/admin/settings") return handleAdminSettings(request, env);
     if (url.pathname === "/api/admin/appointment-status") return handleAdminStatus(request, env);
     if (url.pathname === "/api/superadmin/overview") return handleSuperAdminOverview(request, env);
     if (url.pathname === "/api/superadmin/clinics") return handleSuperAdminCreateClinic(request, env);
@@ -270,6 +271,90 @@ async function handleAdminStatus(request, env) {
   }
 }
 
+
+
+async function handleAdminSettings(request, env) {
+  if (!["GET", "PUT"].includes(request.method)) return json({ error: "Method not allowed" }, 405);
+  try {
+    const token = await authorizedAdmin(request, env);
+    if (!token) return json({ error: "Please sign in again." }, 401);
+    const headers = { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token };
+    const userResponse = await fetch(new URL("/auth/v1/user", env.SUPABASE_URL), { headers, signal: AbortSignal.timeout(12000) });
+    if (!userResponse.ok) return json({ error: "Please sign in again." }, 401);
+    const user = await userResponse.json().catch(() => null);
+    if (!user?.id) return json({ error: "Please sign in again." }, 401);
+
+    // Resolve the clinic exclusively from the authenticated user's membership.
+    const memberUrl = new URL("/rest/v1/clinic_members", env.SUPABASE_URL);
+    memberUrl.searchParams.set("select", "clinic_id");
+    memberUrl.searchParams.set("user_id", "eq." + user.id);
+    memberUrl.searchParams.set("limit", "2");
+    const memberResponse = await fetch(memberUrl, { headers, signal: AbortSignal.timeout(12000) });
+    const memberships = await memberResponse.json().catch(() => []);
+    if (!memberResponse.ok || !Array.isArray(memberships)) return json({ error: "Could not verify your clinic access." }, 502);
+    if (memberships.length === 0) return json({ error: "This account is not assigned as a clinic manager." }, 403);
+    if (memberships.length > 1) return json({ error: "This account manages more than one clinic. Please contact the platform administrator." }, 409);
+    const clinicId = memberships[0].clinic_id;
+
+    const clinicUrl = new URL("/rest/v1/clinics", env.SUPABASE_URL);
+    clinicUrl.searchParams.set("select", "id,name,slug");
+    clinicUrl.searchParams.set("id", "eq." + clinicId);
+    clinicUrl.searchParams.set("limit", "1");
+    const clinicResponse = await fetch(clinicUrl, { headers, signal: AbortSignal.timeout(12000) });
+    const clinics = await clinicResponse.json().catch(() => []);
+    if (!clinicResponse.ok || !Array.isArray(clinics) || !clinics[0]) return json({ error: "Could not load your clinic." }, 502);
+    const clinic = clinics[0];
+
+    const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
+    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language");
+    settingsUrl.searchParams.set("clinic_id", "eq." + clinicId);
+    settingsUrl.searchParams.set("limit", "1");
+
+    if (request.method === "GET") {
+      const settingsResponse = await fetch(settingsUrl, { headers, signal: AbortSignal.timeout(12000) });
+      const settingsRows = await settingsResponse.json().catch(() => []);
+      if (!settingsResponse.ok || !Array.isArray(settingsRows)) return json({ error: "Could not load clinic settings." }, 502);
+      return json({ clinic, settings: settingsRows[0] || { description: "", services: [], opening_hours: {}, default_language: "en" } });
+    }
+
+    const body = await request.json();
+    const description = typeof body.description === "string" ? body.description.trim().slice(0, 2000) : "";
+    const default_language = typeof body.default_language === "string" && ["en","ar","ru","de","fr"].includes(body.default_language) ? body.default_language : "en";
+    if (!Array.isArray(body.services) || body.services.length > 50) return json({ error: "Add up to 50 valid services." }, 400);
+    const services = [];
+    for (const item of body.services) {
+      const name = typeof item?.name === "string" ? item.name.trim() : "";
+      const price = item?.price === null || item?.price === "" || item?.price === undefined ? null : Number(item.price);
+      if (!name || name.length > 120 || (price !== null && (!Number.isFinite(price) || price < 0 || price > 10000000))) {
+        return json({ error: "Each service needs a name and a valid non-negative price (or leave price blank)." }, 400);
+      }
+      services.push({ name, ...(price === null ? {} : { price }) });
+    }
+    const allowedDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
+    const opening_hours = {};
+    if (body.opening_hours && typeof body.opening_hours === "object" && !Array.isArray(body.opening_hours)) {
+      for (const day of allowedDays) {
+        const value = typeof body.opening_hours[day] === "string" ? body.opening_hours[day].trim().slice(0, 60) : "";
+        if (value) opening_hours[day] = value;
+      }
+    }
+    const saveResponse = await fetch(new URL("/rest/v1/clinic_settings?on_conflict=clinic_id", env.SUPABASE_URL), {
+      method: "POST",
+      headers: { ...headers, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal" },
+      body: JSON.stringify({ clinic_id: clinicId, description, services, opening_hours, default_language, updated_at: new Date().toISOString() }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!saveResponse.ok) {
+      const detail = await saveResponse.text();
+      console.error("Clinic settings save failed", saveResponse.status, detail.slice(0, 400));
+      return json({ error: "Could not save settings. Check clinic_settings permissions and policies." }, 502);
+    }
+    return json({ success: true, message: "Clinic settings saved." });
+  } catch (error) {
+    console.error("Clinic settings error", error?.message);
+    return json({ error: "Clinic settings service is temporarily unavailable." }, 500);
+  }
+}
 
 async function handleSuperAdminOverview(request, env) {
   if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);

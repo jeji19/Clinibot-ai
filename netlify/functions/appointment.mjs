@@ -37,8 +37,11 @@ export default async (req) => {
     const requestedLanguage = typeof body.language === "string" ? body.language.trim() : "en";
     const language = ["en", "ru"].includes(requestedLanguage) ? requestedLanguage : "en";
 
-    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferredDate)
-      && !Number.isNaN(Date.parse(preferredDate + "T00:00:00Z"));
+    const validDate = (() => {
+      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(preferredDate)) return false;
+      const parsed = new Date(preferredDate + "T00:00:00Z");
+      return !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === preferredDate;
+    })();
 
     if (
       !service || service.length > 120 ||

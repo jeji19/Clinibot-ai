@@ -9,6 +9,9 @@
       "invocation_logs": true
     }
   },
+  "vars": {
+    "RESEND_TO_EMAIL": "albizrahemran@gmail.com"
+  },
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",

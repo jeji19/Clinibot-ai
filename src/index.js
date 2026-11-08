@@ -76,6 +76,56 @@ async function handleChat(request, env) {
       default_language: settings.default_language || "en"
     };
 
+
+function detectClinicFaqReply(message, clinicInfo) {
+  const text = message.toLowerCase();
+  const hasArabic = /[\u0600-\u06FF]/.test(message);
+  const hasRussian = /[\u0400-\u04FF]/.test(message);
+  const hasGerman = /[äöüß]/i.test(message);
+  const hasFrench = /[àâçéèêëîïôùûüÿœ]/i.test(message);
+  const lang = hasArabic ? "ar" : hasRussian ? "ru" : hasGerman ? "de" : hasFrench ? "fr" : "en";
+  const words = {
+    greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\b?\s*[!.؟。]*$/i.test(text.trim()),
+    services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),
+    hours: /(opening hours|business hours|working hours|when.*open|when.*close|hours|ساعات العمل|مواعيد العمل|متى.*تفتح|متى.*تغلق|دوام|время работы|часы работы|когда.*откры|öffnungszeiten|wann.*geöffnet|horaires|heures d'ouverture|ouverture)/i.test(text),
+    about: /(about (the )?clinic|clinic description|tell me about|عن العيادة|نبذة|وصف العيادة|о клинике|расскажите о клинике|über die klinik|à propos de la clinique)/i.test(text)
+  };
+  const labels = {
+    ar: { welcome: "أهلاً وسهلاً بك في", services: "الخدمات المتاحة وأسعارها", hours: "ساعات العمل", about: "نبذة عن العيادة", free: "مجاني", unavailable: "لم تنشر العيادة هذه المعلومات بعد." },
+    ru: { welcome: "Добро пожаловать в", services: "Доступные услуги и цены", hours: "Часы работы", about: "О клинике", free: "Бесплатно", unavailable: "Клиника пока не опубликовала эту информацию." },
+    de: { welcome: "Willkommen bei", services: "Verfügbare Leistungen und Preise", hours: "Öffnungszeiten", about: "Über die Klinik", free: "Kostenlos", unavailable: "Die Klinik hat diese Informationen noch nicht veröffentlicht." },
+    fr: { welcome: "Bienvenue chez", services: "Services disponibles et tarifs", hours: "Horaires d'ouverture", about: "À propos de la clinique", free: "Gratuit", unavailable: "La clinique n'a pas encore publié ces informations." },
+    en: { welcome: "Welcome to", services: "Available services and prices", hours: "Opening hours", about: "About the clinic", free: "Free", unavailable: "The clinic has not published this information yet." }
+  }[lang];
+  const lines = [];
+  if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
+  if (words.greeting || words.services) {
+    lines.push("**" + labels.services + ":**");
+    if (clinicInfo.services.length) {
+      for (const service of clinicInfo.services) {
+        const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : String(service.price);
+        lines.push("- " + service.name + ": " + price);
+      }
+    } else lines.push(labels.unavailable);
+  }
+  if (words.hours) {
+    lines.push("**" + labels.hours + ":**");
+    const entries = Object.entries(clinicInfo.opening_hours || {});
+    if (entries.length) for (const [day, hours] of entries) lines.push("- " + day + ": " + hours);
+    else lines.push(labels.unavailable);
+  }
+  if (words.about) {
+    lines.push("**" + labels.about + ":**");
+    lines.push(clinicInfo.description || labels.unavailable);
+  }
+  if (!lines.length) return null;
+  if (words.greeting) lines.push(lang === "ar" ? "كيف يمكنني مساعدتك اليوم؟" : lang === "ru" ? "Чем я могу вам помочь?" : lang === "de" ? "Wie kann ich Ihnen heute helfen?" : lang === "fr" ? "Comment puis-je vous aider aujourd'hui ?" : "How can I help you today?");
+  return lines.join("\n");
+}
+
+    const faqReply = detectClinicFaqReply(message, clinicInfo);
+    if (faqReply) return json({ reply: faqReply, handled_without_ai: true });
+
     const instructions = `
 You are CliniBot AI, a professional virtual receptionist for beauty, dermatology and dental clinics worldwide.
 Be friendly, natural, welcoming and professional. Always reply in the same language as the user's latest message. Support Arabic, English, Russian, German and French.

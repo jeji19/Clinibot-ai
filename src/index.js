@@ -37,6 +37,11 @@ async function handleChat(request, env) {
       return json({ error: "This clinic link is invalid." }, 400);
     }
 
+    const medicalReply = detectClinicMedicalIntent(message);
+    if (medicalReply) return json({ reply: medicalReply, handled_without_ai: true });
+
+
+
     // Resolve clinic and its approved public information server-side.
     const serviceHeaders = {
       "apikey": env.SUPABASE_SERVICE_ROLE_KEY,

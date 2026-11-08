@@ -125,7 +125,7 @@ async function loadDemoRequests(){
     try{await api('/api/superadmin/demo-request-delete',{method:'POST',body:JSON.stringify({id:lead.id})});tr.remove();msg.textContent='Demo request deleted.';none.classList.toggle('hidden',body.children.length>0);}
     catch(err){deleteLead.disabled=false;deleteLead.textContent='Retry';msg.textContent=err.message;}
    });
-   const phoneDigits=String(lead.phone||'').replace(/\\D/g,'');
+   const phoneDigits=String(lead.phone||'').replace(/\D/g,'');
    if(phoneDigits.length>=7){
     const whatsapp=document.createElement('a');
     const waMessage='Hello '+String(lead.contact_name||'')+', this is CliniBot AI. Thank you for requesting a demo for '+String(lead.clinic_name||'your clinic')+'. When would be a good time to arrange a quick introduction?';

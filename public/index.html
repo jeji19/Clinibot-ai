@@ -122,6 +122,7 @@ button:hover{background:#a88953}
 const useNetlify=location.hostname.endsWith('netlify.app');
 const chatEndpoint=useNetlify?'/.netlify/functions/chat':'/api/chat';
 const appointmentEndpoint=useNetlify?'/.netlify/functions/appointment':'/api/appointment';
+const clinicInfoEndpoint=useNetlify?'/.netlify/functions/clinic-info':'/api/public/clinic-info';
 const clinicSlugForApp=new URLSearchParams(location.search).get('clinic')||'my-clinic';
 const form=document.getElementById('chatForm'), input=document.getElementById('messageInput'), messages=document.getElementById('messages'), send=document.getElementById('sendBtn');
 function bubble(text,who){const el=document.createElement('div');el.className='msg '+who;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
@@ -195,7 +196,7 @@ languageField.addEventListener('change',applyBookingLanguage);
 async function loadClinicServices(){
  serviceField.disabled=true;
  try{
-  const response=await fetch('/api/public/clinic-info?clinic='+encodeURIComponent(clinicSlugForApp),{headers:{'Accept':'application/json'}});
+  const response=await fetch(clinicInfoEndpoint+'?clinic='+encodeURIComponent(clinicSlugForApp),{headers:{'Accept':'application/json'}});
   const data=await response.json();
   if(!response.ok)throw new Error(data.error||'Could not load clinic services.');
   clinicServices=(Array.isArray(data.services)?data.services:[]).filter(item=>item&&typeof item.name==='string'&&item.name.trim());

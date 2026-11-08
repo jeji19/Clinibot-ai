@@ -222,11 +222,20 @@ async function handleDemoRequest(request, env) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
     const specialty = typeof body.specialty === "string" ? body.specialty.trim() : "";
-    const validEmail = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+[.][A-Z]{2,}$/i.test(email);
-    if (clinic.length < 2 || clinic.length > 100 || contact.length < 2 || contact.length > 100 ||
-        !validEmail || email.length > 160 ||
-        phone.length > 30 || specialty.length > 80) {
-      return json({ error: "Please check the required fields and enter a valid email address." }, 400);
+    const at = email.indexOf("@");
+    const dot = email.lastIndexOf(".");
+    const validEmail = at > 0 && dot > at + 1 && dot < email.length - 1 && !/\\s/.test(email);
+    if (clinic.length < 2 || clinic.length > 100) {
+      return json({ error: "Please enter a clinic name (2–100 characters)." }, 400);
+    }
+    if (contact.length < 2 || contact.length > 100) {
+      return json({ error: "Please enter your name (2–100 characters)." }, 400);
+    }
+    if (!validEmail || email.length > 160) {
+      return json({ error: "Please enter a valid email address, for example name@example.com." }, 400);
+    }
+    if (phone.length > 30 || specialty.length > 80) {
+      return json({ error: "Please check the phone number or specialty field." }, 400);
     }
 
     const serviceHeaders = {

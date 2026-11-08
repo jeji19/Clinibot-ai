@@ -124,6 +124,23 @@ function detectClinicFaqReply(message, clinicInfo) {
   const normalizedMessage = normalizeWords(text);
   const messageTokens = new Set(normalizedMessage.split(/\s+/));
   const genericServiceWords = new Set(["consultation", "consultations", "consult", "service", "services", "treatment", "treatments", "price", "prices", "cost", "how", "much", "the", "for", "is", "are", "of", "only", "what", "does", "do", "you", "your", "услуга", "услуги", "цена", "цены", "стоимость", "консультация", "консультации"]);
+  const localizedServiceName = service => {
+    if (lang !== "ru") return service.name;
+    const name = normalizeWords(service.name);
+    if (name.includes("laser")) return "Консультация по лазерным процедурам";
+    if (name.includes("dermal filler")) return "Консультация по дермальным филлерам";
+    if (name.includes("skin")) return "Консультация по уходу за кожей";
+    return service.name;
+  };
+  const localizedDayName = day => {
+    if (lang !== "ru") return day;
+    const key = normalizeWords(day);
+    const translations = {
+      monday: "Понедельник", tuesday: "Вторник", wednesday: "Среда",
+      thursday: "Четверг", friday: "Пятница", saturday: "Суббота", sunday: "Воскресенье"
+    };
+    return translations[key] || day;
+  };
   const requestedService = clinicInfo.services.find(service => {
     const tokens = normalizeWords(service.name).split(/\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
     return tokens.some(token => messageTokens.has(token));
@@ -131,7 +148,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   if (words.freeConsultations) {
     lines.push("**" + labels.freeConsultations + ":**");
     const freeServices = clinicInfo.services.filter(service => Number(service.price) === 0);
-    if (freeServices.length) for (const service of freeServices) lines.push("- " + service.name + ": " + labels.free);
+    if (freeServices.length) for (const service of freeServices) lines.push("- " + localizedServiceName(service) + ": " + labels.free);
     else lines.push(labels.noFreeConsultations);
   }
   if (words.greeting || words.services) {
@@ -140,7 +157,7 @@ function detectClinicFaqReply(message, clinicInfo) {
     if (selectedServices.length) {
       for (const service of selectedServices) {
         const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : String(service.price);
-        lines.push("- " + service.name + ": " + price);
+        lines.push("- " + localizedServiceName(service) + ": " + price);
       }
     } else lines.push(labels.unavailable);
   }
@@ -163,19 +180,21 @@ function detectClinicFaqReply(message, clinicInfo) {
       });
       if (opening) {
         lines.push("**" + labels.hours + ":**");
-        lines.push("- " + opening[0] + ": " + opening[1]);
+        lines.push("- " + localizedDayName(opening[0]) + ": " + opening[1]);
       } else {
-        lines.push(lang === "ru" ? "Клиника закрыта в " + requestedDay.day + "." : "We are closed on " + requestedDay.day + ".");
+        lines.push(lang === "ru" ? "Клиника закрыта в " + localizedDayName(requestedDay.day) + "." : "We are closed on " + requestedDay.day + ".");
       }
     } else {
       lines.push("**" + labels.hours + ":**");
-      if (entries.length) for (const [day, hours] of entries) lines.push("- " + day + ": " + hours);
+      if (entries.length) for (const [day, hours] of entries) lines.push("- " + localizedDayName(day) + ": " + hours);
       else lines.push(labels.unavailable);
     }
   }
   if (words.about) {
     lines.push("**" + labels.about + ":**");
-    lines.push(clinicInfo.description || labels.unavailable);
+    const description = String(clinicInfo.description || "").trim();
+    const demoDescription = /^demo clinic for testing clinibot ai\\.?$/i.test(description);
+    lines.push(lang === "ru" && demoDescription ? "Демонстрационная клиника для тестирования CliniBot AI." : description || labels.unavailable);
   }
   if (!lines.length) return null;
   if (words.greeting) lines.push(lang === "ru" ? "Чем я могу вам помочь?" : "How can I help you today?");

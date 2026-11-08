@@ -165,7 +165,9 @@ async function handleAppointment(request, env) {
       return json({ error: `Database rejected the request (HTTP ${insertResponse.status}, code ${code}).` }, 502);
     }
 
-    const recipient = clinic.notification_email || env.RESEND_TO_EMAIL;
+    // Resend's testing sender can deliver only to the account owner's verified email.
+    // Use RESEND_TO_EMAIL until the clinic verifies its own sending domain.
+    const recipient = env.RESEND_TO_EMAIL;
     if (env.RESEND_API_KEY && recipient) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {

@@ -2,7 +2,7 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === "/api/chat") return handleChat(request, env);
-    if (url.pathname === "/api/appointment") return handleAppointment(request, env);
+    if (url.pathname === "/api/appointment") return handleAppointment(request, env);\n    if (url.pathname === "/api/admin/login") return handleAdminLogin(request, env);\n    if (url.pathname === "/api/admin/appointments") return handleAdminAppointments(request, env);\n    if (url.pathname === "/api/admin/appointment-status") return handleAdminStatus(request, env);
     return env.ASSETS.fetch(request);
   }
 };
@@ -90,5 +90,85 @@ async function handleAppointment(request, env) {
   } catch (error) {
     console.error("Appointment error", error?.message);
     return json({ error: "The appointment service is temporarily unavailable." }, 500);
+  }
+}
+
+async function handleAdminLogin(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  try {
+    const { email, password } = await request.json();
+    if (typeof email !== "string" || typeof password !== "string" || !email.trim() || !password) return json({ error: "Enter your email and password." }, 400);
+    const response = await fetch(new URL("/auth/v1/token?grant_type=password", env.SUPABASE_URL).toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY },
+      body: JSON.stringify({ email: email.trim(), password }),
+      signal: AbortSignal.timeout(15000)
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.access_token) return json({ error: "Sign-in failed. Check your email and password." }, 401);
+    return json({ access_token: data.access_token, expires_in: data.expires_in });
+  } catch (error) {
+    console.error("Admin login error", error?.message);
+    return json({ error: "Sign-in service is temporarily unavailable." }, 500);
+  }
+}
+
+async function authorizedAdmin(request, env) {
+  const authorization = request.headers.get("Authorization") || "";
+  if (!authorization.startsWith("Bearer ")) return null;
+  const token = authorization.slice(7);
+  const verify = await fetch(new URL("/auth/v1/user", env.SUPABASE_URL).toString(), {
+    headers: { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token },
+    signal: AbortSignal.timeout(12000)
+  });
+  if (!verify.ok) return null;
+  const user = await verify.json().catch(() => null);
+  return user?.id ? token : null;
+}
+
+async function handleAdminAppointments(request, env) {
+  if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
+  try {
+    const token = await authorizedAdmin(request, env);
+    if (!token) return json({ error: "Please sign in again." }, 401);
+    const url = new URL("/rest/v1/appointment_requests?select=id,created_at,service,preferred_date,preferred_time,language,status&order=created_at.desc&limit=100", env.SUPABASE_URL);
+    const response = await fetch(url, { headers: { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token }, signal: AbortSignal.timeout(15000) });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error("Admin list failed", response.status, JSON.stringify(data).slice(0, 400));
+      return json({ error: "Could not load requests. Check the clinic access policy." }, 502);
+    }
+    return json({ appointments: data });
+  } catch (error) {
+    console.error("Admin list error", error?.message);
+    return json({ error: "Dashboard service is temporarily unavailable." }, 500);
+  }
+}
+
+async function handleAdminStatus(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  try {
+    const token = await authorizedAdmin(request, env);
+    if (!token) return json({ error: "Please sign in again." }, 401);
+    const body = await request.json();
+    const id = body.id;
+    const status = body.status;
+    if ((typeof id !== "number" && typeof id !== "string") || !["new", "confirmed", "rejected", "completed"].includes(status)) return json({ error: "Invalid request or status." }, 400);
+    const url = new URL("/rest/v1/appointment_requests?id=eq." + encodeURIComponent(String(id)), env.SUPABASE_URL);
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token, "Prefer": "return=minimal" },
+      body: JSON.stringify({ status }),
+      signal: AbortSignal.timeout(15000)
+    });
+    if (!response.ok) {
+      const detail = await response.text();
+      console.error("Admin update failed", response.status, detail.slice(0, 400));
+      return json({ error: "Could not update this request." }, 502);
+    }
+    return json({ success: true });
+  } catch (error) {
+    console.error("Admin update error", error?.message);
+    return json({ error: "Dashboard service is temporarily unavailable." }, 500);
   }
 }

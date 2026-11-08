@@ -46,32 +46,50 @@ Do not ask for patient names, phone numbers or medical records.
 This is a demo, not a real clinic. No appointments are actually booked.
 `;
 
-    const response = await fetch(
-"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
-      {
-        method: "POST",
-        signal: AbortSignal.timeout(20000),
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey
-        },
-        body: JSON.stringify({
-          system_instruction: {
-            parts: [{ text: instructions }]
-          },
-          contents: [{
-            role: "user",
-            parts: [{ text: message }]
-          }],
-          generationConfig: {
-            temperature: 0.4,
-            maxOutputTokens: 450
-          }
-        })
-      }
-    );
+    const url =
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
 
-    // Read Google's response body only once
+    const requestOptions = {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey
+      },
+      body: JSON.stringify({
+        system_instruction: {
+          parts: [{ text: instructions }]
+        },
+        contents: [{
+          role: "user",
+          parts: [{ text: message }]
+        }],
+        generationConfig: {
+          temperature: 0.4,
+          maxOutputTokens: 450
+        }
+      })
+    };
+
+    // First attempt
+    let response = await fetch(url, {
+      ...requestOptions,
+      signal: AbortSignal.timeout(10000)
+    });
+
+    // Retry once if Google is overloaded
+    if (response.status === 503 || response.status === 429) {
+      console.log("Gemini busy. Retrying once...");
+
+      await new Promise(resolve =>
+        setTimeout(resolve, 1000)
+      );
+
+      response = await fetch(url, {
+        ...requestOptions,
+        signal: AbortSignal.timeout(10000)
+      });
+    }
+
     const responseText = await response.text();
 
     if (!response.ok) {
@@ -82,11 +100,11 @@ This is a demo, not a real clinic. No appointments are actually booked.
       );
 
       return new Response(
-  JSON.stringify({
-    error: `Gemini HTTP ${response.status}: ${responseText.slice(0, 700)}`
-  }),
-  { status: 502, headers }
-);
+        JSON.stringify({
+          error: `Gemini HTTP ${response.status}: ${responseText.slice(0, 700)}`
+        }),
+        { status: 502, headers }
+      );
     }
 
     const data = JSON.parse(responseText);
@@ -110,9 +128,10 @@ This is a demo, not a real clinic. No appointments are actually booked.
 
     return new Response(
       JSON.stringify({
-        error: "Something went wrong. Please try again."
+        error: "Something went wrong: " + error.message
       }),
       { status: 500, headers }
     );
   }
 };
+;

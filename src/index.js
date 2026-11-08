@@ -154,10 +154,41 @@ function detectClinicFaqReply(message, clinicInfo) {
     } else lines.push(labels.unavailable);
   }
   if (words.hours) {
-    lines.push("**" + labels.hours + ":**");
     const entries = Object.entries(clinicInfo.opening_hours || {});
-    if (entries.length) for (const [day, hours] of entries) lines.push("- " + day + ": " + hours);
-    else lines.push(labels.unavailable);
+    const dayAliases = [
+      { day: "Monday", aliases: ["monday", "mon", "الاثنين", "الإثنين", "понедельник", "montag", "lundi"] },
+      { day: "Tuesday", aliases: ["tuesday", "tue", "tues", "الثلاثاء", "вторник", "dienstag", "mardi"] },
+      { day: "Wednesday", aliases: ["wednesday", "wed", "الأربعاء", "среда", "mittwoch", "mercredi"] },
+      { day: "Thursday", aliases: ["thursday", "thu", "thur", "الخميس", "четверг", "donnerstag", "jeudi"] },
+      { day: "Friday", aliases: ["friday", "fri", "الجمعة", "пятница", "freitag", "vendredi"] },
+      { day: "Saturday", aliases: ["saturday", "sat", "السبت", "суббота", "samstag", "samedi"] },
+      { day: "Sunday", aliases: ["sunday", "sun", "الأحد", "الاحد", "воскресенье", "sonntag", "dimanche"] }
+    ];
+    const requestedDay = dayAliases.find(item => item.aliases.some(alias => messageTokens.has(normalizeWords(alias))));
+    if (requestedDay) {
+      const opening = entries.find(([day]) => {
+        const normalizedDay = normalizeWords(day);
+        return normalizedDay === normalizeWords(requestedDay.day) ||
+          requestedDay.aliases.some(alias => normalizedDay === normalizeWords(alias));
+      });
+      if (opening) {
+        lines.push("**" + labels.hours + ":**");
+        lines.push("- " + opening[0] + ": " + opening[1]);
+      } else {
+        const closed = {
+          ar: "العيادة مغلقة يوم " + requestedDay.day + ".",
+          ru: "Клиника закрыта в " + requestedDay.day + ".",
+          de: "Die Klinik ist am " + requestedDay.day + " geschlossen.",
+          fr: "La clinique est fermée le " + requestedDay.day + ".",
+          en: "We are closed on " + requestedDay.day + "."
+        };
+        lines.push(closed[lang] || closed.en);
+      }
+    } else {
+      lines.push("**" + labels.hours + ":**");
+      if (entries.length) for (const [day, hours] of entries) lines.push("- " + day + ": " + hours);
+      else lines.push(labels.unavailable);
+    }
   }
   if (words.about) {
     lines.push("**" + labels.about + ":**");

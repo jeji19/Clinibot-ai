@@ -10,6 +10,7 @@ export default {
     if (url.pathname === "/api/admin/appointment-status") return handleAdminStatus(request, env);
     if (url.pathname === "/api/superadmin/overview") return handleSuperAdminOverview(request, env);
     if (url.pathname === "/api/superadmin/demo-requests") return handleSuperAdminDemoRequests(request, env);
+    if (url.pathname === "/api/superadmin/demo-request-status") return handleSuperAdminDemoRequestStatus(request, env);
     if (url.pathname === "/api/superadmin/clinics") return handleSuperAdminCreateClinic(request, env);
     if (url.pathname === "/api/superadmin/members") return handleSuperAdminAddMember(request, env);
     return env.ASSETS.fetch(request);
@@ -548,6 +549,40 @@ async function handleSuperAdminDemoRequests(request, env) {
   } catch (error) {
     console.error("Super Admin demo requests error", error?.message);
     return json({ error: "Demo requests service is temporarily unavailable." }, 500);
+  }
+}
+
+async function handleSuperAdminDemoRequestStatus(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  try {
+    const admin = await verifySuperAdmin(request, env);
+    if (!admin) return json({ error: "Super Admin authorization required." }, 403);
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Demo request storage is not configured." }, 503);
+    const body = await request.json();
+    const id = typeof body.id === "string" ? body.id.trim() : "";
+    const status = typeof body.status === "string" ? body.status : "";
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuid.test(id) || !["new", "contacted", "converted", "closed"].includes(status)) {
+      return json({ error: "Invalid demo request or status." }, 400);
+    }
+    const key = env.SUPABASE_SERVICE_ROLE_KEY;
+    const updateUrl = new URL("/rest/v1/demo_requests", env.SUPABASE_URL);
+    updateUrl.searchParams.set("id", "eq." + id);
+    const response = await fetch(updateUrl, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "apikey": key, "Authorization": "Bearer " + key, "Prefer": "return=representation" },
+      body: JSON.stringify({ status }),
+      signal: AbortSignal.timeout(15000)
+    });
+    const data = await response.json().catch(() => []);
+    if (!response.ok || !Array.isArray(data) || data.length === 0) {
+      console.error("Demo request status update failed", response.status, JSON.stringify(data).slice(0, 300));
+      return json({ error: "Could not update this demo request." }, response.ok ? 404 : 502);
+    }
+    return json({ success: true, status });
+  } catch (error) {
+    console.error("Demo request status error", error?.message);
+    return json({ error: "Demo request update service is temporarily unavailable." }, 500);
   }
 }
 

@@ -222,7 +222,7 @@ async function handleDemoRequest(request, env) {
     const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const phone = typeof body.phone === "string" ? body.phone.trim() : "";
     const specialty = typeof body.specialty === "string" ? body.specialty.trim() : "";
-    const validEmail = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$/i.test(email);
+    const validEmail = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+[.][A-Z]{2,}$/i.test(email);
     if (clinic.length < 2 || clinic.length > 100 || contact.length < 2 || contact.length > 100 ||
         !validEmail || email.length > 160 ||
         phone.length > 30 || specialty.length > 80) {

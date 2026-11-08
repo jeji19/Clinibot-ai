@@ -93,10 +93,10 @@ export default async (req) => {
             to: [recipient],
             subject: "New CliniBot appointment request — " + clinic.name,
             text: "A new appointment request was received for " + clinic.name +
-              ".\\nPatient: " + patientName + "\\nPhone: " + patientPhone +
-              "\\nService: " + service + "\\nPreferred date: " + preferredDate +
-              "\\nPreferred time: " + preferredTime + "\\nLanguage: " + language +
-              "\\nStatus: new\\nPlease review it in your CliniBot dashboard."
+              ".\nPatient: " + patientName + "\nPhone: " + patientPhone +
+              "\nService: " + service + "\nPreferred date: " + preferredDate +
+              "\nPreferred time: " + preferredTime + "\nLanguage: " + language +
+              "\nStatus: new\nPlease review it in your CliniBot dashboard."
           }),
           signal: AbortSignal.timeout(10000)
         });

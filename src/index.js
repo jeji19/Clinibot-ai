@@ -378,7 +378,7 @@ async function handleAppointment(request, env) {
     if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
       return json({ error: "This clinic link is invalid. Please open the clinic's correct booking link." }, 400);
     }
-    if (!patient_name || patient_name.length > 100 || !/^[+0-9()\s.-]{6,30}$/.test(patient_phone) || !service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
+    if (!patient_name || patient_name.length > 100 || !/^[+0-9()\s.-]{6,30}$/.test(patient_phone) || !service || service.length > 120 || !validDate || !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(preferred_time) || language.length > 20) {
       return json({ error: "Please provide your name, a valid phone number, service, date and preferred time." }, 400);
     }
 

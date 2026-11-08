@@ -80,6 +80,7 @@ button:disabled{opacity:.55;cursor:wait}
 const useNetlify=location.hostname.endsWith('netlify.app');
 const chatEndpoint=useNetlify?'/.netlify/functions/chat':'/api/chat';
 const appointmentEndpoint=useNetlify?'/.netlify/functions/appointment':'/api/appointment';
+const clinicSlugForApp=new URLSearchParams(location.search).get('clinic')||'my-clinic';
 const form=document.getElementById('chatForm'), input=document.getElementById('messageInput'), messages=document.getElementById('messages'), send=document.getElementById('sendBtn');
 function bubble(text,who){const el=document.createElement('div');el.className='msg '+who;el.textContent=text;messages.appendChild(el);messages.scrollTop=messages.scrollHeight;return el}
 form.addEventListener('submit',async e=>{
@@ -87,7 +88,7 @@ form.addEventListener('submit',async e=>{
  bubble(message,'user');input.value='';send.disabled=true;send.textContent='…';
  const waiting=bubble('Thinking…','bot');
  try{
-  const r=await fetch(chatEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
+  const r=await fetch(chatEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message,clinic_slug:clinicSlugForApp})});
   const raw=await r.text();waiting.remove();let data;
   try{data=JSON.parse(raw)}catch{throw new Error(`Server response error (HTTP ${r.status}): ${raw.slice(0,300)}`)}
   if(!r.ok)throw new Error(data.error||'AI service unavailable');

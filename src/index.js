@@ -544,12 +544,33 @@ async function authorizedAdmin(request, env) {
   return user?.id ? token : null;
 }
 
+async function resolveAdminClinicId(token, env) {
+  const headers = { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token };
+  const userResponse = await fetch(new URL("/auth/v1/user", env.SUPABASE_URL), { headers, signal: AbortSignal.timeout(12000) });
+  if (!userResponse.ok) return { error: "Please sign in again.", status: 401 };
+  const user = await userResponse.json().catch(() => null);
+  if (!user?.id) return { error: "Please sign in again.", status: 401 };
+  const memberUrl = new URL("/rest/v1/clinic_members", env.SUPABASE_URL);
+  memberUrl.searchParams.set("select", "clinic_id");
+  memberUrl.searchParams.set("user_id", "eq." + user.id);
+  memberUrl.searchParams.set("limit", "2");
+  const memberResponse = await fetch(memberUrl, { headers, signal: AbortSignal.timeout(12000) });
+  const memberships = await memberResponse.json().catch(() => []);
+  if (!memberResponse.ok || !Array.isArray(memberships)) return { error: "Could not verify your clinic access.", status: 502 };
+  if (memberships.length === 0) return { error: "This account is not assigned as a clinic manager.", status: 403 };
+  if (memberships.length > 1) return { error: "This account manages more than one clinic. Please contact the platform administrator.", status: 409 };
+  return { clinicId: memberships[0].clinic_id };
+}
+
 async function handleAdminAppointments(request, env) {
   if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
   try {
     const token = await authorizedAdmin(request, env);
     if (!token) return json({ error: "Please sign in again." }, 401);
+    const access = await resolveAdminClinicId(token, env);
+    if (access.error) return json({ error: access.error }, access.status);
     const url = new URL("/rest/v1/appointment_requests?select=id,created_at,patient_name,patient_phone,service,preferred_date,preferred_time,language,status&order=created_at.desc&limit=100", env.SUPABASE_URL);
+    url.searchParams.set("clinic_id", "eq." + access.clinicId);
     const response = await fetch(url, { headers: { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token }, signal: AbortSignal.timeout(15000) });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
@@ -568,11 +589,14 @@ async function handleAdminStatus(request, env) {
   try {
     const token = await authorizedAdmin(request, env);
     if (!token) return json({ error: "Please sign in again." }, 401);
+    const access = await resolveAdminClinicId(token, env);
+    if (access.error) return json({ error: access.error }, access.status);
     const body = await request.json();
     const id = body.id;
     const status = body.status;
     if ((typeof id !== "number" && typeof id !== "string") || !["new", "confirmed", "rejected", "completed"].includes(status)) return json({ error: "Invalid request or status." }, 400);
     const url = new URL("/rest/v1/appointment_requests?id=eq." + encodeURIComponent(String(id)), env.SUPABASE_URL);
+    url.searchParams.set("clinic_id", "eq." + access.clinicId);
     const response = await fetch(url, {
       method: "PATCH",
       headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token, "Prefer": "return=minimal" },

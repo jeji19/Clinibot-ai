@@ -6,6 +6,7 @@ export default {
     if (url.pathname === "/api/admin/login") return handleAdminLogin(request, env);
     if (url.pathname === "/api/admin/appointments") return handleAdminAppointments(request, env);
     if (url.pathname === "/api/admin/appointment-status") return handleAdminStatus(request, env);
+    if (url.pathname === "/api/superadmin/overview") return handleSuperAdminOverview(request, env);
     return env.ASSETS.fetch(request);
   }
 };
@@ -192,5 +193,57 @@ async function handleAdminStatus(request, env) {
   } catch (error) {
     console.error("Admin update error", error?.message);
     return json({ error: "Dashboard service is temporarily unavailable." }, 500);
+  }
+}
+
+
+async function handleSuperAdminOverview(request, env) {
+  if (request.method !== "GET") return json({ error: "Method not allowed" }, 405);
+  try {
+    const authorization = request.headers.get("Authorization") || "";
+    if (!authorization.startsWith("Bearer ")) return json({ error: "Please sign in." }, 401);
+    const token = authorization.slice(7);
+    const headers = { "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + token };
+    const userResponse = await fetch(new URL("/auth/v1/user", env.SUPABASE_URL), { headers, signal: AbortSignal.timeout(12000) });
+    if (!userResponse.ok) return json({ error: "Please sign in again." }, 401);
+    const user = await userResponse.json().catch(() => null);
+    if (!user?.id) return json({ error: "Please sign in again." }, 401);
+
+    const checkUrl = new URL("/rest/v1/super_admins", env.SUPABASE_URL);
+    checkUrl.searchParams.set("select", "user_id");
+    checkUrl.searchParams.set("user_id", "eq." + user.id);
+    const checkResponse = await fetch(checkUrl, { headers, signal: AbortSignal.timeout(12000) });
+    const checkRows = await checkResponse.json().catch(() => []);
+    if (!checkResponse.ok || !Array.isArray(checkRows) || checkRows.length === 0) {
+      return json({ error: "This account is not authorized as a Super Admin." }, 403);
+    }
+
+    const urls = [
+      new URL("/rest/v1/clinics?select=id,name&order=name.asc", env.SUPABASE_URL),
+      new URL("/rest/v1/clinic_members?select=clinic_id,user_id", env.SUPABASE_URL),
+      new URL("/rest/v1/appointment_requests?select=id,clinic_id,status,created_at&order=created_at.desc&limit=1000", env.SUPABASE_URL)
+    ];
+    const results = await Promise.all(urls.map(url => fetch(url, { headers, signal: AbortSignal.timeout(15000) })));
+    const payloads = await Promise.all(results.map(r => r.json().catch(() => [])));
+    if (results.some(r => !r.ok) || payloads.some(x => !Array.isArray(x))) {
+      console.error("Super Admin overview query failed", results.map(r => r.status));
+      return json({ error: "Could not load Super Admin data. Check the database policies." }, 502);
+    }
+    const [clinics, members, appointments] = payloads;
+    const overview = clinics.map(clinic => {
+      const clinicMembers = members.filter(member => member.clinic_id === clinic.id);
+      const clinicAppointments = appointments.filter(item => item.clinic_id === clinic.id);
+      return {
+        id: clinic.id,
+        name: clinic.name,
+        manager_count: clinicMembers.length,
+        request_count: clinicAppointments.length,
+        new_count: clinicAppointments.filter(item => item.status === "new").length
+      };
+    });
+    return json({ clinics: overview, total_requests: appointments.length });
+  } catch (error) {
+    console.error("Super Admin overview error", error?.message);
+    return json({ error: "Super Admin service is temporarily unavailable." }, 500);
   }
 }

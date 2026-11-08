@@ -14,13 +14,26 @@ export default {
     if (url.pathname === "/api/superadmin/demo-request-delete") return handleSuperAdminDemoRequestDelete(request, env);
     if (url.pathname === "/api/superadmin/clinics") return handleSuperAdminCreateClinic(request, env);
     if (url.pathname === "/api/superadmin/members") return handleSuperAdminAddMember(request, env);
-    return env.ASSETS.fetch(request);
+    return secureAssetResponse(await env.ASSETS.fetch(request));
   }
 };
 
+const securityHeaders = {
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()"
+};
+
+function secureAssetResponse(response) {
+  const headers = new Headers(response.headers);
+  for (const [name, value] of Object.entries(securityHeaders)) headers.set(name, value);
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
+}
+
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
-  headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
+  headers: { ...securityHeaders, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
 
 async function handleChat(request, env) {

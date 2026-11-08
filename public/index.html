@@ -57,18 +57,20 @@ button:disabled{opacity:.55;cursor:wait}
 <div class="panelhead"><strong>Try the CliniBot assistant</strong><span class="online">● Demo online</span></div>
 <div class="messages" id="messages"><div class="msg bot">Hello! I'm the CliniBot AI demo assistant. Ask me a general question about clinic reception, or say hello in your preferred language.</div></div>
 <form class="composer" id="chatForm"><input id="messageInput" maxlength="1200" placeholder="Type a message…" autocomplete="off" required><button id="sendBtn">Send</button></form>
-<div class="note">Do not enter patient names, contact details, symptoms, medical records or other sensitive information.</div>
+<div class="note">Your name and phone number are used by the clinic only to respond to this appointment request. Do not enter medical details.</div>
 <div class="chat-booking">
 <button type="button" id="chatBookingToggle" aria-expanded="false">Request an appointment</button>
 <form id="chatBookingForm" hidden>
 <div class="booking-grid">
+<div class="field"><label for="chatPatientName">Full name</label><input id="chatPatientName" maxlength="100" autocomplete="name" placeholder="Your full name" required></div>
+<div class="field"><label for="chatPatientPhone">Phone number</label><input id="chatPatientPhone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 555 123 4567" pattern="[+0-9()\\s.-]{6,30}" required></div>
 <div class="field"><label for="chatService">Service</label><input id="chatService" maxlength="120" placeholder="e.g. Skin consultation" required></div>
 <div class="field"><label for="chatDate">Preferred date</label><input id="chatDate" type="date" required></div>
 <div class="field"><label for="chatTime">Preferred time</label><input id="chatTime" maxlength="40" placeholder="e.g. 10:00 AM" required></div>
 <div class="field"><label for="chatLanguage">Language</label><select id="chatLanguage"><option value="en">English</option><option value="ar">العربية</option><option value="ru">Русский</option><option value="de">Deutsch</option><option value="fr">Français</option></select></div>
 </div>
 <div class="booking-actions"><button id="chatBookingSubmit" type="submit">Send request</button><span id="chatBookingStatus" role="status" aria-live="polite"></span></div>
-<p class="note">This is a request only. The clinic must confirm availability. Do not enter medical details.</p>
+<p class="note">This is a request only. The clinic must confirm availability. Your contact details are shared with the clinic for this request only.</p>
 </form>
 </div>
 </section>
@@ -79,6 +81,8 @@ button:disabled{opacity:.55;cursor:wait}
 <p>Send your preferred service, date and time to the clinic. This is a request only; the clinic must confirm availability.</p>
 <form id="bookingForm">
 <div class="booking-grid">
+<div class="field"><label for="patientName">Full name</label><input id="patientName" name="patient_name" maxlength="100" autocomplete="name" placeholder="Your full name" required></div>
+<div class="field"><label for="patientPhone">Phone number</label><input id="patientPhone" name="patient_phone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 555 123 4567" pattern="[+0-9()\\s.-]{6,30}" required></div>
 <div class="field"><label for="service">Service</label><input id="service" name="service" maxlength="120" placeholder="e.g. Botox consultation" required></div>
 <div class="field"><label for="preferredDate">Preferred date</label><input id="preferredDate" name="preferred_date" type="date" required></div>
 <div class="field"><label for="preferredTime">Preferred time</label><input id="preferredTime" name="preferred_time" maxlength="40" placeholder="e.g. 5:00 PM" required></div>
@@ -125,7 +129,7 @@ chatBookingToggle.addEventListener('click',()=>{
 });
 chatBookingForm.addEventListener('submit',async e=>{
  e.preventDefault();chatBookingStatus.className='';chatBookingStatus.textContent='Sending…';chatBookingSubmit.disabled=true;
- const payload={clinic_slug:clinicSlugForApp,service:document.getElementById('chatService').value.trim(),preferred_date:chatBookingDate.value,preferred_time:document.getElementById('chatTime').value.trim(),language:document.getElementById('chatLanguage').value};
+ const payload={clinic_slug:clinicSlugForApp,patient_name:document.getElementById('chatPatientName').value.trim(),patient_phone:document.getElementById('chatPatientPhone').value.trim(),service:document.getElementById('chatService').value.trim(),preferred_date:chatBookingDate.value,preferred_time:document.getElementById('chatTime').value.trim(),language:document.getElementById('chatLanguage').value};
  try{
   const response=await fetch(appointmentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();
@@ -144,7 +148,7 @@ dateField.min=new Date().toISOString().slice(0,10);
 bookingForm.addEventListener('submit',async e=>{
  e.preventDefault();bookingStatus.className='';bookingStatus.textContent='Sending request…';bookingButton.disabled=true;
  const clinicSlug=new URLSearchParams(location.search).get('clinic')||'my-clinic';
- const payload={clinic_slug:clinicSlug,service:document.getElementById('service').value.trim(),preferred_date:dateField.value,preferred_time:document.getElementById('preferredTime').value.trim(),language:document.getElementById('language').value};
+ const payload={clinic_slug:clinicSlug,patient_name:document.getElementById('patientName').value.trim(),patient_phone:document.getElementById('patientPhone').value.trim(),service:document.getElementById('service').value.trim(),preferred_date:dateField.value,preferred_time:document.getElementById('preferredTime').value.trim(),language:document.getElementById('language').value};
  try{
   const response=await fetch(appointmentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
   const result=await response.json();

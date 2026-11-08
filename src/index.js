@@ -181,10 +181,20 @@ async function handleAppointment(request, env) {
           }),
           signal: AbortSignal.timeout(10000)
         });
-        if (!emailResponse.ok) console.error("Resend notification failed", emailResponse.status, (await emailResponse.text()).slice(0, 400));
+        const resendBody = (await emailResponse.text()).slice(0, 400);
+        if (!emailResponse.ok) {
+          console.error("Resend notification failed", emailResponse.status, resendBody);
+        } else {
+          console.log("Resend notification accepted", emailResponse.status, resendBody);
+        }
       } catch (emailError) {
         console.error("Resend notification error", emailError?.message);
       }
+    } else {
+      console.error("Resend notification skipped: missing configuration", {
+        hasApiKey: Boolean(env.RESEND_API_KEY),
+        hasRecipient: Boolean(recipient)
+      });
     }
     return json({ success: true, clinic: clinic.name, message: "Your appointment request was received. The clinic team must confirm availability." }, 201);
   } catch (error) {

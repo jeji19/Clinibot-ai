@@ -50,6 +50,7 @@ This is a demo, not a real clinic. No appointments are actually booked.
 "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
       {
         method: "POST",
+        signal: AbortSignal.timeout(20000),
         headers: {
           "Content-Type": "application/json",
           "x-goog-api-key": apiKey

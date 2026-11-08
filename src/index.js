@@ -78,7 +78,7 @@ async function handleChat(request, env) {
 
 
 function detectClinicLanguage(message) {
-  return /[\\u0400-\\u04FF]/.test(String(message || "")) ? "ru" : "en";
+  return /[\u0400-\u04FF]/.test(String(message || "")) ? "ru" : "en";
 }
 
 function detectClinicAppointmentIntent(message) {
@@ -98,9 +98,9 @@ function detectClinicFaqReply(message, clinicInfo) {
   const text = String(message || "").toLowerCase();
   const lang = detectClinicLanguage(text);
   const words = {
-    greeting: /^(hi|hello|hey|здравствуйте|привет|добрый день|доброе утро|добрый вечер)\\s*[!.?。]*$/i.test(text.trim()),
+    greeting: /^(hi|hello|hey|здравствуйте|привет|добрый день|доброе утро|добрый вечер)\s*[!.?。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|услуг|цены|стоимость|сколько стоит|процедур)/i.test(text),
-    freeConsultations: /(free\\s+(consultation|consultations|consult|consults)|are\\s+(the\\s+)?consultations?\\s+free|do you offer\\s+(free\\s+)?consultations?|бесплатн\\w*\\s+консультац|консультац\\w*\\s+бесплатн\\w*)/i.test(text),
+    freeConsultations: /(free\s+(consultation|consultations|consult|consults)|are\s+(the\s+)?consultations?\s+free|do you offer\s+(free\s+)?consultations?|бесплатн\w*\s+консультац|консультац\w*\s+бесплатн\w*)/i.test(text),
     hours: /(opening hours|business hours|working hours|when.*open|when.*close|are you (open|closed)|is (the )?(clinic|office) (open|closed)|open on (monday|tuesday|wednesday|thursday|friday|saturday|sunday)|what time.*(open|close)|what are your hours|hours|время работы|часы работы|когда.*откры|вы работаете|работаете ли|график работы)/i.test(text),
     about: /(about (the |your )?clinic|clinic description|tell me (more )?about (the |your )?clinic|what can you tell me about|more information about (the |your )?clinic|о клинике|расскажите о клинике|информация о клинике)/i.test(text)
   };
@@ -120,12 +120,12 @@ function detectClinicFaqReply(message, clinicInfo) {
   const lines = [];
   if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
   const normalizeWords = value => String(value || "").toLowerCase()
-    .replace(/[^a-z0-9\\u0400-\\u04FF]+/g, " ").trim();
+    .replace(/[^a-z0-9\u0400-\u04FF]+/g, " ").trim();
   const normalizedMessage = normalizeWords(text);
-  const messageTokens = new Set(normalizedMessage.split(/\\s+/));
+  const messageTokens = new Set(normalizedMessage.split(/\s+/));
   const genericServiceWords = new Set(["consultation", "consultations", "consult", "service", "services", "treatment", "treatments", "price", "prices", "cost", "how", "much", "the", "for", "is", "are", "of", "only", "what", "does", "do", "you", "your", "услуга", "услуги", "цена", "цены", "стоимость", "консультация", "консультации"]);
   const requestedService = clinicInfo.services.find(service => {
-    const tokens = normalizeWords(service.name).split(/\\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
+    const tokens = normalizeWords(service.name).split(/\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
     return tokens.some(token => messageTokens.has(token));
   });
   if (words.freeConsultations) {
@@ -179,7 +179,7 @@ function detectClinicFaqReply(message, clinicInfo) {
   }
   if (!lines.length) return null;
   if (words.greeting) lines.push(lang === "ru" ? "Чем я могу вам помочь?" : "How can I help you today?");
-  return lines.join("\\n");
+  return lines.join("\n");
 }
 
     const appointmentReply = detectClinicAppointmentIntent(message);
@@ -548,7 +548,9 @@ async function handleAdminSettings(request, env) {
       const settingsResponse = await fetch(settingsUrl, { headers, signal: AbortSignal.timeout(12000) });
       const settingsRows = await settingsResponse.json().catch(() => []);
       if (!settingsResponse.ok || !Array.isArray(settingsRows)) return json({ error: "Could not load clinic settings." }, 502);
-      return json({ clinic, settings: settingsRows[0] || { description: "", services: [], opening_hours: {}, default_language: "en" } });
+      const currentSettings = settingsRows[0] || { description: "", services: [], opening_hours: {}, default_language: "en" };
+      currentSettings.default_language = ["en", "ru"].includes(currentSettings.default_language) ? currentSettings.default_language : "en";
+      return json({ clinic, settings: currentSettings });
     }
 
     const body = await request.json();

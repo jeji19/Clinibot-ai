@@ -61,48 +61,72 @@ Do not request passwords, payment details, medical records, symptoms or other se
 
 async function handleAppointment(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
-  let base;
-  try { base = new URL(env.SUPABASE_URL || "").origin; } catch { base = ""; }
-  if (!base || !env.SUPABASE_ANON_KEY) return json({ error: "Appointment service is not configured." }, 503);
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
+    return json({ error: "Appointment service is not configured." }, 503);
+  }
   try {
     const body = await request.json();
     const service = typeof body.service === "string" ? body.service.trim() : "";
     const preferred_date = typeof body.preferred_date === "string" ? body.preferred_date.trim() : "";
     const preferred_time = typeof body.preferred_time === "string" ? body.preferred_time.trim() : "";
     const language = typeof body.language === "string" ? body.language.trim() : "en";
-    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
+    const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "";
+    const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(clinic_slug) || clinic_slug.length > 60) {
+      return json({ error: "This clinic link is invalid. Please open the clinic's correct booking link." }, 400);
+    }
     if (!service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
       return json({ error: "Please provide a service, a valid date and a preferred time." }, 400);
     }
-    const response = await fetch(base + "/rest/v1/appointment_requests", {
+
+    // Resolve the clinic on the server. Never trust a clinic_id supplied by the browser.
+    const clinicUrl = new URL("/rest/v1/clinics", env.SUPABASE_URL);
+    clinicUrl.searchParams.set("select", "id,name,slug,is_active,notification_email");
+    clinicUrl.searchParams.set("slug", "eq." + clinic_slug);
+    clinicUrl.searchParams.set("is_active", "eq.true");
+    clinicUrl.searchParams.set("limit", "1");
+    const serviceHeaders = {
+      "apikey": env.SUPABASE_SERVICE_ROLE_KEY,
+      "Authorization": "Bearer " + env.SUPABASE_SERVICE_ROLE_KEY
+    };
+    const clinicResponse = await fetch(clinicUrl, { headers: serviceHeaders, signal: AbortSignal.timeout(12000) });
+    const clinics = await clinicResponse.json().catch(() => []);
+    if (!clinicResponse.ok || !Array.isArray(clinics)) {
+      console.error("Clinic lookup failed", clinicResponse.status, JSON.stringify(clinics).slice(0, 300));
+      return json({ error: "Could not verify this clinic. Please try again later." }, 502);
+    }
+    const clinic = clinics[0];
+    if (!clinic) return json({ error: "This clinic link is unavailable or inactive." }, 404);
+
+    const insertResponse = await fetch(new URL("/rest/v1/appointment_requests", env.SUPABASE_URL), {
       method: "POST",
       headers: {
+        ...serviceHeaders,
         "Content-Type": "application/json",
-        "apikey": env.SUPABASE_ANON_KEY,
-        "Authorization": "Bearer " + env.SUPABASE_ANON_KEY,
         "Prefer": "return=minimal"
       },
-      body: JSON.stringify({ service, preferred_date, preferred_time, language, status: "new" }),
+      body: JSON.stringify({ clinic_id: clinic.id, service, preferred_date, preferred_time, language, status: "new" }),
       signal: AbortSignal.timeout(15000)
     });
-    if (!response.ok) {
-      const detail = await response.text();
+    if (!insertResponse.ok) {
+      const detail = await insertResponse.text();
       let code = "unknown";
       try { code = JSON.parse(detail).code || code; } catch {}
-      console.error("Supabase insert failed", response.status, detail.slice(0, 500));
-      return json({ error: `Database rejected the request (HTTP ${response.status}, code ${code}).` }, 502);
+      console.error("Supabase insert failed", insertResponse.status, detail.slice(0, 500));
+      return json({ error: `Database rejected the request (HTTP ${insertResponse.status}, code ${code}).` }, 502);
     }
-    // Send a manager notification when email settings are configured. Email failure must not undo a saved booking request.
-    if (env.RESEND_API_KEY && env.RESEND_TO_EMAIL) {
+
+    const recipient = clinic.notification_email || env.RESEND_TO_EMAIL;
+    if (env.RESEND_API_KEY && recipient) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { "Authorization": "Bearer " + env.RESEND_API_KEY, "Content-Type": "application/json" },
           body: JSON.stringify({
             from: "CliniBot AI <onboarding@resend.dev>",
-            to: [env.RESEND_TO_EMAIL],
-            subject: "New CliniBot appointment request",
-            text: `A new appointment request was received.\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
+            to: [recipient],
+            subject: `New CliniBot appointment request — ${clinic.name}`,
+            text: `A new appointment request was received for ${clinic.name}.\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
           }),
           signal: AbortSignal.timeout(10000)
         });
@@ -111,7 +135,7 @@ async function handleAppointment(request, env) {
         console.error("Resend notification error", emailError?.message);
       }
     }
-    return json({ success: true, message: "Your appointment request was received. The clinic team must confirm availability." }, 201);
+    return json({ success: true, clinic: clinic.name, message: "Your appointment request was received. The clinic team must confirm availability." }, 201);
   } catch (error) {
     console.error("Appointment error", error?.message);
     return json({ error: "The appointment service is temporarily unavailable." }, 500);

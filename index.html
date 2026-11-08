@@ -62,9 +62,24 @@ form.addEventListener('submit',async e=>{
  const waiting=bubble('Thinking…','bot');
  try{
   const r=await fetch('/.netlify/functions/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message})});
-  const data=await r.json();waiting.remove();
-  if(!r.ok)throw new Error(data.error||'The assistant is temporarily unavailable.');
-  bubble(data.reply||'Sorry, I could not prepare a reply.','bot');
+  const raw = await r.text();
+waiting.remove();
+
+let data;
+
+try {
+  data = JSON.parse(raw);
+} catch {
+  throw new Error(
+    `Server response error (HTTP ${r.status}): ${raw.slice(0, 300)}`
+  );
+}
+
+if (!r.ok) {
+  throw new Error(data.error || 'AI service unavailable');
+}
+
+bubble(data.reply || 'Empty AI response', 'bot');
  }catch(err){waiting.remove();bubble(err.message||'Connection error. Please try again.','bot')}
  finally{send.disabled=false;send.textContent='Send';input.focus()}
 });

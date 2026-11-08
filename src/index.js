@@ -296,7 +296,12 @@ async function handleSuperAdminCreateClinic(request, env) {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       const detail = JSON.stringify(data);
-      if (detail.includes("clinics_slug_unique") || detail.includes("duplicate key")) return json({ error: "This clinic URL is already used. Choose another." }, 409);
+      if (detail.includes("clinics_slug_unique")) return json({ error: "This clinic URL is already used. Choose another." }, 409);
+      if (detail.includes("duplicate key")) {
+        const constraint = data.code || "unique_constraint";
+        console.error("Create clinic duplicate conflict", response.status, detail.slice(0, 400));
+        return json({ error: "Database duplicate conflict (" + constraint + "). This is not necessarily the clinic URL; the database ID/default may need fixing." }, 409);
+      }
       console.error("Create clinic failed", response.status, detail.slice(0, 400));
       return json({ error: "Could not create clinic. Check the database policies and columns." }, 502);
     }

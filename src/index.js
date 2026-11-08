@@ -124,15 +124,15 @@ function detectClinicFaqReply(message, clinicInfo) {
   }[lang];
   const lines = [];
   if (words.greeting) lines.push(labels.welcome + " **" + clinicInfo.clinic_name + "**!");
-  const normalizedMessage = text.replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
+  const normalizeWords = value => String(value || "").toLowerCase()
+    .replace(/[^a-z0-9\\u0600-\\u06FF\\u0400-\\u04FF]+/g, " ").trim();
+  const normalizedMessage = normalizeWords(text);
+  const messageTokens = new Set(normalizedMessage.split(/\\s+/));
+  const genericServiceWords = new Set(["consultation", "consultations", "consult", "service", "services", "treatment", "treatments", "price", "prices", "cost", "how", "much", "the", "for", "is", "are", "of", "only", "what", "does", "do", "you", "your"]);
   const requestedService = clinicInfo.services.find(service => {
-    const name = String(service.name || "").toLowerCase();
-    const normalizedName = name.replace(/[^\\p{L}\\p{N}]+/gu, " ").trim();
-    const tokens = normalizedName.split(/\s+/).filter(token => token.length > 2);
-    const directMatch = normalizedName && normalizedMessage.includes(normalizedName);
-    const tokenMatch = tokens.length > 0 && tokens.some(token => normalizedMessage.includes(token));
-    const laserAlias = /\\b(laser|لیزر|лазер)\\b/i.test(text) && /laser|لیزر|лазер/i.test(name);
-    return directMatch || tokenMatch || laserAlias;
+    const name = normalizeWords(service.name);
+    const tokens = name.split(/\\s+/).filter(token => token.length > 2 && !genericServiceWords.has(token));
+    return tokens.some(token => messageTokens.has(token));
   });
   if (words.freeConsultations) {
     lines.push("**" + labels.freeConsultations + ":**");

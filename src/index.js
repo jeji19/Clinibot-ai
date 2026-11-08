@@ -77,6 +77,22 @@ async function handleChat(request, env) {
     };
 
 
+function detectClinicLanguage(message) {
+  const text = String(message || "").toLowerCase();
+  if (/[\\u0600-\\u06FF]/.test(text)) return "ar";
+  if (/[\\u0400-\\u04FF]/.test(text)) return "ru";
+  if (/[äöüß]/i.test(text)) return "de";
+  if (/[àâçéèêëîïôùûüÿœ]/i.test(text)) return "fr";
+  const tokens = new Set(text.match(/[a-z]+/g) || []);
+  const frenchMarkers = ["quels","quelles","sont","vos","horaires","ouverture","proposez","propose","vous","voudrais","rendez","prendre","clinique","tarifs","combien","bonjour","salut","je","une","des","les","avec","pour"];
+  const germanMarkers = ["ich","mochte","moechte","einen","termin","vereinbaren","welche","bitte","danke","guten","tag","ihre","und","wie"];
+  const frenchScore = frenchMarkers.filter(word => tokens.has(word)).length;
+  const germanScore = germanMarkers.filter(word => tokens.has(word)).length;
+  if (frenchScore >= 2 && frenchScore >= germanScore) return "fr";
+  if (germanScore >= 2) return "de";
+  return "en";
+}
+
 function detectClinicAppointmentIntent(message) {
   const text = message.toLowerCase().trim();
   const patterns = {
@@ -86,10 +102,7 @@ function detectClinicAppointmentIntent(message) {
     fr: /(prendre rendez-vous|rendez-vous|je voudrais réserver|je veux réserver|réserver une consultation)/i,
     en: /(book an? (appointment|consultation)|make an? appointment|schedule an? appointment|i want to book|i'd like to book|i would like to book|booking an? appointment|reserve an? appointment)/i
   };
-  const lang = /[\u0600-\u06FF]/.test(message) ? "ar"
-    : /[\u0400-\u04FF]/.test(message) ? "ru"
-    : /[äöüß]/i.test(message) ? "de"
-    : /[àâçéèêëîïôùûüÿœ]/i.test(message) ? "fr" : "en";
+  const lang = detectClinicLanguage(message);
   const match = patterns[lang].test(text) || (lang !== "en" && patterns.en.test(text));
   if (!match) return null;
   return {
@@ -103,11 +116,7 @@ function detectClinicAppointmentIntent(message) {
 
 function detectClinicFaqReply(message, clinicInfo) {
   const text = message.toLowerCase();
-  const hasArabic = /[\u0600-\u06FF]/.test(message);
-  const hasRussian = /[\u0400-\u04FF]/.test(message);
-  const hasGerman = /[äöüß]/i.test(message);
-  const hasFrench = /[àâçéèêëîïôùûüÿœ]/i.test(message);
-  const lang = hasArabic ? "ar" : hasRussian ? "ru" : hasGerman ? "de" : hasFrench ? "fr" : "en";
+  const lang = detectClinicLanguage(message);
   const words = {
     greeting: /^(hi|hello|hey|مرحبا|مرحباً|اهلا|أهلا|السلام عليكم|здравствуйте|привет|добрый день|hallo|guten tag|bonjour|salut)\s*[!.؟。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|الخدمات|الخدمة|الأسعار|الاسعار|السعر|كم سعر|كم تكلفة|услуг|цены|стоимость|сколько стоит|dienstleistung|leistungen|preis|kosten|service|services|prix|tarif|combien coûte)/i.test(text),

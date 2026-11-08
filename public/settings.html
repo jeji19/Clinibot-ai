@@ -18,6 +18,22 @@ button.secondary{background:#edf3f6;color:var(--navy)}button.danger{background:#
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.day{min-width:0}
 #status{min-height:22px;margin-top:10px;font-size:13px}.error{color:#b42318}.success{color:#087f72}.hint{font-size:12px;color:var(--muted);margin-top:8px}
 @media(max-width:560px){.panel{padding:16px}.service{grid-template-columns:minmax(0,1fr) 105px auto;gap:6px}.service input{padding:9px}.grid{grid-template-columns:1fr 1fr}h1{font-size:22px}}
+
+/* Premium clinic identity */
+:root{--navy:#18263a;--teal:#b99a63;--muted:#77736d;--bg:#f7f4ee;--line:#e9e1d5}
+body{background:var(--bg);color:var(--navy)}
+header{background:#fffdf9;border-bottom-color:var(--line);padding-top:20px;padding-bottom:20px}
+.brand span{color:#b99a63}
+main{max-width:900px;margin:38px auto}
+.panel{background:#fffdf9;border-color:var(--line);border-radius:20px;box-shadow:0 16px 45px #382a160c}
+h1,h2{letter-spacing:-.5px}
+input,textarea,select{border-color:#e4dacb;border-radius:11px;background:#fffefa}
+button,.link{background:#b99a63;color:#18263a;border-radius:11px}
+button:hover,.link:hover{background:#a88953}
+button.secondary,.link.secondary{background:#f1eadf;color:#4b453b}
+button.danger{background:#f9e9e5;color:#a33d35}
+.service{border-bottom-color:var(--line)}
+
 </style>
 </head>
 <body>

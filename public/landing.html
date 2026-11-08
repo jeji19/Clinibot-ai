@@ -220,15 +220,17 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
   const dict=translations[lang]||{};
   document.documentElement.lang=lang;
   document.documentElement.dir=lang==='ar'?'rtl':'ltr';
+  const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+  let node;
+  while(node=walker.nextNode()){
+   if(!originals.has(node))originals.set(node,node.nodeValue);
+   const raw=originals.get(node),key=raw.trim();
+   if(dict[key])node.nodeValue=raw.replace(key,dict[key]);
+   else node.nodeValue=raw;
+  }
   document.querySelectorAll('body *').forEach(el=>{
-   if(el.children.length===0 && el.textContent.trim()){
-    if(!originals.has(el))originals.set(el,el.textContent);
-    const raw=originals.get(el), key=raw.trim();
-    if(dict[key])el.textContent=raw.replace(key,dict[key]);
-   }
    ['placeholder','aria-label'].forEach(attr=>{
     if(el.hasAttribute(attr)){
-     const key=attr+'|'+(el.getAttribute(attr));
      if(!el.dataset['original'+attr])el.dataset['original'+attr]=el.getAttribute(attr);
      const original=el.dataset['original'+attr];
      if(dict[original])el.setAttribute(attr,dict[original]);

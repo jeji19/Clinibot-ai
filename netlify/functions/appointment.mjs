@@ -34,7 +34,8 @@ export default async (req) => {
     const service = typeof body.service === "string" ? body.service.trim() : "";
     const preferredDate = typeof body.preferred_date === "string" ? body.preferred_date.trim() : "";
     const preferredTime = typeof body.preferred_time === "string" ? body.preferred_time.trim() : "";
-    const language = typeof body.language === "string" ? body.language.trim() : "en";
+    const requestedLanguage = typeof body.language === "string" ? body.language.trim() : "en";
+    const language = ["en", "ru"].includes(requestedLanguage) ? requestedLanguage : "en";
 
     const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferredDate)
       && !Number.isNaN(Date.parse(preferredDate + "T00:00:00Z"));
@@ -43,7 +44,7 @@ export default async (req) => {
       !service || service.length > 120 ||
       !validDate ||
       !preferredTime || preferredTime.length > 40 ||
-      language.length > 20
+      !["en", "ru"].includes(language)
     ) {
       return new Response(
         JSON.stringify({ error: "Please provide a service, a valid date and a preferred time." }),

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CliniBot AI — Clinic Settings</title>
+<style>
+:root{--navy:#10243a;--teal:#20b8a6;--muted:#66788a;--bg:#f4f8fb;--line:#e4ebf1}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--navy);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:white;border-bottom:1px solid var(--line);padding:16px max(5vw,20px);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:21px;font-weight:800}.brand span{color:var(--teal)}main{max-width:850px;margin:28px auto;padding:0 18px}
+.panel{background:white;border:1px solid var(--line);border-radius:16px;padding:22px;margin-bottom:16px;box-shadow:0 12px 40px #10243a0a}
+h1{font-size:25px;margin:0 0 4px}h2{font-size:18px;margin:0 0 12px}p,.muted{color:var(--muted)}p{margin:0 0 14px}
+label{display:block;font-size:13px;font-weight:650;margin:12px 0 5px}input,textarea,select{width:100%;padding:11px;border:1px solid var(--line);border-radius:9px;font:inherit;color:var(--navy);background:white}
+textarea{min-height:85px;resize:vertical}.service{display:grid;grid-template-columns:minmax(0,1fr) 140px auto;gap:9px;align-items:end;padding:12px 0;border-bottom:1px solid var(--line)}
+.service label{margin-top:0}.service button{margin-bottom:1px}
+button,.link{border:0;border-radius:9px;padding:10px 14px;font:inherit;font-weight:650;cursor:pointer;background:var(--teal);color:white;text-decoration:none;display:inline-block}
+button.secondary{background:#edf3f6;color:var(--navy)}button.danger{background:#fff0ef;color:#b42318}button:disabled{opacity:.6;cursor:wait}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.day{min-width:0}
+#status{min-height:22px;margin-top:10px;font-size:13px}.error{color:#b42318}.success{color:#087f72}.hint{font-size:12px;color:var(--muted);margin-top:8px}
+@media(max-width:560px){.panel{padding:16px}.service{grid-template-columns:minmax(0,1fr) 105px auto;gap:6px}.service input{padding:9px}.grid{grid-template-columns:1fr 1fr}h1{font-size:22px}}
+</style>
+</head>
+<body>
+<header><div class="brand">CliniBot<span> AI</span> <span style="color:#66788a;font-size:13px;font-weight:600">/ Clinic Settings</span></div><div><a class="link secondary" href="/admin.html">Back to dashboard</a> <button id="logout" class="secondary">Log out</button></div></header>
+<main>
+<section class="panel">
+<h1 id="clinicName">Clinic settings</h1><p>Manage the public information your CliniBot receptionist uses. Only information saved here will be shared in chat.</p>
+<label for="description">Clinic description</label><textarea id="description" maxlength="2000" placeholder="Briefly describe your clinic"></textarea>
+<label for="language">Default language</label><select id="language"><option value="en">English</option><option value="ar">Arabic</option><option value="ru">Russian</option><option value="de">German</option><option value="fr">French</option></select>
+</section>
+<section class="panel">
+<h2>Services and prices</h2><p class="muted">Enter the exact service names and prices. Leave a price blank if you do not want the bot to quote it.</p>
+<div id="services"></div><button type="button" id="addService" class="secondary">+ Add service</button>
+</section>
+<section class="panel">
+<h2>Opening hours</h2><p class="muted">Use a clear format, for example 09:00–18:00 or Closed.</p>
+<div class="grid" id="hours"></div>
+</section>
+<section class="panel">
+<button id="save">Save clinic settings</button><div id="status" role="status"></div>
+<div class="hint">Changes are saved to your clinic profile and used by the AI receptionist. Appointment availability is not automatically synchronized with a calendar.</div>
+</section>
+</main>
+<script>
+const token=sessionStorage.getItem('clinibot_admin_token')||'';
+const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const servicesEl=document.getElementById('services'),hoursEl=document.getElementById('hours'),statusEl=document.getElementById('status');
+async function api(path,options={}){const response=await fetch(path,{...options,headers:{'Content-Type':'application/json','Authorization':'Bearer '+token,...(options.headers||{})}});const data=await response.json().catch(()=>({error:'Invalid server response'}));if(!response.ok)throw new Error(data.error||'Request failed');return data}
+function addService(name='',price=''){const row=document.createElement('div');row.className='service';const nameWrap=document.createElement('div'),priceWrap=document.createElement('div');const nl=document.createElement('label');nl.textContent='Service name';const ni=document.createElement('input');ni.className='service-name';ni.maxLength=120;ni.required=true;ni.placeholder='e.g. Skin consultation';ni.value=name;nameWrap.append(nl,ni);const pl=document.createElement('label');pl.textContent='Price';const pi=document.createElement('input');pi.className='service-price';pi.type='number';pi.min='0';pi.step='0.01';pi.placeholder='e.g. 50';pi.value=price;priceWrap.append(pl,pi);const remove=document.createElement('button');remove.type='button';remove.className='danger';remove.textContent='Remove';remove.addEventListener('click',()=>row.remove());row.append(nameWrap,priceWrap,remove);servicesEl.append(row)}
+function renderHours(values={}){hoursEl.replaceChildren();for(const day of days){const wrap=document.createElement('div');wrap.className='day';const label=document.createElement('label');label.textContent=day;const input=document.createElement('input');input.className='hour';input.dataset.day=day;input.placeholder='09:00–18:00';input.value=values[day]||'';wrap.append(label,input);hoursEl.append(wrap)}}
+async function load(){if(!token){location.href='/admin.html';return}statusEl.textContent='Loading settings…';try{const data=await api('/api/admin/settings');document.getElementById('clinicName').textContent=data.clinic.name+' — Settings';const s=data.settings||{};document.getElementById('description').value=s.description||'';document.getElementById('language').value=s.default_language||'en';servicesEl.replaceChildren();for(const item of s.services||[])addService(item.name||'',item.price??'');if(!servicesEl.children.length)addService();renderHours(s.opening_hours||{});statusEl.textContent='Settings loaded.'}catch(err){statusEl.className='error';statusEl.textContent=err.message;if(err.message.toLowerCase().includes('sign in'))location.href='/admin.html'}}
+document.getElementById('addService').addEventListener('click',()=>addService());
+document.getElementById('save').addEventListener('click',async()=>{const button=document.getElementById('save');button.disabled=true;statusEl.className='';statusEl.textContent='Saving…';try{const services=[...servicesEl.querySelectorAll('.service')].map(row=>({name:row.querySelector('.service-name').value.trim(),price:row.querySelector('.service-price').value.trim()})).filter(x=>x.name).map(x=>({name:x.name,price:x.price===''?null:Number(x.price)}));const opening_hours={};for(const input of hoursEl.querySelectorAll('.hour'))if(input.value.trim())opening_hours[input.dataset.day]=input.value.trim();await api('/api/admin/settings',{method:'PUT',body:JSON.stringify({description:document.getElementById('description').value,default_language:document.getElementById('language').value,services,opening_hours})});statusEl.className='success';statusEl.textContent='Settings saved successfully.'}catch(err){statusEl.className='error';statusEl.textContent=err.message}finally{button.disabled=false}});
+document.getElementById('logout').addEventListener('click',()=>{sessionStorage.removeItem('clinibot_admin_token');location.href='/admin.html'});
+renderHours();load();
+</script>
+</body></html>

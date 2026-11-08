@@ -64,7 +64,7 @@ async function handleAppointment(request, env) {
     const preferred_date = typeof body.preferred_date === "string" ? body.preferred_date.trim() : "";
     const preferred_time = typeof body.preferred_time === "string" ? body.preferred_time.trim() : "";
     const language = typeof body.language === "string" ? body.language.trim() : "en";
-    const validDate = /^\\d{4}-\\d{2}-\\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
+    const validDate = /^\d{4}-\d{2}-\d{2}$/.test(preferred_date) && !Number.isNaN(Date.parse(preferred_date + "T00:00:00Z"));
     if (!service || service.length > 120 || !validDate || !preferred_time || preferred_time.length > 40 || language.length > 20) {
       return json({ error: "Please provide a service, a valid date and a preferred time." }, 400);
     }

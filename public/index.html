@@ -109,7 +109,7 @@ button:hover{background:#a88953}
 <div class="field"><label id="bookingPhoneLabel" for="patientPhone">Phone number</label><input id="patientPhone" name="patient_phone" type="tel" maxlength="30" autocomplete="tel" placeholder="+1 555 123 4567" pattern="[+0-9()\s.-]{6,30}" required></div>
 <div class="field"><label id="bookingServiceLabel" for="service">Service</label><select id="service" name="service" required disabled><option value="">Loading clinic services…</option></select></div>
 <div class="field"><label id="bookingDateLabel" for="preferredDate">Preferred date</label><input id="preferredDate" name="preferred_date" type="date" required></div>
-<div class="field"><label id="bookingTimeLabel" for="preferredTime">Preferred time</label><input id="preferredTime" name="preferred_time" maxlength="40" placeholder="e.g. 5:00 PM" required></div>
+<div class="field"><label id="bookingTimeLabel" for="preferredTime">Preferred time</label><input id="preferredTime" name="preferred_time" type="time" required></div>
 <div class="field"><label id="bookingLanguageLabel" for="language">Preferred language</label><select id="language" name="language"><option value="en">English</option><option value="ru">Русский</option></select></div>
 </div>
 <div class="booking-actions"><button id="bookingButton" type="submit">Send appointment request</button><span id="bookingStatus" role="status" aria-live="polite"></span></div>
@@ -183,7 +183,6 @@ function applyBookingLanguage(){
  for(const [id,value] of Object.entries(labels))document.getElementById(id).textContent=value;
  document.getElementById('patientName').placeholder=ru?'Ваше имя и фамилия':'Your full name';
  document.getElementById('patientPhone').placeholder=ru?'+7 900 123 45 67':'+1 555 123 4567';
- document.getElementById('preferredTime').placeholder=ru?'Например, 17:00':'e.g. 5:00 PM';
  bookingButton.textContent=ru?'Отправить запрос на запись':'Send appointment request';
  if(serviceField.options.length>1){
   for(let i=1;i<serviceField.options.length;i++){

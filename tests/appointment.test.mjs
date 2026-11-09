@@ -5,6 +5,8 @@ import { pathToFileURL } from "node:url";
 
 const pagesSource = await readFile(new URL("../functions/api/appointment.js", import.meta.url), "utf8");
 const pagesModule = await import("data:text/javascript;base64," + Buffer.from(pagesSource).toString("base64"));
+const workerSource = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
+const workerModule = await import("data:text/javascript;base64," + Buffer.from(workerSource).toString("base64"));
 const netlifyModule = await import(pathToFileURL(new URL("../netlify/functions/appointment.mjs", import.meta.url).pathname).href);
 
 const validBody = {
@@ -39,6 +41,17 @@ async function invokePages(body, config = env, method = "POST") {
   });
 }
 
+async function invokeWorker(body, config = env, method = "POST") {
+  return workerModule.default.fetch(new Request("https://example.test/api/appointment", {
+    method,
+    headers: { "Content-Type": "application/json" },
+    ...(method === "GET" ? {} : { body: JSON.stringify(body) })
+  }), {
+    ...config,
+    ASSETS: { fetch: async () => new Response("not found", { status: 404 }) }
+  });
+}
+
 async function invokeNetlify(body, config = env, method = "POST") {
   const keys = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "RESEND_API_KEY", "RESEND_TO_EMAIL"];
   const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
@@ -60,7 +73,7 @@ async function invokeNetlify(body, config = env, method = "POST") {
   }
 }
 
-const adapters = [["Cloudflare Pages", invokePages], ["Netlify", invokeNetlify]];
+const adapters = [["Cloudflare Worker", invokeWorker], ["Cloudflare Pages", invokePages], ["Netlify", invokeNetlify]];
 
 for (const [label, invoke] of adapters) {
   test(`${label}: requires server-side Supabase configuration`, async () => {

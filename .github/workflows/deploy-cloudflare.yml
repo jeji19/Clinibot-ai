@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ inputs.confirm_production == true }}
+    if: ${{ inputs.confirm_production == true && github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: production
@@ -34,6 +34,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+          ref: main
 
       - name: Verify target and credentials
         shell: bash
@@ -48,7 +49,11 @@ jobs:
             echo "Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID as GitHub Actions secrets before deploying." >&2
             exit 1
           fi
-          echo "Validated production target: $configured_name"
+          if [[ ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[a-fA-F0-9]{32}$ ]]; then
+            echo "CLOUDFLARE_ACCOUNT_ID must be a 32-character hexadecimal Cloudflare account ID." >&2
+            exit 1
+          fi
+          echo "Validated production target: $configured_name and Cloudflare account ID format."
 
       - name: Deploy Worker
         uses: cloudflare/wrangler-action@v4

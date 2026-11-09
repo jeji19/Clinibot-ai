@@ -217,8 +217,8 @@ test("fresh Supabase bootstrap defines core tables and enables RLS", async () =>
   const bootstrap = await read("supabase/bootstrap/initial_schema.sql");
   const guide = await read("supabase/bootstrap/README.md");
   for (const table of ["clinics", "clinic_settings", "clinic_members", "super_admins", "appointment_requests"]) {
-    assert.match(bootstrap, new RegExp("create table if not exists public\\\\." + table, "i"));
-    assert.match(bootstrap, new RegExp("alter table public\\\\." + table + " enable row level security", "i"));
+    assert.match(bootstrap, new RegExp("create table if not exists public[.]" + table, "i"));
+    assert.match(bootstrap, new RegExp("alter table public[.]" + table + " enable row level security", "i"));
   }
   assert.match(bootstrap, /create policy "Super admins can create clinics"/i);
   assert.match(bootstrap, /create policy "Managers can update clinic appointments"/i);

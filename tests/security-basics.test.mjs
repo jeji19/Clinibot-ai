@@ -155,6 +155,8 @@ test("public appointment inserts are server-only, not anonymous Data API writes"
 test("manager dashboard clears expired sessions for both reads and status updates", async () => {
   const dashboard = await read("public/admin.html");
   assert.match(dashboard, /function handleSessionError\(err\)/);
+  assert.match(dashboard, /response\.status===401\|\|response\.status===403/);
+  assert.match(dashboard, /response\.status===409&&\/clinic manager\|more than one clinic\/i\.test/);
   assert.match(dashboard, /message\.includes\('sign in'\)/);
   assert.match(dashboard, /catch\(err\)\{tableStatus\.textContent=err\.message;handleSessionError\(err\)\}/);
   assert.match(dashboard, /select\.value=item\.status\|\|'new';handleSessionError\(err\)/);
@@ -174,6 +176,7 @@ test("Super Admin dashboard clears expired or revoked authorization from every p
 test("clinic settings page clears expired or revoked manager sessions", async () => {
   const page = await read("public/settings.html");
   assert.match(page, /response.status===401||response.status===403/);
+  assert.match(page, /response.status===409&&\/clinic manager\|more than one clinic\/i\.test/);
   assert.match(page, /sessionStorage.removeItem('clinibot_admin_token')/);
   assert.match(page, /location.href='/admin.html'/);
 });

@@ -109,3 +109,27 @@ test("appointment intent directs patients to the request form without claiming a
   assert.match(data.reply, /confirm availability/);
   assert.equal(data.handled_without_ai, true);
 });
+
+
+async function invokeRawChat(raw) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("Malformed chat payload must not call upstream services"); };
+  try {
+    const response = await worker.default.fetch(new Request("https://example.test/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: raw
+    }), env);
+    return response;
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+test("chat rejects malformed, null, and array JSON payloads with 400", async () => {
+  for (const raw of ["{", "null", "[]"]) {
+    const response = await invokeRawChat(raw);
+    assert.equal(response.status, 400);
+    assert.match((await response.json()).error, /invalid json/i);
+  }
+});

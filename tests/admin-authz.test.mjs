@@ -299,7 +299,7 @@ test("Super Admin clinic creation also initializes default clinic settings", asy
 
 test("Super Admin cannot assign a manager already assigned to another clinic", async () => {
   const otherClinicId = "33333333-3333-4333-8333-333333333333";
-  const response = await invoke("/api/superadmin/add-member", {
+  const response = await invoke("/api/superadmin/members", {
     method: "POST", body: { clinic_id: clinicId, user_id: managerId }
   }, async url => {
     const target = new URL(String(url));

@@ -61,6 +61,6 @@ After deployment, verify with a real test clinic and test accounts:
 
 ## Automated checks and current verification limits
 
-A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks on pushes and pull requests to `main`. This is a syntax check only; it does not test browser behavior, Supabase permissions, email delivery, or production deployment.
+A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks and verifies that the public API adapter files and Netlify rewrites are present on pushes and pull requests to `main`. These are static checks; they do not test browser behavior, Supabase permissions, email delivery, or production deployment.
 
 A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing syntax workflow as proof of production deployment.

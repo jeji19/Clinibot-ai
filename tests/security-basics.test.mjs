@@ -95,3 +95,13 @@ test("every Super Admin route verifies the Super Admin allowlist before privileg
     assert.doesNotMatch(functionSource(worker, name), /SUPABASE_SERVICE_ROLE_KEY/);
   }
 });
+
+test("Supabase RLS audit is read-only and covers all application tables", async () => {
+  const audit = await read("supabase/audits/20261109_rls_audit.sql");
+  for (const table of ["clinics", "clinic_settings", "clinic_members", "super_admins", "appointment_requests", "demo_requests"]) {
+    assert.ok(audit.includes(`'${table}'`), `RLS audit must include ${table}`);
+  }
+  assert.match(audit, /from\s+pg_policies/i);
+  assert.match(audit, /information_schema\.role_table_grants/i);
+  assert.doesNotMatch(audit, /\b(?:alter|create|drop|insert|update|delete|truncate|grant|revoke)\s+(?:table|policy|index|into|set|from|on|all|select|public)/i);
+});

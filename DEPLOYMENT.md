@@ -25,6 +25,8 @@ Set these values in the deployment platform's environment/secrets settings. Neve
 | `RESEND_API_KEY` | Email notifications | Optional; requests are stored even if email delivery fails |
 | `RESEND_TO_EMAIL` | Email notification destination | The current Worker config defaults this to the platform inbox |
 
+Appointment notifications are sent to the clinic's `clinics.notification_email` when configured, and fall back to `RESEND_TO_EMAIL` only when the clinic has no notification address. Demo-request notifications remain routed to the platform inbox.
+
 ## Database prerequisites
 
 The application expects the Supabase tables and columns used by the API, including:

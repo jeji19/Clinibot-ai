@@ -57,6 +57,8 @@ jobs:
         run: node --test tests/appointment.test.mjs
       - name: Test public clinic info endpoints
         run: node --test tests/clinic-info.test.mjs
+      - name: Test clinic chat language and safety fallbacks
+        run: node --test tests/chat.test.mjs
       - name: Test manager and Super Admin authorization
         run: node --test tests/admin-authz.test.mjs
       - name: Test baseline security safeguards

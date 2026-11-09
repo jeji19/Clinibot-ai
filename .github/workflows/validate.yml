@@ -50,3 +50,6 @@ jobs:
           grep -Fq 'to = "/.netlify/functions/demo-request"' netlify.toml
           grep -Fq 'fetch("/api/demo-request"' public/landing.html
           echo "Cloudflare Pages, Netlify functions, and landing-form routes are wired."
+
+      - name: Test demo request endpoints
+        run: node --test tests/demo-request.test.mjs

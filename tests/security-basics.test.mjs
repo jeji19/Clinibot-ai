@@ -47,19 +47,25 @@ test("clinic manager endpoints authenticate and scope all access to the user's c
   const appointments = functionSource(worker, "handleAdminAppointments");
   const status = functionSource(worker, "handleAdminStatus");
   const settings = functionSource(worker, "handleAdminSettings");
+  const membershipResolver = functionSource(worker, "resolveAdminClinicId");
 
   for (const [name, source] of [["appointments", appointments], ["status", status], ["settings", settings]]) {
-    assert.match(source, /authorizedAdmin\(request, env\)/, `${name} must authenticate the manager`);
-    assert.match(source, /clinic_members/, `${name} must resolve clinic membership`);
-    assert.match(source, /user_id/, `${name} must bind membership to the authenticated user`);
-    assert.match(source, /memberships\.length\s*>\s*1/, `${name} must reject ambiguous multi-clinic membership`);
+    assert.match(source, /authorizedAdmin\\(request, env\\)/, `${name} must authenticate the manager`);
     assert.doesNotMatch(source, /SUPABASE_SERVICE_ROLE_KEY/, `${name} must not bypass row-level access with the service role`);
   }
 
-  assert.match(appointments, /clinic_id",\s*"eq\."\s*\+\s*access\.clinicId/);
-  assert.match(status, /clinic_id",\s*"eq\."\s*\+\s*access\.clinicId/, "status updates must be scoped to the manager's clinic");
-  assert.match(settings, /clinic_id",\s*"eq\."\s*\+\s*clinicId/, "settings reads must be scoped to the manager's clinic");
-  assert.match(settings, /clinic_id:\s*clinicId/, "settings writes must use the membership-derived clinic ID");
+  assert.match(appointments, /resolveAdminClinicId\\(token, env\\)/);
+  assert.match(status, /resolveAdminClinicId\\(token, env\\)/);
+  for (const source of [membershipResolver, settings]) {
+    assert.match(source, /clinic_members/);
+    assert.match(source, /user_id/);
+    assert.match(source, /memberships\\.length\\s*>\\s*1/, "ambiguous multi-clinic membership must be rejected");
+  }
+
+  assert.match(appointments, /clinic_id",\\s*"eq\\."\\s*\\+\\s*access\\.clinicId/);
+  assert.match(status, /clinic_id",\\s*"eq\\."\\s*\\+\\s*access\\.clinicId/, "status updates must be scoped to the manager's clinic");
+  assert.match(settings, /clinic_id",\\s*"eq\\."\\s*\\+\\s*clinicId/, "settings reads must be scoped to the manager's clinic");
+  assert.match(settings, /clinic_id:\\s*clinicId/, "settings writes must use the membership-derived clinic ID");
 });
 
 test("every Super Admin route verifies the Super Admin allowlist before privileged work", async () => {

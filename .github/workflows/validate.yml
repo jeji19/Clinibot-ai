@@ -65,6 +65,8 @@ jobs:
         run: node --test tests/security-basics.test.mjs
       - name: Test guarded production deployment workflow
         run: node --test tests/deploy-workflow.test.mjs
+      - name: Test Cloudflare diagnostics workflow safeguards
+        run: node --test tests/diagnostics-workflow.test.mjs
 
   supabase-bootstrap:
     runs-on: ubuntu-latest

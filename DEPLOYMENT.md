@@ -44,6 +44,12 @@ The connected `clinibot-ai` project was audited and these hardening migrations w
 
 Default privileges for future public tables created by the `postgres` role were also tightened. The existing default privileges for `supabase_admin` could not be changed through the connected database role and remain a separate follow-up item. The Supabase Security Advisor also reports leaked-password protection disabled (requires an eligible plan/setting change) and an informational RLS-enabled/no-policy finding for `demo_requests`; the latter is intentional because the table has no direct client grants and is accessed only through verified server-side Super Admin routes.
 
+## Product scope and commercial readiness
+
+The public product and demo interfaces currently support English and Russian only. The Super Admin `plan` field (Basic/Pro/Premium) is account metadata; automated subscription billing, payment collection, plan-based feature enforcement, and a customer self-service subscription portal are not implemented. Do not represent a clinic as paid or actively subscribed based only on the plan label. Before accepting recurring payments, implement and test a payment provider, webhook verification, subscription state synchronization, cancellation, and invoice handling.
+
+Appointment requests are not calendar bookings: the clinic team must review each request and confirm availability. The product does not currently synchronize with Google Calendar or another scheduling system.
+
 ## Deployment target warning
 
 The tracked `wrangler.jsonc` currently names the Worker `clinibot-ai`, while the previously supplied live hostname is `clinibot-ai1.albizrahemran.workers.dev`. Confirm which Worker is the intended production target in Cloudflare before running a deployment command. Do not change the configured Worker name based on the hostname alone.

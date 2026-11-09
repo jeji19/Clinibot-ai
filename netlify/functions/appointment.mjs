@@ -83,7 +83,7 @@ export default async (req) => {
       return json({ error: "Database could not save the appointment request (" + code + ")." }, 502);
     }
 
-    const recipient = process.env.RESEND_TO_EMAIL;
+    const recipient = clinic.notification_email || process.env.RESEND_TO_EMAIL;
     if (process.env.RESEND_API_KEY && recipient) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {

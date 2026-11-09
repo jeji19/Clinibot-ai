@@ -1,9 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
 
 const source = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
 const worker = await import("data:text/javascript;base64," + Buffer.from(source).toString("base64"));
+const pagesSource = await readFile(new URL("../functions/api/chat.js", import.meta.url), "utf8");
+const pagesModule = await import("data:text/javascript;base64," + Buffer.from(pagesSource).toString("base64"));
+const netlifyModule = await import(pathToFileURL(new URL("../netlify/functions/chat.mjs", import.meta.url).pathname).href);
 
 const env = {
   SUPABASE_URL: "https://project.supabase.co",
@@ -131,5 +135,40 @@ test("chat rejects malformed, null, and array JSON payloads with 400", async () 
     const response = await invokeRawChat(raw);
     assert.equal(response.status, 400);
     assert.match((await response.json()).error, /invalid json/i);
+  }
+});
+
+
+test("Cloudflare Pages and Netlify chat adapters reject malformed JSON payloads", async () => {
+  const originalFetch = globalThis.fetch;
+  const keys = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "GEMINI_API_KEY"];
+  const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  globalThis.fetch = async () => { throw new Error("Malformed payload must not call upstream services"); };
+  try {
+    for (const raw of ["{", "null", "[]"]) {
+      const request = new Request("https://example.test/api/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: raw
+      });
+      const pagesResponse = await pagesModule.onRequestPost({
+        request,
+        env: { SUPABASE_URL: env.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }
+      });
+      assert.equal(pagesResponse.status, 400);
+      assert.match((await pagesResponse.json()).error, /invalid json/i);
+
+      process.env.SUPABASE_URL = env.SUPABASE_URL;
+      process.env.SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
+      const netlifyResponse = await netlifyModule.default(new Request("https://example.test/.netlify/functions/chat", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: raw
+      }));
+      assert.equal(netlifyResponse.status, 400);
+      assert.match((await netlifyResponse.json()).error, /invalid json/i);
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const key of keys) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
   }
 });

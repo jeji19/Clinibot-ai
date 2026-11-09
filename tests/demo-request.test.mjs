@@ -6,6 +6,8 @@ import { pathToFileURL } from "node:url";
 const pagesSource = await readFile(new URL("../functions/api/demo-request.js", import.meta.url), "utf8");
 const pagesModule = await import("data:text/javascript;base64," + Buffer.from(pagesSource).toString("base64"));
 const netlifyModule = await import(pathToFileURL(new URL("../netlify/functions/demo-request.mjs", import.meta.url).pathname).href);
+const workerSource = await readFile(new URL("../src/index.js", import.meta.url), "utf8");
+const workerModule = await import("data:text/javascript;base64," + Buffer.from(workerSource).toString("base64"));
 
 const validBody = {
   clinic_name: "North Clinic",
@@ -63,6 +65,19 @@ for (const [label, invoke] of adapters) {
   test(`${label}: rejects requests when storage configuration is missing`, async () => {
     const response = await invoke(validBody);
     assert.equal(response.status, 503);
+  });
+
+  test(`${label}: rejects null and array JSON payloads before database access`, async () => {
+    await withMockFetch(async () => { throw new Error("database must not be called"); }, async () => {
+      for (const body of [null, []]) {
+        const response = await invoke(body, {
+          SUPABASE_URL: "https://project.supabase.co",
+          SUPABASE_SERVICE_ROLE_KEY: "test-key"
+        });
+        assert.equal(response.status, 400);
+        assert.match((await response.json()).error, /invalid json/i);
+      }
+    });
   });
 
   test(`${label}: validates required clinic and contact fields`, async () => {
@@ -131,3 +146,24 @@ for (const [label, invoke] of adapters) {
     });
   });
 }
+
+
+test("Worker demo request rejects malformed JSON without calling upstream services", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("Malformed request must not call upstream services"); };
+  try {
+    for (const raw of ["{", "null", "[]"]) {
+      const response = await workerModule.default.fetch(new Request("https://example.test/api/demo-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: raw
+      }), {
+        SUPABASE_URL: "https://project.supabase.co",
+        SUPABASE_SERVICE_ROLE_KEY: "test-key",
+        ASSETS: { fetch: async () => new Response("not found", { status: 404 }) }
+      });
+      assert.equal(response.status, 400);
+      assert.match((await response.json()).error, /invalid json/i);
+    }
+  } finally { globalThis.fetch = originalFetch; }
+});

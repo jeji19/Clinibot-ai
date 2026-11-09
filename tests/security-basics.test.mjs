@@ -201,7 +201,7 @@ test("public-facing language options are limited to English and Russian", async 
   const statusCopyStart = landing.lastIndexOf("const languageCopy = {");
   const statusCopyEnd = landing.indexOf("const translateStatus", statusCopyStart);
   const statusCopy = landing.slice(statusCopyStart, statusCopyEnd);
-  assert.match(statusCopy, /^\s*ru:/m);
-  assert.doesNotMatch(statusCopy, /^\s*(?:ar|de|fr|es):/m);
+  assert.ok(statusCopy.includes('ru:'));
+  assert.doesNotMatch(statusCopy, /\b(?:ar|de|fr|es)\s*:/);
   assert.doesNotMatch(clinic, /<option value="ar">/);
 });

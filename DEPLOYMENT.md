@@ -95,3 +95,14 @@ A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-fr
 These automated checks validate source-level safeguards and mocked endpoint behavior, including the least-privilege grant migrations and server-only appointment writes. They do not test browser behavior, authenticated requests using real manager/Super Admin JWTs, email delivery, or production deployment. The connected Supabase project has been inspected directly and its current RLS/grant metadata verified; a real login-based manager/Super Admin end-to-end test is still required.
 
 A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing CI workflow as proof of production deployment.
+
+
+## Cloudflare Worker log diagnostics
+
+A manual, read-only log-inspection workflow is available at `.github/workflows/diagnose-cloudflare-logs.yml`. It queries the Cloudflare Workers Observability Telemetry API for recent events from `clinibot-ai1` containing the term `Resend`, defaults to the previous 48 hours, and redacts email addresses and phone-like values before printing matching events in the GitHub Actions log. It does not deploy or change Worker settings.
+
+Add these GitHub Actions secrets:
+- `CLOUDFLARE_DIAGNOSTICS_TOKEN`: a narrowly scoped token for Workers Observability.
+- `CLOUDFLARE_ACCOUNT_ID`: the account ID already used by the deployment workflow.
+
+**Permission caveat:** Cloudflare's current API reference lists `Workers Observability Write` as the accepted permission for the telemetry query endpoint, even though this workflow only reads log results. A token with only `Workers Observability Read` may receive HTTP 403. Do not add Worker script edit, account administration, billing, DNS, or user-management permissions for this diagnostics workflow. Run GitHub Actions → **Diagnose CliniBot AI Worker Logs** → **Run workflow** and keep the default 48-hour lookback. The workflow is manual-only and is not run automatically on pushes.

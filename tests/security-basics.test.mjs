@@ -125,3 +125,16 @@ test("Supabase public table grants follow the least-privilege application access
   const demoLead = functionSource(worker, "handleDemoRequest");
   assert.match(demoLead, /SUPABASE_SERVICE_ROLE_KEY/);
 });
+
+
+test("Supabase RLS policies use cached auth lookups and a membership lookup index", async () => {
+  const policies = await read("supabase/migrations/20261109065306_optimize_rls_policies_and_membership_index.sql");
+  const superAdmin = await read("supabase/migrations/20261109065312_optimize_super_admin_clinic_policies.sql");
+  assert.match(policies, /create\s+policy\s+"Managers and super admins can view clinics"/i);
+  assert.match(policies, /create\s+policy\s+"Managers and super admins can view clinic members"/i);
+  assert.match(policies, /create\s+policy\s+"Managers and super admins can view appointments"/i);
+  assert.match(policies, /\(select\s+auth\.uid\(\)\)/i);
+  assert.match(policies, /create\s+index\s+if\s+not\s+exists\s+clinic_members_user_id_idx/i);
+  assert.match(superAdmin, /\(select\s+auth\.uid\(\)\)/i);
+  assert.doesNotMatch(policies + superAdmin, /\bauth\.uid\(\)\s*=/i);
+});

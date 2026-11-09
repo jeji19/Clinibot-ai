@@ -238,3 +238,16 @@ test("public product and chat copy contain no unsupported Arabic-language string
     assert.doesNotMatch(source, /[\u0600-\u06FF]/, path + " should stay within English and Russian");
   }
 });
+
+
+test("Cloudflare production deployment is manual, target-checked, and smoke-tested", async () => {
+  const workflow = await read(".github/workflows/deploy-cloudflare.yml");
+  assert.match(workflow, /workflow_dispatch/);
+  assert.match(workflow, /confirm_production == true/);
+  assert.match(workflow, /CLOUDFLARE_API_TOKEN/);
+  assert.match(workflow, /CLOUDFLARE_ACCOUNT_ID/);
+  assert.match(workflow, /configured_name/);
+  assert.match(workflow, /api\/public\/clinic-info/);
+  assert.match(workflow, /__unpublished_smoke_test__/);
+  assert.doesNotMatch(workflow, /push:\s*\n\s*branches:/);
+});

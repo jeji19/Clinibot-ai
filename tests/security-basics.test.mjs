@@ -211,3 +211,18 @@ test("public-facing language options are limited to English and Russian", async 
   assert.doesNotMatch(statusCopy, /\b(?:ar|de|fr|es)\s*:/);
   assert.doesNotMatch(clinic, /<option value="ar">/);
 });
+
+
+test("fresh Supabase bootstrap defines core tables and enables RLS", async () => {
+  const bootstrap = await read("supabase/bootstrap/initial_schema.sql");
+  const guide = await read("supabase/bootstrap/README.md");
+  for (const table of ["clinics", "clinic_settings", "clinic_members", "super_admins", "appointment_requests"]) {
+    assert.match(bootstrap, new RegExp("create table if not exists public\\\\." + table, "i"));
+    assert.match(bootstrap, new RegExp("alter table public\\\\." + table + " enable row level security", "i"));
+  }
+  assert.match(bootstrap, /create policy "Super admins can create clinics"/i);
+  assert.match(bootstrap, /create policy "Managers can update clinic appointments"/i);
+  assert.doesNotMatch(bootstrap, /create policy[^;]*public appointment requests/i);
+  assert.match(guide, /run `initial_schema\.sql` once/i);
+  assert.match(guide, /apply every SQL migration/i);
+});

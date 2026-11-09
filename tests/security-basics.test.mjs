@@ -138,3 +138,15 @@ test("Supabase RLS policies use cached auth lookups and a membership lookup inde
   assert.match(superAdmin, /\(select\s+auth\.uid\(\)\)/i);
   assert.doesNotMatch(policies + superAdmin, /\bauth\.uid\(\)\s*=/i);
 });
+
+
+test("public appointment inserts are server-only, not anonymous Data API writes", async () => {
+  const removal = await read("supabase/migrations/20261109065408_remove_unused_anon_appointment_policy.sql");
+  assert.match(removal, /drop\s+policy\s+if\s+exists\s+"Allow public appointment requests"/i);
+  const worker = await read("src/index.js");
+  assert.match(functionSource(worker, "handleAppointment"), /SUPABASE_SERVICE_ROLE_KEY/);
+  const pages = await read("functions/api/appointment.js");
+  const netlify = await read("netlify/functions/appointment.mjs");
+  assert.match(pages, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(netlify, /SUPABASE_SERVICE_ROLE_KEY/);
+});

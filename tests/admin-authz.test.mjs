@@ -96,6 +96,23 @@ test("admin appointment API scopes reads to the manager's assigned clinic", asyn
   assert.equal((await response.json()).appointments.length, 1);
 });
 
+test("admin appointment status rejects malformed JSON before update", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    throw new Error("Malformed status payload must not reach the database");
+  };
+  try {
+    const malformed = new Request("https://example.test/api/admin/appointment-status", {
+      method: "POST", headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" }, body: "{"
+    });
+    const response = await worker.default.fetch(malformed, env);
+    assert.equal(response.status, 400);
+  } finally { globalThis.fetch = originalFetch; }
+});
+
 test("admin appointment status rejects unsupported states before update", async () => {
   const response = await invoke("/api/admin/appointment-status", {
     method: "POST",

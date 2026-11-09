@@ -64,3 +64,12 @@ where table_schema = 'public'
   )
   and grantee in ('anon', 'authenticated', 'service_role')
 order by table_name, grantee, privilege_type;
+
+-- Indexes that enforce manager membership uniqueness and support clinic-scoped lookups.
+select
+  indexname,
+  indexdef
+from pg_indexes
+where schemaname = 'public'
+  and tablename = 'clinic_members'
+order by indexname;

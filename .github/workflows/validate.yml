@@ -40,9 +40,13 @@ jobs:
           test -f netlify/functions/appointment.mjs
           test -f netlify/functions/clinic-info.mjs
           test -f netlify/functions/demo-request.mjs
-          for route in chat appointment public/clinic-info demo-request; do
-            grep -Fq "from = \"/api/$route\"" netlify.toml
-            grep -Fq "to = \"/.netlify/functions/$route\"" netlify.toml
-          done
+          grep -Fq 'from = "/api/chat"' netlify.toml
+          grep -Fq 'to = "/.netlify/functions/chat"' netlify.toml
+          grep -Fq 'from = "/api/appointment"' netlify.toml
+          grep -Fq 'to = "/.netlify/functions/appointment"' netlify.toml
+          grep -Fq 'from = "/api/public/clinic-info"' netlify.toml
+          grep -Fq 'to = "/.netlify/functions/clinic-info"' netlify.toml
+          grep -Fq 'from = "/api/demo-request"' netlify.toml
+          grep -Fq 'to = "/.netlify/functions/demo-request"' netlify.toml
           grep -Fq 'fetch("/api/demo-request"' public/landing.html
           echo "Cloudflare Pages, Netlify functions, and landing-form routes are wired."

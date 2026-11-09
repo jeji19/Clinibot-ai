@@ -9,6 +9,52 @@ const pagesSource = await readFile(new URL("../functions/api/chat.js", import.me
 const pagesModule = await import("data:text/javascript;base64," + Buffer.from(pagesSource).toString("base64"));
 const netlifyModule = await import(pathToFileURL(new URL("../netlify/functions/chat.mjs", import.meta.url).pathname).href);
 
+async function invokePagesChat(message, defaultLanguage) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/rest/v1/clinics")) return Response.json([{ id: "clinic-1", name: "North Clinic", slug: "north-clinic", is_active: true }]);
+    if (target.pathname.endsWith("/rest/v1/clinic_settings")) return Response.json([{ description: "A dermatology clinic", services: [], opening_hours: {}, default_language: defaultLanguage }]);
+    throw new Error("Unexpected Pages chat upstream request: " + target.pathname);
+  };
+  try {
+    const response = await pagesModule.onRequestPost({
+      request: new Request("https://example.test/api/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message, clinic_slug: "north-clinic" }) }),
+      env: { SUPABASE_URL: env.SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY }
+    });
+    return { response, data: await response.json() };
+  } finally { globalThis.fetch = originalFetch; }
+}
+
+async function invokeNetlifyChat(message, defaultLanguage) {
+  const originalFetch = globalThis.fetch;
+  const keys = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "GEMINI_API_KEY"];
+  const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
+  for (const key of keys) {
+    if (key === "SUPABASE_URL") process.env[key] = env.SUPABASE_URL;
+    else if (key === "SUPABASE_SERVICE_ROLE_KEY") process.env[key] = env.SUPABASE_SERVICE_ROLE_KEY;
+    else delete process.env[key];
+  }
+  globalThis.fetch = async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/rest/v1/clinics")) return Response.json([{ id: "clinic-1", name: "North Clinic", slug: "north-clinic", is_active: true }]);
+    if (target.pathname.endsWith("/rest/v1/clinic_settings")) return Response.json([{ description: "A dermatology clinic", services: [], opening_hours: {}, default_language: defaultLanguage }]);
+    throw new Error("Unexpected Netlify chat upstream request: " + target.pathname);
+  };
+  try {
+    const response = await netlifyModule.default(new Request("https://example.test/.netlify/functions/chat", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message, clinic_slug: "north-clinic" })
+    }));
+    return { response, data: await response.json() };
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const key of keys) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
+  }
+}
+
 const env = {
   SUPABASE_URL: "https://project.supabase.co",
   SUPABASE_ANON_KEY: "test-anon-key",
@@ -185,3 +231,22 @@ test("zero-priced services are labeled in the patient's detected language", asyn
   assert.match(russian.data.reply, /Бесплатно/);
   assert.doesNotMatch(russian.data.reply, /Free/);
 });
+
+
+for (const [label, invoke] of [["Cloudflare Pages", invokePagesChat], ["Netlify", invokeNetlifyChat]]) {
+  test(`${label}: honors clinic default language and explicit patient language`, async () => {
+    const russianDefault = await invoke("???", "ru");
+    assert.equal(russianDefault.response.status, 200);
+    assert.match(russianDefault.data.reply, /Я могу помочь/);
+
+    const englishDefault = await invoke("???", "en");
+    assert.equal(englishDefault.response.status, 200);
+    assert.match(englishDefault.data.reply, /I can help/);
+
+    const explicitEnglish = await invoke("hello", "ru");
+    assert.match(explicitEnglish.data.reply, /Welcome to/);
+
+    const explicitRussian = await invoke("привет", "en");
+    assert.match(explicitRussian.data.reply, /Добро пожаловать/);
+  });
+}

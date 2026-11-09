@@ -29,7 +29,7 @@ async function withMockFetch(mock, run) {
 }
 
 async function invokePages(body, config = env, method = "POST") {
-  return pagesModule.onRequest({
+  return pagesModule.onRequestPost({
     request: new Request("https://example.test/api/appointment", {
       method,
       headers: { "Content-Type": "application/json" },

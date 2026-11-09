@@ -53,7 +53,8 @@ async function handleChat(request, env) {
     return json({ error: "Clinic information service is not configured." }, 503);
   }
   try {
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "my-clinic";
     if (!message || message.length > 1200) return json({ error: "Please enter a valid message." }, 400);
@@ -494,7 +495,8 @@ async function handleDemoRequest(request, env) {
     return json({ error: "Demo request storage is temporarily unavailable." }, 503);
   }
   try {
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     // Honeypot field: silently accept automated submissions without storing or emailing.
     if (typeof body.website === "string" && body.website.trim()) return json({ success: true }, 200);
     const clinic = typeof body.clinic_name === "string" ? body.clinic_name.trim() : "";

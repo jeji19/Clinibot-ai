@@ -138,7 +138,7 @@ function detectClinicAppointmentIntent(message, defaultLanguage = "en") {
   if (!patterns[lang].test(text)) return null;
   return lang === "ru"
     ? "Конечно! Чтобы отправить запрос на запись, нажмите кнопку «Request an appointment», выберите услугу, дату и время и укажите контактные данные. Клиника проверит запрос и подтвердит запись."
-    : "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm the appointment.";
+    : "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm availability.";
 }
 
 function detectClinicFaqReply(message, clinicInfo) {

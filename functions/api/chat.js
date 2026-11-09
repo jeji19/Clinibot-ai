@@ -75,8 +75,11 @@ async function handleChat(request, env) {
     };
 
 
-function detectClinicLanguage(message) {
-  return /[\u0400-\u04FF]/.test(String(message || "")) ? "ru" : "en";
+function detectClinicLanguage(message, defaultLanguage = "en") {
+  const value = String(message || "");
+  if (/[\u0400-\u04FF]/.test(value)) return "ru";
+  if (/[A-Za-z]/.test(value)) return "en";
+  return defaultLanguage === "ru" ? "ru" : "en";
 }
 
 function detectClinicMedicalIntent(message) {
@@ -95,9 +98,9 @@ function detectClinicMedicalIntent(message) {
     : "I understand your concern. It would not be safe to recommend a procedure based on a chat message. Please consult a qualified clinic professional who can assess your situation and discuss suitable options. The AI assistant cannot diagnose conditions or prescribe treatment. You can request a consultation using the “Request an appointment” button.";
 }
 
-function detectClinicAppointmentIntent(message) {
+function detectClinicAppointmentIntent(message, defaultLanguage = "en") {
   const text = String(message || "").toLowerCase().trim();
-  const lang = detectClinicLanguage(text);
+  const lang = detectClinicLanguage(text, defaultLanguage);
   const patterns = {
     ru: /(записаться|запись на приём|запись на прием|хочу записаться|запишите меня|записаться на консультацию)/i,
     en: /(book an? (appointment|consultation)|make an? appointment|schedule an? appointment|i want to book|i'd like to book|i would like to book|booking an? appointment|reserve an? appointment)/i
@@ -105,12 +108,12 @@ function detectClinicAppointmentIntent(message) {
   if (!patterns[lang].test(text)) return null;
   return lang === "ru"
     ? "Конечно! Чтобы отправить запрос на запись, нажмите кнопку «Request an appointment», выберите услугу, дату и время и укажите контактные данные. Клиника проверит запрос и подтвердит запись."
-    : "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm the appointment.";
+    : "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm availability.";
 }
 
 function detectClinicFaqReply(message, clinicInfo) {
   const text = String(message || "").toLowerCase();
-  const lang = detectClinicLanguage(text);
+  const lang = detectClinicLanguage(text, clinicInfo.default_language);
   const words = {
     greeting: /^(hi|hello|hey|здравствуйте|привет|добрый день|доброе утро|добрый вечер)\s*[!.?。]*$/i.test(text.trim()),
     services: /(service|services|treatment|treatments|price|prices|cost|how much|услуг|цены|стоимость|сколько стоит|процедур)/i.test(text),
@@ -217,14 +220,14 @@ function detectClinicFaqReply(message, clinicInfo) {
 
 
 
-    const appointmentReply = detectClinicAppointmentIntent(message);
+    const appointmentReply = detectClinicAppointmentIntent(message, clinicInfo.default_language);
     if (appointmentReply) return json({ reply: appointmentReply, handled_without_ai: true });
 
     const faqReply = detectClinicFaqReply(message, clinicInfo);
     if (faqReply) return json({ reply: faqReply, handled_without_ai: true });
 
     if (!env.GEMINI_API_KEY) {
-      const language = detectClinicLanguage(message);
+      const language = detectClinicLanguage(message, clinicInfo.default_language);
       const fallback = {
         ru: "Я могу помочь с опубликованной информацией об услугах, ценах и часах работы. Для других вопросов, пожалуйста, обратитесь к команде клиники.",
         en: "I can help with published information about services, prices and opening hours. For other questions, please contact the clinic team."
@@ -232,9 +235,10 @@ function detectClinicFaqReply(message, clinicInfo) {
       return json({ reply: fallback[language] || fallback.en, handled_without_ai: true });
     }
 
+    const replyLanguage = detectClinicLanguage(message, clinicInfo.default_language);
     const instructions = `
 You are CliniBot AI, a polished, helpful and professional virtual receptionist for beauty, dermatology and dental clinics worldwide.
-Always reply in English or Russian only. If the message is in Russian, reply in natural professional Russian; otherwise reply in English.
+Always reply in English or Russian only. For this message, reply in natural professional ${replyLanguage === "ru" ? "Russian" : "English"}, using the clinic's default language only when the message itself does not clearly indicate a language.
 Sound like a real, attentive receptionist: warm, clear, natural and conversational, never robotic, repetitive, overly formal or salesy.
 Answer the exact question first. Keep most answers to 1–3 short sentences. Use a short list only when it makes the answer easier to understand. Avoid unnecessary introductions, repeated greetings, excessive bold formatting and generic filler.
 If the question is ambiguous, ask just one short clarifying question. Do not make the user repeat information they have already provided.

@@ -52,7 +52,7 @@ Appointment requests are not calendar bookings: the clinic team must review each
 
 ## Deployment target warning
 
-The tracked `wrangler.jsonc` currently names the Worker `clinibot-ai`, while the previously supplied live hostname is `clinibot-ai1.albizrahemran.workers.dev`. Confirm which Worker is the intended production target in Cloudflare before running a deployment command. Do not change the configured Worker name based on the hostname alone. The current GitHub Actions workflow runs validation only; it does not deploy to Cloudflare. The connected tools do not currently provide Cloudflare deployment access, so no Worker deployment has been performed from this workflow.
+The tracked `wrangler.jsonc` now names the Worker `clinibot-ai1`, matching the previously supplied `clinibot-ai1.albizrahemran.workers.dev` hostname. Cloudflare documents the production route format as `<worker-name>.<account-subdomain>.workers.dev` and requires the Worker name to match the Wrangler configuration for Git-connected builds ([workers.dev naming](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/), [Git integration name requirement](https://developers.cloudflare.com/workers/ci-cd/builds/)). The current GitHub Actions workflow runs validation only; it does not deploy to Cloudflare. The connected tools do not currently provide Cloudflare deployment access, so no Worker deployment has been performed.
 
 ## Supabase RLS audit
 

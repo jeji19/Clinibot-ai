@@ -142,7 +142,7 @@ async function loadDemoRequests(){
   }
   none.classList.toggle('hidden',leads.length>0);
   msg.textContent=leads.length+' demo request(s) loaded (latest 200).';
- }catch(err){msg.textContent=err.message;if(err.message.toLowerCase().includes('sign in')||err.message.toLowerCase().includes('authorized')){token='';sessionStorage.removeItem('clinibot_admin_token');showLogin()}}
+ }catch(err){msg.textContent=err.message;handleSuperAdminSessionError(err)}
 }
 
 document.getElementById('clinicForm').addEventListener('submit',async e=>{
@@ -153,7 +153,7 @@ document.getElementById('clinicForm').addEventListener('submit',async e=>{
 document.getElementById('memberForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=document.getElementById('assignManagerButton'),msg=document.getElementById('memberFormMessage');btn.disabled=true;msg.textContent='Assigning manager…';
  try{await api('/api/superadmin/members',{method:'POST',body:JSON.stringify({clinic_id:document.getElementById('memberClinic').value,user_id:document.getElementById('managerUserId').value.trim()})});msg.textContent='Manager assigned successfully.';document.getElementById('managerUserId').value='';await loadOverview()}
- catch(err){msg.textContent=err.message}finally{btn.disabled=false}
+ catch(err){msg.textContent=err.message;handleSuperAdminSessionError(err)}finally{btn.disabled=false}
 });
 document.getElementById('refresh').addEventListener('click',loadOverview);
 logout.addEventListener('click',()=>{token='';sessionStorage.removeItem('clinibot_admin_token');rows.replaceChildren();showLogin()});

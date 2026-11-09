@@ -733,12 +733,16 @@ async function handleAdminSettings(request, env) {
       return json({ error: "Opening hours must be provided as a day-to-hours object." }, 400);
     }
     const services = [];
+    const serviceNames = new Set();
     for (const item of body.services) {
       const name = typeof item?.name === "string" ? item.name.trim() : "";
+      const normalizedName = name.toLocaleLowerCase("en");
       const price = item?.price === null || item?.price === "" || item?.price === undefined ? null : Number(item.price);
       if (!name || name.length > 120 || (price !== null && (!Number.isFinite(price) || price < 0 || price > 10000000))) {
         return json({ error: "Each service needs a name and a valid non-negative price (or leave price blank)." }, 400);
       }
+      if (serviceNames.has(normalizedName)) return json({ error: "Service names must be unique within a clinic." }, 400);
+      serviceNames.add(normalizedName);
       services.push({ name, ...(price === null ? {} : { price }) });
     }
     const allowedDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];

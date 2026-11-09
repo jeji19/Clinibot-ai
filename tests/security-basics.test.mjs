@@ -159,7 +159,8 @@ test("manager dashboard clears expired sessions for both reads and status update
   assert.match(dashboard, /response\.status===409&&\/clinic manager\|more than one clinic\/i\.test/);
   assert.match(dashboard, /message\.includes\('sign in'\)/);
   assert.match(dashboard, /catch\(err\)\{tableStatus\.textContent=err\.message;handleSessionError\(err\)\}/);
-  assert.match(dashboard, /select\.value=item\.status\|\|'new';handleSessionError\(err\)/);
+  assert.match(dashboard, /let currentStatus=item\.status\|\|'new';select\.value=currentStatus;/);
+  assert.match(dashboard, /select\.value=currentStatus;handleSessionError\(err\)/);
   assert.match(dashboard, /sessionStorage\.removeItem\('clinibot_admin_token'\)/);
 });
 

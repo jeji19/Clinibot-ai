@@ -5,6 +5,21 @@
   directory = "netlify/functions"
 
 [[redirects]]
+  from = "/api/chat"
+  to = "/.netlify/functions/chat"
+  status = 200
+
+[[redirects]]
+  from = "/api/appointment"
+  to = "/.netlify/functions/appointment"
+  status = 200
+
+[[redirects]]
+  from = "/api/public/clinic-info"
+  to = "/.netlify/functions/clinic-info"
+  status = 200
+
+[[redirects]]
   from = "/api/demo-request"
   to = "/.netlify/functions/demo-request"
   status = 200

@@ -189,3 +189,14 @@ test("database enforces one clinic membership per manager account", async () => 
   const cleanup = await read("supabase/migrations/20261109100026_remove_redundant_manager_membership_index.sql");
   assert.match(cleanup, /drop\s+index\s+if\s+exists\s+public\.clinic_members_user_id_idx/i);
 });
+
+
+test("public-facing language options are limited to English and Russian", async () => {
+  const landing = await read("public/landing.html");
+  const clinic = await read("public/index.html");
+  assert.match(landing, /<option value="en">EN<\/option>/);
+  assert.match(landing, /<option value="ru">RU<\/option>/);
+  assert.doesNotMatch(landing, /\bar\s*:\s*\{/);
+  assert.doesNotMatch(landing, /<option value="ar">/);
+  assert.doesNotMatch(clinic, /<option value="ar">/);
+});

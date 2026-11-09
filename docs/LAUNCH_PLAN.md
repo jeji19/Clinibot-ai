@@ -65,6 +65,7 @@ A clinic should be able to complete this flow without developer help:
 
 - Complete a real browser-based end-to-end test with a dedicated test clinic, manager account, and non-real patient data.
 - Confirm which Cloudflare Worker is the production target and verify the actual deployed version. GitHub CI passing does not prove that Cloudflare deployed the same commit.
+- Configure a clinic-facing custom domain or Worker route before business-critical production; the current `workers.dev` URL is suitable for testing but Cloudflare recommends custom domains/routes for production workloads.
 - Define the controller/processor roles, lawful basis, privacy notice, retention/deletion process, processor agreements, and incident-response procedure for each target market. Patient names, phone numbers, and requested services can constitute personal data and may reveal health-related information.
 - Review applicable GDPR and local health-data rules before using the product with real patients. Do not claim HIPAA, GDPR, or other regulatory compliance without a documented assessment and appropriate contracts/controls.
 - Configure backups, monitoring, access revocation, and a tested support process.

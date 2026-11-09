@@ -48,6 +48,7 @@ A paid pilot may be offered only after every P0 item below is completed and evid
 - [ ] Verify medical/urgent prompts return safe escalation guidance and do not call the generative model where deterministic safety handling applies.
 - [ ] Test email delivery, failure behavior, and a manual fallback process for missed notifications.
 - [ ] Publish customer-facing privacy notice, terms, retention/deletion contact/process, and support contact appropriate to the pilot market.
+- [ ] Review and approve the engineering data-flow inventory in `docs/DATA_FLOW_INVENTORY.md`; confirm provider contracts, data locations, retention, and international-transfer terms.
 - [ ] Complete a documented privacy/security review for the intended jurisdiction and data flows; sign required processor agreements before real patient data is used.
 - [ ] Define written pilot scope, duration, price, cancellation/refund terms, onboarding responsibilities, support hours, and success criteria.
 

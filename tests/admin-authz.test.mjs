@@ -333,6 +333,21 @@ test("Super Admin cannot assign a manager already assigned to another clinic", a
 });
 
 
+test("clinic settings rejects duplicate service names without saving", async () => {
+  const response = await invoke("/api/admin/settings", {
+    method: "PUT",
+    body: { description: "Clinic", default_language: "en", services: [{ name: "Laser", price: 50 }, { name: " laser ", price: 60 }], opening_hours: {} }
+  }, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    if (target.pathname.endsWith("/rest/v1/clinics")) return json([{ id: clinicId, name: "North Clinic", slug: "north-clinic" }]);
+    throw new Error("Duplicate service names must not be saved");
+  });
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /unique/i);
+});
+
 test("clinic settings rejects unsupported default language without saving", async () => {
   const response = await invoke("/api/admin/settings", {
     method: "PUT",

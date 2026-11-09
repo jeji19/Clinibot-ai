@@ -177,7 +177,7 @@ test("clinic settings page clears expired or revoked manager sessions", async ()
   const page = await read("public/settings.html");
   assert.match(page, /response.status===401||response.status===403/);
   assert.match(page, /response.status===409&&\/clinic manager\|more than one clinic\/i\.test/);
-  assert.match(page, /sessionStorage.removeItem('clinibot_admin_token')/);
+  assert.ok(page.includes("sessionStorage.removeItem('clinibot_admin_token')"));
   assert.ok(page.includes("location.href='/admin.html'"));
 });
 

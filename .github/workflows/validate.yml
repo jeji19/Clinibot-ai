@@ -28,3 +28,21 @@ jobs:
           done < <(find src functions netlify/functions -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
           test "$count" -gt 0
           echo "Syntax checks passed for $count JavaScript files."
+      - name: Verify public API adapter wiring
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f functions/api/chat.js
+          test -f functions/api/appointment.js
+          test -f functions/api/public/clinic-info.js
+          test -f functions/api/demo-request.js
+          test -f netlify/functions/chat.mjs
+          test -f netlify/functions/appointment.mjs
+          test -f netlify/functions/clinic-info.mjs
+          test -f netlify/functions/demo-request.mjs
+          for route in chat appointment public/clinic-info demo-request; do
+            grep -Fq "from = \"/api/$route\"" netlify.toml
+            grep -Fq "to = \"/.netlify/functions/$route\"" netlify.toml
+          done
+          grep -Fq 'fetch("/api/demo-request"' public/landing.html
+          echo "Cloudflare Pages, Netlify functions, and landing-form routes are wired."

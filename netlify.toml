@@ -3,3 +3,8 @@
 
 [functions]
   directory = "netlify/functions"
+
+[[redirects]]
+  from = "/api/demo-request"
+  to = "/.netlify/functions/demo-request"
+  status = 200

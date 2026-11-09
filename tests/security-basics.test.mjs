@@ -105,3 +105,23 @@ test("Supabase RLS audit is read-only and covers all application tables", async 
   assert.match(audit, /information_schema\.role_table_grants/i);
   assert.doesNotMatch(audit, /\b(?:alter|create|drop|insert|update|delete|truncate|grant|revoke)\s+(?:table|policy|index|into|set|from|on|all|select|public)/i);
 });
+
+
+test("Supabase public table grants follow the least-privilege application access model", async () => {
+  const grants = await read("supabase/migrations/20261109065207_tighten_public_table_grants.sql");
+  const defaults = await read("supabase/migrations/20261109065210_revoke_default_public_grants.sql");
+  assert.match(grants, /revoke\s+all\s+privileges[\s\S]*?from\s+anon,\s*authenticated/i);
+  assert.match(grants, /grant\s+select,\s*insert,\s*update\s+on\s+table\s+public\.clinics\s+to\s+authenticated/i);
+  assert.match(grants, /grant\s+select,\s*insert,\s*update\s+on\s+table\s+public\.clinic_settings\s+to\s+authenticated/i);
+  assert.match(grants, /grant\s+select,\s*insert,\s*delete\s+on\s+table\s+public\.clinic_members\s+to\s+authenticated/i);
+  assert.match(grants, /grant\s+select\s+on\s+table\s+public\.super_admins\s+to\s+authenticated/i);
+  assert.match(grants, /grant\s+select,\s*update\s+on\s+table\s+public\.appointment_requests\s+to\s+authenticated/i);
+  assert.doesNotMatch(grants, /grant\s+[^;]*\s+on\s+table\s+public\.demo_requests\s+to\s+(?:anon|authenticated)/i);
+  assert.match(defaults, /alter\s+default\s+privileges\s+for\s+role\s+postgres[\s\S]*?revoke\s+all\s+on\s+tables\s+from\s+anon,\s*authenticated/i);
+
+  const worker = await read("src/index.js");
+  const appointment = functionSource(worker, "handleAppointment");
+  assert.match(appointment, /SUPABASE_SERVICE_ROLE_KEY/);
+  const demoLead = functionSource(worker, "handleDemoRequest");
+  assert.match(demoLead, /SUPABASE_SERVICE_ROLE_KEY/);
+});

@@ -53,3 +53,5 @@ jobs:
 
       - name: Test demo request endpoints
         run: node --test tests/demo-request.test.mjs
+      - name: Test baseline security safeguards
+        run: node --test tests/security-basics.test.mjs

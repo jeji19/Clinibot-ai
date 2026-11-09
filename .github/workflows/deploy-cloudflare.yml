@@ -34,6 +34,7 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
+        with:
           ref: main
 
       - name: Verify target and credentials

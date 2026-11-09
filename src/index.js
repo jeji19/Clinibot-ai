@@ -32,6 +32,15 @@ function secureAssetResponse(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+async function readJsonObject(request) {
+  try {
+    const body = await request.json();
+    return body && typeof body === "object" && !Array.isArray(body) ? body : null;
+  } catch {
+    return null;
+  }
+}
+
 const json = (data, status = 200) => new Response(JSON.stringify(data), {
   status,
   headers: { ...securityHeaders, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
@@ -849,7 +858,8 @@ async function handleSuperAdminDemoRequestStatus(request, env) {
     const admin = await verifySuperAdmin(request, env);
     if (!admin) return json({ error: "Super Admin authorization required." }, 403);
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Demo request storage is not configured." }, 503);
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     const id = (typeof body.id === "string" || typeof body.id === "number") ? String(body.id).trim() : "";
     const status = typeof body.status === "string" ? body.status.trim().toLowerCase() : "";
     const validId = id.length > 0 && id.length <= 128 && /^[a-zA-Z0-9_-]+$/.test(id);
@@ -884,7 +894,8 @@ async function handleSuperAdminDemoRequestDelete(request, env) {
     const admin = await verifySuperAdmin(request, env);
     if (!admin) return json({ error: "Super Admin authorization required." }, 403);
     if (!env.SUPABASE_SERVICE_ROLE_KEY) return json({ error: "Demo request storage is not configured." }, 503);
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     const id = (typeof body.id === "string" || typeof body.id === "number") ? String(body.id).trim() : "";
     const validId = id.length > 0 && id.length <= 128 && /^[a-zA-Z0-9_-]+$/.test(id);
     if (!validId) return json({ error: "Invalid demo request." }, 400);
@@ -913,7 +924,8 @@ async function handleSuperAdminCreateClinic(request, env) {
   try {
     const admin = await verifySuperAdmin(request, env);
     if (!admin) return json({ error: "Super Admin authorization required." }, 403);
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     const name = typeof body.name === "string" ? body.name.trim() : "";
     const slug = typeof body.slug === "string" ? body.slug.trim().toLowerCase() : "";
     const plan = typeof body.plan === "string" ? body.plan : "basic";
@@ -952,7 +964,8 @@ async function handleSuperAdminAddMember(request, env) {
   try {
     const admin = await verifySuperAdmin(request, env);
     if (!admin) return json({ error: "Super Admin authorization required." }, 403);
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     const clinic_id = typeof body.clinic_id === "string" ? body.clinic_id.trim() : "";
     const user_id = typeof body.user_id === "string" ? body.user_id.trim() : "";
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;

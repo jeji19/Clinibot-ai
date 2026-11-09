@@ -61,6 +61,8 @@ After deployment, verify with a real test clinic and test accounts:
 
 ## Automated checks and current verification limits
 
-A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks and verifies that the public API adapter files and Netlify rewrites are present on pushes and pull requests to `main`. These are static checks; they do not test browser behavior, Supabase permissions, email delivery, or production deployment.
+A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks, verifies public API adapter wiring, exercises demo-request endpoint behavior with mocked database/email services, and checks baseline security safeguards. The security tests assert that manager endpoints authenticate users and scope clinic data to membership-derived clinic IDs, Super Admin routes verify the allowlist before privileged operations, public pages contain no server secrets, dashboard pages avoid known unsafe HTML sinks, and the tracked demo-request migration enables RLS without direct client policies.
 
-A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing syntax workflow as proof of production deployment.
+These automated checks validate source-level safeguards and mocked endpoint behavior. They do not test browser behavior, the actual Supabase RLS policies for `clinics`, `clinic_settings`, `clinic_members`, `super_admins`, or `appointment_requests`, email delivery, or production deployment. Only the `demo_requests` migration is currently tracked in this repository; verify that migration has been applied and independently inspect the other table policies in the target Supabase project.
+
+A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing CI workflow as proof of production deployment.

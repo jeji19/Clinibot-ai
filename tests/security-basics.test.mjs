@@ -198,6 +198,11 @@ test("public-facing language options are limited to English and Russian", async 
   assert.match(landing, /<option value="ru">RU<\/option>/);
   assert.doesNotMatch(landing, /\bar\s*:\s*\{/);
   assert.doesNotMatch(landing, /<option value="ar">/);
+  const mainCopyStart = landing.indexOf("const translations={");
+  const mainCopyEnd = landing.indexOf("Object.assign(translations.ru", mainCopyStart);
+  const mainCopy = landing.slice(mainCopyStart, mainCopyEnd);
+  assert.ok(mainCopy.includes("ru:{"));
+  assert.doesNotMatch(mainCopy, /\b(?:ar|de|fr|es)\s*:/);
   const statusCopyStart = landing.lastIndexOf("const languageCopy = {");
   const statusCopyEnd = landing.indexOf("const translateStatus", statusCopyStart);
   const statusCopy = landing.slice(statusCopyStart, statusCopyEnd);

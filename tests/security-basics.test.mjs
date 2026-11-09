@@ -169,3 +169,11 @@ test("Super Admin dashboard clears expired or revoked authorization from every p
   assert.match(dashboard, /sessionStorage\.removeItem\('clinibot_admin_token'\)/);
   assert.ok((dashboard.match(/handleSuperAdminSessionError\(err\)/g) || []).length >= 7, "all protected dashboard actions should clear revoked sessions");
 });
+
+
+test("clinic settings page clears expired or revoked manager sessions", async () => {
+  const page = await read("public/settings.html");
+  assert.match(page, /response.status===401||response.status===403/);
+  assert.match(page, /sessionStorage.removeItem('clinibot_admin_token')/);
+  assert.match(page, /location.href='/admin.html'/);
+});

@@ -160,3 +160,12 @@ test("manager dashboard clears expired sessions for both reads and status update
   assert.match(dashboard, /select\.value=item\.status\|\|'new';handleSessionError\(err\)/);
   assert.match(dashboard, /sessionStorage\.removeItem\('clinibot_admin_token'\)/);
 });
+
+
+test("Super Admin dashboard clears expired or revoked authorization from every protected action", async () => {
+  const dashboard = await read("public/superadmin.html");
+  assert.match(dashboard, /function handleSuperAdminSessionError\(err\)/);
+  assert.match(dashboard, /message\.includes\('authorization'\)/);
+  assert.match(dashboard, /sessionStorage\.removeItem\('clinibot_admin_token'\)/);
+  assert.ok((dashboard.match(/handleSuperAdminSessionError\(err\)/g) || []).length >= 7, "all protected dashboard actions should clear revoked sessions");
+});

@@ -64,3 +64,48 @@ test("an explicit Russian message overrides an English clinic default", async ()
   assert.equal(response.status, 200);
   assert.match(data.reply, /Добро пожаловать в \*\*North Clinic\*\*/);
 });
+
+
+async function invokeWithoutUpstream(message) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async () => { throw new Error("Medical safety replies must not call external services"); };
+  try {
+    const response = await worker.default.fetch(new Request("https://example.test/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, clinic_slug: "north-clinic" })
+    }), env);
+    return { response, data: await response.json() };
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
+test("English emergency messages receive an urgent-care response without calling external services", async () => {
+  const { response, data } = await invokeWithoutUpstream("I have chest pain and cannot breathe");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /emergency services/i);
+  assert.equal(data.handled_without_ai, true);
+});
+
+test("Russian emergency messages receive an urgent-care response without calling external services", async () => {
+  const { response, data } = await invokeWithoutUpstream("У меня сильная боль в груди, не могу дышать");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /экстренной помощи/);
+  assert.equal(data.handled_without_ai, true);
+});
+
+test("medical procedure recommendations are redirected to qualified clinic staff", async () => {
+  const { response, data } = await invokeWithoutUpstream("I have acne. What procedure do you recommend for me?");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /qualified clinic professional/i);
+  assert.equal(data.handled_without_ai, true);
+});
+
+test("appointment intent directs patients to the request form without claiming a confirmed booking", async () => {
+  const { response, data } = await invokeChat("I'd like to book an appointment", "en");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /Request an appointment/);
+  assert.match(data.reply, /confirm availability/);
+  assert.equal(data.handled_without_ai, true);
+});

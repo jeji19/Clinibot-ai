@@ -169,3 +169,48 @@ test("Super Admin clinic creation validates input before database write", async 
   });
   assert.equal(response.status, 400);
 });
+
+
+test("Super Admin write endpoints reject malformed JSON with 400", async () => {
+  const paths = [
+    ["/api/superadmin/demo-request-status", "POST"],
+    ["/api/superadmin/demo-request-delete", "POST"],
+    ["/api/superadmin/clinics", "POST"],
+    ["/api/superadmin/members", "POST"]
+  ];
+  for (const [path, method] of paths) {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = async url => {
+      const target = new URL(String(url));
+      if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+      if (target.pathname.endsWith("/rest/v1/super_admins")) return json([{ user_id: managerId }]);
+      throw new Error("Malformed JSON must not reach a database write");
+    };
+    try {
+      const malformed = new Request("https://example.test" + path, {
+        method, headers: { Authorization: "Bearer valid-token", "Content-Type": "application/json" }, body: "{"
+      });
+      const response = await worker.default.fetch(malformed, env);
+      assert.equal(response.status, 400, path);
+    } finally { globalThis.fetch = originalFetch; }
+  }
+});
+
+test("Super Admin demo leads and write endpoints deny users outside the allowlist", async () => {
+  const paths = [
+    ["/api/superadmin/demo-requests", "GET"],
+    ["/api/superadmin/demo-request-status", "POST"],
+    ["/api/superadmin/demo-request-delete", "POST"],
+    ["/api/superadmin/clinics", "POST"],
+    ["/api/superadmin/members", "POST"]
+  ];
+  for (const [path, method] of paths) {
+    const response = await invoke(path, { method, body: method === "POST" ? { id: 1, status: "closed", name: "Clinic", slug: "clinic", clinic_id: clinicId, user_id: managerId } : undefined }, async url => {
+      const target = new URL(String(url));
+      if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+      if (target.pathname.endsWith("/rest/v1/super_admins")) return json([]);
+      throw new Error("Non-admin must not reach privileged data or writes");
+    });
+    assert.equal(response.status, 403, path);
+  }
+});

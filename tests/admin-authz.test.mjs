@@ -214,3 +214,49 @@ test("Super Admin demo leads and write endpoints deny users outside the allowlis
     assert.equal(response.status, 403, path);
   }
 });
+
+
+test("Super Admin clinic update validates allowed fields before database write", async () => {
+  const response = await invoke("/api/superadmin/clinic-update", {
+    method: "POST", body: { clinic_id: clinicId, is_active: "false", plan: "enterprise" }
+  }, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/super_admins")) return json([{ user_id: managerId }]);
+    throw new Error("Invalid clinic update must not reach database");
+  });
+  assert.equal(response.status, 400);
+});
+
+test("Super Admin clinic update is allowlist-protected and uses the admin JWT", async () => {
+  let updateBody;
+  const response = await invoke("/api/superadmin/clinic-update", {
+    method: "POST", body: { clinic_id: clinicId, is_active: false, plan: "pro" }
+  }, async (url, options = {}) => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/super_admins")) return json([{ user_id: managerId }]);
+    if (target.pathname.endsWith("/rest/v1/clinics")) {
+      assert.equal(options.method, "PATCH");
+      assert.equal(target.searchParams.get("id"), "eq." + clinicId);
+      assert.equal(options.headers.Authorization, "Bearer valid-token");
+      updateBody = JSON.parse(options.body);
+      return json([{ id: clinicId, is_active: false, plan: "pro" }]);
+    }
+    throw new Error("Unexpected upstream request");
+  });
+  assert.equal(response.status, 200);
+  assert.deepEqual(updateBody, { is_active: false, plan: "pro" });
+});
+
+test("Non-Super Admin cannot deactivate a clinic", async () => {
+  const response = await invoke("/api/superadmin/clinic-update", {
+    method: "POST", body: { clinic_id: clinicId, is_active: false }
+  }, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/super_admins")) return json([]);
+    throw new Error("Unauthorized clinic update must not reach database");
+  });
+  assert.equal(response.status, 403);
+});

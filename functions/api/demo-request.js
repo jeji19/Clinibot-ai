@@ -15,7 +15,8 @@ async function handleDemoRequest(request, env) {
     return json({ error: "Demo request storage is temporarily unavailable." }, 503);
   }
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid JSON request body." }, 400);
     if (typeof body.website === "string" && body.website.trim()) return json({ success: true }, 200);
     const clinic = typeof body.clinic_name === "string" ? body.clinic_name.trim() : "";
     const contact = typeof body.contact_name === "string" ? body.contact_name.trim() : "";

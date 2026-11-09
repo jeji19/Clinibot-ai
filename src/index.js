@@ -1039,6 +1039,16 @@ async function handleSuperAdminAddMember(request, env) {
     const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!uuid.test(clinic_id) || !uuid.test(user_id)) return json({ error: "Enter a valid clinic ID and manager user ID." }, 400);
     const headers = { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + admin.token, "Prefer": "return=minimal" };
+    // The manager dashboard currently supports exactly one clinic per manager.
+    // Reject an existing assignment before inserting to avoid creating an unusable multi-clinic account.
+    const existingUrl = new URL("/rest/v1/clinic_members", env.SUPABASE_URL);
+    existingUrl.searchParams.set("select", "clinic_id");
+    existingUrl.searchParams.set("user_id", "eq." + user_id);
+    existingUrl.searchParams.set("limit", "1");
+    const existingResponse = await fetch(existingUrl, { headers, signal: AbortSignal.timeout(12000) });
+    const existingRows = await existingResponse.json().catch(() => []);
+    if (!existingResponse.ok || !Array.isArray(existingRows)) return json({ error: "Could not verify the manager's existing clinic assignment." }, 502);
+    if (existingRows.length) return json({ error: "This manager is already assigned to a clinic. Each manager account can manage only one clinic." }, 409);
     const response = await fetch(new URL("/rest/v1/clinic_members", env.SUPABASE_URL), {
       method: "POST", headers, body: JSON.stringify({ clinic_id, user_id }), signal: AbortSignal.timeout(15000)
     });

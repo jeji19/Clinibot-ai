@@ -25,6 +25,6 @@ jobs:
             echo "Checking $file"
             node --input-type=module --check < "$file"
             count=$((count + 1))
-          done < <(find src functions netlify/functions -type f \\( -name '*.js' -o -name '*.mjs' \\) -print0)
+          done < <(find src functions netlify/functions -type f \( -name '*.js' -o -name '*.mjs' \) -print0)
           test "$count" -gt 0
           echo "Syntax checks passed for $count JavaScript files."

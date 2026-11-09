@@ -22,7 +22,8 @@ async function handleChat(request, env) {
     return json({ error: "Clinic information service is not configured." }, 503);
   }
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid JSON request body." }, 400);
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "my-clinic";
     if (!message || message.length > 1200) return json({ error: "Please enter a valid message." }, 400);

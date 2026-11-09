@@ -1,14 +1,16 @@
 # CliniBot AI deployment checklist
 
-## Supported API adapters
+## Deployment adapters and feature coverage
 
 The repository contains three deployment adapters:
 
-- **Cloudflare Worker:** `src/index.js` with static assets from `public/`.
-- **Cloudflare Pages Functions:** `functions/api/`.
-- **Netlify Functions:** `netlify/functions/`.
+- **Cloudflare Worker:** `src/index.js` serves the public assets and implements the public APIs, clinic-manager APIs, and Super Admin APIs.
+- **Cloudflare Pages Functions:** `functions/api/` implements public chat, public clinic information, and appointment submission.
+- **Netlify Functions:** `netlify/functions/` implements public chat, public clinic information, and appointment submission.
 
-The public booking page selects the Netlify endpoints when it is served from a `.netlify.app` hostname; otherwise it uses the same-origin `/api/*` routes. Keep the adapters aligned when changing chat, clinic information, or appointment handling.
+**Important:** The Pages and Netlify adapters do not currently implement the clinic-manager or Super Admin API routes used by `public/admin.html`, `public/settings.html`, and `public/superadmin.html`. Those management screens therefore require the Cloudflare Worker deployment as currently implemented. Do not advertise Pages or Netlify as full-featured alternatives until their management endpoints have been ported and tested.
+
+The public booking page selects the Netlify endpoints when it is served from a `.netlify.app` hostname; otherwise it uses the same-origin `/api/*` routes. Keep public chat, clinic information, and appointment adapters aligned when changing those features.
 
 ## Required environment configuration
 
@@ -36,7 +38,7 @@ The application expects the Supabase tables and columns used by the API, includi
 
 The repository currently contains a tracked SQL migration for `demo_requests`. The other schema and Row Level Security policies are not fully represented by tracked migrations here. Verify them in the target Supabase project before production use; do not assume that successful source-code checks prove RLS is configured correctly.
 
-The application uses the service-role key only in server-side functions. Manager access is additionally scoped in the API to the manager's clinic membership. Super Admin actions require a verified user listed in `super_admins`.
+The application uses the service-role key only in server-side functions. Manager access is scoped in the Worker API to the manager's clinic membership. Super Admin actions require a verified user listed in `super_admins`. Confirm the actual Supabase RLS policies independently.
 
 ## Deployment target warning
 
@@ -57,6 +59,8 @@ After deployment, verify with a real test clinic and test accounts:
 9. Email delivery is checked separately from database storage.
 10. Review Worker logs and Supabase logs for failed requests and RLS denials.
 
-## Current verification limits
+## Automated checks and current verification limits
 
-Static JavaScript syntax checks and source-level assertions have been run on the Worker, booking page, landing page, Cloudflare Pages adapters, and Netlify adapters. No CI checks are configured in the repository. A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit as proof of production deployment.
+A GitHub Actions workflow at `.github/workflows/validate.yml` now runs dependency-free JavaScript module syntax checks on pushes and pull requests to `main`. This is a syntax check only; it does not test browser behavior, Supabase permissions, email delivery, or production deployment.
+
+A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing syntax workflow as proof of production deployment.

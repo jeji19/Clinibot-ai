@@ -67,13 +67,14 @@ jobs:
                     operation: "eq",
                     type: "string",
                     value: "clinibot-ai1"
+                  },
+                  {
+                    key: "$metadata.trigger",
+                    operation: "includes",
+                    type: "string",
+                    value: "/api/appointment"
                   }
-                ],
-                needle: {
-                  value: "Resend",
-                  isRegex: false,
-                  matchCase: false
-                }
+                ]
               }
             }' > /tmp/cf-observability-query.json
 
@@ -114,7 +115,9 @@ jobs:
                   elif ($message | test("Resend notification accepted"; "i")) then "resend_request_accepted"
                   elif ($message | test("Resend notification failed"; "i")) then "resend_request_failed"
                   elif ($message | test("Resend notification error"; "i")) then "resend_runtime_error"
-                  else "other_matching_resend_event"
+                  elif ($message | test("Supabase insert failed"; "i")) then "appointment_database_insert_failed"
+                  elif ($message | test("Appointment error"; "i")) then "appointment_handler_error"
+                  else "other_appointment_event"
                   end
                 ),
                 http_status: (try ($message | capture("Resend notification failed (?<status>[0-9]{3})").status) catch null)
@@ -123,5 +126,5 @@ jobs:
           ' /tmp/cf-observability-response.json
 
           count="$(jq -r '.result.events.count // 0' /tmp/cf-observability-response.json)"
-          echo "Total matching Resend events reported by Cloudflare: $count"
+          echo "Total appointment events reported by Cloudflare: $count"
           echo "Raw messages, patient data, email addresses, phone numbers, and request payloads are intentionally withheld."

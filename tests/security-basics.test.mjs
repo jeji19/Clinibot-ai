@@ -226,3 +226,15 @@ test("fresh Supabase bootstrap defines core tables and enables RLS", async () =>
   assert.match(guide, /run `initial_schema\.sql` once/i);
   assert.match(guide, /apply every SQL migration/i);
 });
+
+
+test("public product and chat copy contain no unsupported Arabic-language strings", async () => {
+  for (const path of [
+    "public/landing.html", "public/index.html", "public/settings.html",
+    "public/admin.html", "public/superadmin.html", "src/index.js",
+    "functions/api/chat.js", "netlify/functions/chat.mjs"
+  ]) {
+    const source = await read(path);
+    assert.doesNotMatch(source, /[\u0600-\u06FF]/, path + " should stay within English and Russian");
+  }
+});

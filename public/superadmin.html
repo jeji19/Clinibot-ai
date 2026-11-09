@@ -62,6 +62,7 @@ button{border:0;border-radius:10px;padding:10px 15px;font:inherit;font-weight:65
 <label for="clinicEmail">Notification email (optional)</label><input id="clinicEmail" type="email" placeholder="manager@example.com">
 <div style="margin-top:16px"><button id="createClinicButton" type="submit">Create clinic</button></div>
 <div id="clinicFormMessage" class="muted" role="status" style="margin-top:10px"></div>
+<div id="clinicCreated" class="hidden" style="margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfd"><strong>Clinic is ready</strong><div id="clinicCreatedUrl" style="overflow-wrap:anywhere;margin:6px 0"></div><a id="openClinicLink" target="_blank" rel="noopener noreferrer">Open public clinic page</a></div>
 </form>
 </div>
 <div class="panel" style="margin-top:18px">
@@ -147,7 +148,7 @@ async function loadDemoRequests(){
 
 document.getElementById('clinicForm').addEventListener('submit',async e=>{
  e.preventDefault();const btn=document.getElementById('createClinicButton'),msg=document.getElementById('clinicFormMessage');btn.disabled=true;msg.textContent='Creating clinic…';
- try{const data=await api('/api/superadmin/clinics',{method:'POST',body:JSON.stringify({name:document.getElementById('clinicName').value.trim(),slug:document.getElementById('clinicSlug').value.trim().toLowerCase(),plan:document.getElementById('clinicPlan').value,notification_email:document.getElementById('clinicEmail').value.trim()})});msg.textContent='Clinic created successfully.';e.target.reset();await loadOverview()}
+ try{const clinicName=document.getElementById('clinicName').value.trim(),slug=document.getElementById('clinicSlug').value.trim().toLowerCase();const data=await api('/api/superadmin/clinics',{method:'POST',body:JSON.stringify({name:clinicName,slug,plan:document.getElementById('clinicPlan').value,notification_email:document.getElementById('clinicEmail').value.trim()})});msg.textContent='Clinic created successfully.';const clinicUrl=window.location.origin+'/?clinic='+encodeURIComponent(slug);document.getElementById('clinicCreatedUrl').textContent=clinicUrl;const openLink=document.getElementById('openClinicLink');openLink.href=clinicUrl;document.getElementById('clinicCreated').classList.remove('hidden');e.target.reset();await loadOverview();if(data.clinic?.id)document.getElementById('memberClinic').value=data.clinic.id}
  catch(err){msg.textContent=err.message;handleSuperAdminSessionError(err)}finally{btn.disabled=false}
 });
 document.getElementById('memberForm').addEventListener('submit',async e=>{

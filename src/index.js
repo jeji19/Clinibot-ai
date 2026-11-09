@@ -953,7 +953,27 @@ async function handleSuperAdminCreateClinic(request, env) {
       console.error("Create clinic failed", response.status, detail.slice(0, 400));
       return json({ error: "Could not create clinic. Check the database policies and columns." }, 502);
     }
-    return json({ success: true, clinic: Array.isArray(data) ? data[0] : data }, 201);
+    const clinic = Array.isArray(data) ? data[0] : data;
+    let settings_ready = false;
+    if (clinic?.id) {
+      const settingsResponse = await fetch(new URL("/rest/v1/clinic_settings?on_conflict=clinic_id", env.SUPABASE_URL), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + admin.token, "Prefer": "resolution=merge-duplicates,return=minimal" },
+        body: JSON.stringify({ clinic_id: clinic.id, description: "", services: [], opening_hours: {}, default_language: "en" }),
+        signal: AbortSignal.timeout(15000)
+      });
+      settings_ready = settingsResponse.ok;
+      if (!settings_ready) {
+        const detail = await settingsResponse.text();
+        console.error("Initial clinic settings creation failed", settingsResponse.status, detail.slice(0, 400));
+      }
+    }
+    return json({
+      success: true,
+      clinic,
+      settings_ready,
+      message: settings_ready ? "Clinic and default settings created." : "Clinic created, but its settings need to be initialized from the manager dashboard."
+    }, 201);
   } catch (error) {
     console.error("Create clinic error", error?.message);
     return json({ error: "Clinic creation service is temporarily unavailable." }, 500);

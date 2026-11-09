@@ -81,6 +81,16 @@ for (const [label, invoke] of adapters) {
     assert.equal(response.status, 503);
   });
 
+  test(`${label}: rejects null or array JSON payloads before database access`, async () => {
+    await withMockFetch(async () => { throw new Error("database must not be called"); }, async () => {
+      for (const body of [null, []]) {
+        const response = await invoke(body);
+        assert.equal(response.status, 400);
+        assert.match((await response.json()).error, /invalid json/i);
+      }
+    });
+  });
+
   test(`${label}: rejects malformed booking fields before database access`, async () => {
     await withMockFetch(async () => { throw new Error("database must not be called"); }, async () => {
       const response = await invoke({ ...validBody, preferred_time: "25:90" });

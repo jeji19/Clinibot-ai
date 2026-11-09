@@ -1,0 +1,30 @@
+name: Validate JavaScript
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check JavaScript and module syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          count=0
+          while IFS= read -r -d '' file; do
+            echo "Checking $file"
+            node --input-type=module --check < "$file"
+            count=$((count + 1))
+          done < <(find src functions netlify/functions -type f \\( -name '*.js' -o -name '*.mjs' \\) -print0)
+          test "$count" -gt 0
+          echo "Syntax checks passed for $count JavaScript files."

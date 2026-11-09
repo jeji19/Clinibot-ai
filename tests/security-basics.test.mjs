@@ -180,3 +180,10 @@ test("clinic settings page clears expired or revoked manager sessions", async ()
   assert.match(page, /sessionStorage.removeItem('clinibot_admin_token')/);
   assert.match(page, /location.href='/admin.html'/);
 });
+
+
+test("database enforces one clinic membership per manager account", async () => {
+  const migration = await read("supabase/migrations/20261109070000_enforce_single_clinic_manager.sql");
+  assert.match(migration, /create\s+unique\s+index\s+if\s+not\s+exists\s+clinic_members_one_clinic_per_user_idx/i);
+  assert.match(migration, /on\s+public\.clinic_members\s*\(user_id\)/i);
+});

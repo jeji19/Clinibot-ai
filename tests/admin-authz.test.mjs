@@ -314,3 +314,32 @@ test("Super Admin cannot assign a manager already assigned to another clinic", a
   assert.equal(response.status, 409);
   assert.match((await response.json()).error, /already assigned/i);
 });
+
+
+test("clinic settings rejects unsupported default language without saving", async () => {
+  const response = await invoke("/api/admin/settings", {
+    method: "PUT",
+    body: { description: "Clinic", default_language: "ar", services: [], opening_hours: {} }
+  }, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    if (target.pathname.endsWith("/rest/v1/clinics")) return json([{ id: clinicId, name: "North Clinic", slug: "north-clinic" }]);
+    throw new Error("Invalid language must not be saved");
+  });
+  assert.equal(response.status, 400);
+});
+
+test("clinic settings rejects malformed opening-hours values without saving", async () => {
+  const response = await invoke("/api/admin/settings", {
+    method: "PUT",
+    body: { description: "Clinic", default_language: "en", services: [], opening_hours: { Monday: 123 } }
+  }, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    if (target.pathname.endsWith("/rest/v1/clinics")) return json([{ id: clinicId, name: "North Clinic", slug: "north-clinic" }]);
+    throw new Error("Invalid opening hours must not be saved");
+  });
+  assert.equal(response.status, 400);
+});

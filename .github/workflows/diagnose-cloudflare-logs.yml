@@ -1,0 +1,122 @@
+name: Diagnose CliniBot AI Worker Logs
+
+on:
+  workflow_dispatch:
+    inputs:
+      lookback_hours:
+        description: "How many recent hours of Worker logs to inspect (1-168)."
+        type: string
+        required: true
+        default: "48"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: clinibot-cloudflare-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  logs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate diagnostic inputs
+        id: range
+        shell: bash
+        env:
+          LOOKBACK_HOURS: ${{ inputs.lookback_hours }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$LOOKBACK_HOURS" =~ ^[0-9]+$ ]] || (( LOOKBACK_HOURS < 1 || LOOKBACK_HOURS > 168 )); then
+            echo "lookback_hours must be an integer from 1 to 168." >&2
+            exit 1
+          fi
+          echo "hours=$LOOKBACK_HOURS" >> "$GITHUB_OUTPUT"
+
+      - name: Query Cloudflare Worker observability logs
+        shell: bash
+        env:
+          CF_API_TOKEN: ${{ secrets.CLOUDFLARE_DIAGNOSTICS_TOKEN }}
+          CF_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          LOOKBACK_HOURS: ${{ steps.range.outputs.hours }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$CF_API_TOKEN" || -z "$CF_ACCOUNT_ID" ]]; then
+            echo "Missing CLOUDFLARE_DIAGNOSTICS_TOKEN or CLOUDFLARE_ACCOUNT_ID GitHub Actions secret." >&2
+            exit 1
+          fi
+
+          now_ms="$(date -u +%s%3N)"
+          from_ms="$((now_ms - LOOKBACK_HOURS * 60 * 60 * 1000))"
+
+          jq -n \
+            --argjson from "$from_ms" \
+            --argjson to "$now_ms" \
+            '{
+              queryId: "clinibot-ai-resend-diagnostic",
+              timeframe: {from: $from, to: $to},
+              view: "events",
+              limit: 100,
+              parameters: {
+                datasets: ["cloudflare-workers"],
+                filterCombination: "and",
+                filters: [
+                  {
+                    key: "$metadata.service",
+                    operation: "eq",
+                    type: "string",
+                    value: "clinibot-ai1"
+                  }
+                ],
+                needle: {
+                  value: "Resend",
+                  isRegex: false,
+                  matchCase: false
+                }
+              }
+            }' > /tmp/cf-observability-query.json
+
+          http_code="$(curl --silent --show-error --max-time 60 \
+            -o /tmp/cf-observability-response.json \
+            -w '%{http_code}' \
+            -X POST "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/workers/observability/telemetry/query" \
+            -H "Authorization: Bearer $CF_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data-binary @/tmp/cf-observability-query.json)"
+
+          if [[ "$http_code" == "403" ]]; then
+            echo "::error::Cloudflare rejected this token. The current telemetry query endpoint requires the Workers Observability Write permission, even though this workflow only reads log results. The token's Observability Read permission is insufficient for this endpoint."
+            jq -r '.errors[]? | [.code, .message] | @tsv' /tmp/cf-observability-response.json || true
+            exit 1
+          fi
+
+          if [[ "$http_code" != "200" ]]; then
+            echo "::error::Cloudflare observability query returned HTTP $http_code."
+            jq -r '.errors[]? | [.code, .message] | @tsv' /tmp/cf-observability-response.json || true
+            exit 1
+          fi
+
+          if [[ "$(jq -r '.success // false' /tmp/cf-observability-response.json)" != "true" ]]; then
+            echo "::error::Cloudflare did not report a successful observability query."
+            jq -r '.errors[]? | [.code, .message] | @tsv' /tmp/cf-observability-response.json || true
+            exit 1
+          fi
+
+          echo "Cloudflare query completed. Matching events:"
+          jq -r '
+            (.result.events.events // [])[]
+            | {
+                timestamp: (.timestamp // .["$metadata"].timestamp // null),
+                level: (.["$metadata"].level // null),
+                message: (.["$metadata"].message // null),
+                error: (.["$metadata"].error // null),
+                source: (.source // null),
+                trigger: (.["$metadata"].trigger // null)
+              }
+            | tojson
+          ' /tmp/cf-observability-response.json \
+            | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/[REDACTED_EMAIL]/g; s/\+?[0-9][0-9 ()-]{7,}[0-9]/[REDACTED_PHONE]/g'
+
+          count="$(jq -r '.result.events.count // 0' /tmp/cf-observability-response.json)"
+          echo "Total matching Resend events reported by Cloudflare: $count"

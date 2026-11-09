@@ -10,7 +10,7 @@ The repository contains three deployment adapters:
 
 **Important:** The Pages and Netlify adapters do not currently implement the clinic-manager or Super Admin API routes used by `public/admin.html`, `public/settings.html`, and `public/superadmin.html`. Those management screens therefore require the Cloudflare Worker deployment as currently implemented. Do not advertise Pages or Netlify as full-featured alternatives until their management endpoints have been ported and tested.
 
-The public booking page selects the Netlify endpoints when it is served from a `.netlify.app` hostname; otherwise it uses same-origin `/api/*` routes. The landing-page demo form posts to `/api/demo-request`: Cloudflare Worker and Pages expose that route directly, while Netlify rewrites it to `/.netlify/functions/demo-request` in `netlify.toml`. Netlify publishes only the `public/` directory so repository source and deployment files are not part of the static site.
+The public booking page selects direct Netlify function URLs on a `.netlify.app` hostname; otherwise it uses same-origin `/api/*` routes. Netlify rewrites `/api/chat`, `/api/appointment`, `/api/public/clinic-info`, and `/api/demo-request` to their corresponding functions, so custom domains work too. Netlify publishes only the `public/` directory so repository source and deployment files are not part of the static site.
 
 ## Required environment configuration
 

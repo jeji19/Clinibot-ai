@@ -4,13 +4,13 @@
 
 The repository contains three deployment adapters:
 
-- **Cloudflare Worker:** `src/index.js` serves the public assets and implements the public APIs, clinic-manager APIs, and Super Admin APIs.
-- **Cloudflare Pages Functions:** `functions/api/` implements public chat, public clinic information, and appointment submission.
-- **Netlify Functions:** `netlify/functions/` implements public chat, public clinic information, and appointment submission.
+- **Cloudflare Worker:** `src/index.js` serves the public assets and implements public APIs, clinic-manager APIs, and Super Admin APIs.
+- **Cloudflare Pages Functions:** `functions/api/` implements public chat, public clinic information, appointment submission, and demo-lead submission.
+- **Netlify Functions:** `netlify/functions/` implements public chat, public clinic information, appointment submission, and demo-lead submission.
 
 **Important:** The Pages and Netlify adapters do not currently implement the clinic-manager or Super Admin API routes used by `public/admin.html`, `public/settings.html`, and `public/superadmin.html`. Those management screens therefore require the Cloudflare Worker deployment as currently implemented. Do not advertise Pages or Netlify as full-featured alternatives until their management endpoints have been ported and tested.
 
-The public booking page selects the Netlify endpoints when it is served from a `.netlify.app` hostname; otherwise it uses the same-origin `/api/*` routes. Keep public chat, clinic information, and appointment adapters aligned when changing those features.
+The public booking page selects the Netlify endpoints when it is served from a `.netlify.app` hostname; otherwise it uses same-origin `/api/*` routes. The landing-page demo form posts to `/api/demo-request`: Cloudflare Worker and Pages expose that route directly, while Netlify rewrites it to `/.netlify/functions/demo-request` in `netlify.toml`.
 
 ## Required environment configuration
 
@@ -18,7 +18,7 @@ Set these values in the deployment platform's environment/secrets settings. Neve
 
 | Variable | Required for | Notes |
 |---|---|---|
-| `SUPABASE_URL` | Chat, public clinic info, bookings, admin | Project URL, origin or project URL |
+| `SUPABASE_URL` | Chat, public clinic info, bookings, demo leads, admin | Project URL, origin or project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chat FAQ, public clinic info, appointment storage, demo leads | Server-side secret only; never expose to browser code |
 | `SUPABASE_ANON_KEY` | Admin authentication and authenticated manager/Super Admin operations | Public project key; database RLS still matters |
 | `GEMINI_API_KEY` | Free-form AI chat replies | Optional; FAQ and safety responses work without it |
@@ -52,15 +52,15 @@ After deployment, verify with a real test clinic and test accounts:
 2. English and Russian chat responses work, including clinic FAQ and medical-safety fallbacks.
 3. A published service can be selected; an unpublished service is rejected by the server.
 4. Appointment date and time validation works; a request is stored with the correct clinic ID.
-5. The manager can see and update only that clinic's requests.
-6. A manager assigned to another clinic cannot read or update the first clinic's requests.
-7. Super Admin access is denied to ordinary manager accounts.
-8. Demo leads are stored and visible only through the Super Admin flow.
-9. Email delivery is checked separately from database storage.
+5. The landing-page demo form stores a lead and sends a notification when email is configured.
+6. The manager can see and update only that clinic's requests.
+7. A manager assigned to another clinic cannot read or update the first clinic's requests.
+8. Super Admin access is denied to ordinary manager accounts.
+9. Demo leads are stored and visible only through the Super Admin flow.
 10. Review Worker logs and Supabase logs for failed requests and RLS denials.
 
 ## Automated checks and current verification limits
 
-A GitHub Actions workflow at `.github/workflows/validate.yml` now runs dependency-free JavaScript module syntax checks on pushes and pull requests to `main`. This is a syntax check only; it does not test browser behavior, Supabase permissions, email delivery, or production deployment.
+A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks on pushes and pull requests to `main`. This is a syntax check only; it does not test browser behavior, Supabase permissions, email delivery, or production deployment.
 
 A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing syntax workflow as proof of production deployment.

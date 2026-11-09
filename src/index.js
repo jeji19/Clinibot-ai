@@ -15,6 +15,7 @@ export default {
     if (url.pathname === "/api/superadmin/demo-request-delete") return handleSuperAdminDemoRequestDelete(request, env);
     if (url.pathname === "/api/superadmin/clinics") return handleSuperAdminCreateClinic(request, env);
     if (url.pathname === "/api/superadmin/members") return handleSuperAdminAddMember(request, env);
+    if (url.pathname === "/api/superadmin/clinic-update") return handleSuperAdminClinicUpdate(request, env);
     return secureAssetResponse(await env.ASSETS.fetch(request));
   }
 };
@@ -958,6 +959,53 @@ async function handleSuperAdminCreateClinic(request, env) {
     return json({ error: "Clinic creation service is temporarily unavailable." }, 500);
   }
 }
+
+
+async function handleSuperAdminClinicUpdate(request, env) {
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+  try {
+    const admin = await verifySuperAdmin(request, env);
+    if (!admin) return json({ error: "Super Admin authorization required." }, 403);
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
+    const clinic_id = typeof body.clinic_id === "string" ? body.clinic_id.trim() : "";
+    const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuid.test(clinic_id)) return json({ error: "Enter a valid clinic ID." }, 400);
+    const patch = {};
+    if (Object.hasOwn(body, "is_active")) {
+      if (typeof body.is_active !== "boolean") return json({ error: "Clinic status must be active or inactive." }, 400);
+      patch.is_active = body.is_active;
+    }
+    if (Object.hasOwn(body, "plan")) {
+      if (!["basic", "pro", "premium"].includes(body.plan)) return json({ error: "Invalid subscription plan." }, 400);
+      patch.plan = body.plan;
+    }
+    if (Object.hasOwn(body, "notification_email")) {
+      const email = typeof body.notification_email === "string" ? body.notification_email.trim() : "";
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Enter a valid notification email." }, 400);
+      patch.notification_email = email || null;
+    }
+    if (!Object.keys(patch).length) return json({ error: "No supported clinic changes were provided." }, 400);
+    const url = new URL("/rest/v1/clinics", env.SUPABASE_URL);
+    url.searchParams.set("id", "eq." + clinic_id);
+    const response = await fetch(url, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "apikey": env.SUPABASE_ANON_KEY, "Authorization": "Bearer " + admin.token, "Prefer": "return=representation" },
+      body: JSON.stringify(patch),
+      signal: AbortSignal.timeout(15000)
+    });
+    const data = await response.json().catch(() => []);
+    if (!response.ok || !Array.isArray(data) || data.length === 0) {
+      console.error("Super Admin clinic update failed", response.status, JSON.stringify(data).slice(0, 300));
+      return json({ error: "Could not update this clinic. Check its ID and database policies." }, response.ok ? 404 : 502);
+    }
+    return json({ success: true, clinic: data[0] });
+  } catch (error) {
+    console.error("Super Admin clinic update error", error?.message);
+    return json({ error: "Clinic update service is temporarily unavailable." }, 500);
+  }
+}
+
 
 async function handleSuperAdminAddMember(request, env) {
   if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);

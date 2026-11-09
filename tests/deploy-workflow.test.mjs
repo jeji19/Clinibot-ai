@@ -8,26 +8,24 @@ const workflow = await readFile(
 );
 
 test("production deployment requires explicit confirmation and main branch", () => {
-  assert.match(
-    workflow,
-    /if: \$\{\{ inputs\.confirm_production == true && github\.ref == 'refs\/heads\/main' \}\}/,
-  );
-  assert.match(workflow, /confirm_production:[\s\S]*default: false/);
-  assert.match(workflow, /uses: actions\/checkout@v6\n\s+with:\n\s+ref: main/);
+  assert.ok(workflow.includes("if: ${{ inputs.confirm_production == true && github.ref == 'refs/heads/main' }}"));
+  assert.ok(workflow.includes("default: false"));
+  assert.ok(workflow.includes("uses: actions/checkout@v6\n        with:\n          ref: main"));
 });
 
 test("production deployment validates Worker target and Cloudflare credentials", () => {
-  assert.match(workflow, /configured_name=.*wrangler\.jsonc/);
-  assert.match(workflow, /WORKER_NAME.*configured_name/);
-  assert.match(workflow, /CLOUDFLARE_API_TOKEN/);
-  assert.match(workflow, /CLOUDFLARE_ACCOUNT_ID/);
-  assert.match(workflow, /\[\[ ! "\$CLOUDFLARE_ACCOUNT_ID" =~ \^\[a-fA-F0-9\]\{32\}\$ \]\]/);
+  assert.ok(workflow.includes("configured_name="));
+  assert.ok(workflow.includes("wrangler.jsonc"));
+  assert.ok(workflow.includes('if [[ "$WORKER_NAME" != "$configured_name" ]]'));
+  assert.ok(workflow.includes("CLOUDFLARE_API_TOKEN"));
+  assert.ok(workflow.includes("CLOUDFLARE_ACCOUNT_ID"));
+  assert.ok(workflow.includes('[[ ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[a-fA-F0-9]{32}$ ]]'));
 });
 
 test("deployment performs public smoke tests and rejects unpublished services", () => {
-  assert.match(workflow, /Smoke-test public clinic info and chat/);
-  assert.match(workflow, /api\/public\/clinic-info/);
-  assert.match(workflow, /api\/chat/);
-  assert.match(workflow, /Verify unpublished services cannot be booked/);
-  assert.match(workflow, /\[\[ "\$status" != "400" \]\]/);
+  assert.ok(workflow.includes("Smoke-test public clinic info and chat"));
+  assert.ok(workflow.includes("/api/public/clinic-info"));
+  assert.ok(workflow.includes("/api/chat"));
+  assert.ok(workflow.includes("Verify unpublished services cannot be booked"));
+  assert.ok(workflow.includes('[[ "$status" != "400" ]]'));
 });

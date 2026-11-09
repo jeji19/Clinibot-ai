@@ -36,9 +36,11 @@ The application expects the Supabase tables and columns used by the API, includi
 - `appointment_requests`
 - `demo_requests`
 
-The repository currently contains a tracked SQL migration for `demo_requests`. The other schema and Row Level Security policies are not fully represented by tracked migrations here. Verify them in the target Supabase project before production use; do not assume that successful source-code checks prove RLS is configured correctly.
+The repository contains the `demo_requests` table migration plus project-specific hardening migrations for least-privilege table grants, default grants for tables created by `postgres`, optimized RLS policies, and the clinic-members lookup index. The full bootstrap schema and every original RLS policy are not yet represented as a clean, from-scratch migration set. The hardening migrations assume the existing tables and named baseline policies are already present; do not use this migration folder alone to provision a brand-new project.
 
-The application uses the service-role key only in server-side functions. Manager access is scoped in the Worker API to the manager's clinic membership. Super Admin actions require a verified user listed in `super_admins`. Confirm the actual Supabase RLS policies independently.
+The connected `clinibot-ai` project was audited and these hardening migrations were applied there. Anonymous (`anon`) has no direct table privileges on the six application tables. Authenticated access is limited to the operations needed by the Worker manager/Super Admin APIs; `demo_requests` is service-role-only. RLS remains enabled on all six tables. The application uses service-role credentials only in server-side functions. Manager access is scoped to clinic membership, and Super Admin actions require a verified user listed in `super_admins`.
+
+Default privileges for future public tables created by the `postgres` role were also tightened. The existing default privileges for `supabase_admin` could not be changed through the connected database role and remain a separate follow-up item.
 
 ## Deployment target warning
 
@@ -48,7 +50,7 @@ The tracked `wrangler.jsonc` currently names the Worker `clinibot-ai`, while the
 
 A read-only metadata audit is available at `supabase/audits/20261109_rls_audit.sql`. Run it in the Supabase SQL Editor using a project owner/admin role. It reports whether the six application tables exist, whether RLS is enabled/forced, the policies attached to them (including their `USING` and `WITH CHECK` expressions), and explicit grants for `anon`, `authenticated`, and `service_role`.
 
-The audit does not modify the database. Review its output against the intended access model before changing any policies:
+The audit does not modify the database. It can be rerun to verify the applied changes. Current access model:
 - Clinic managers should only read/update appointment requests belonging to a clinic they are a member of.
 - Clinic managers should only read/update settings for their membership-derived clinic.
 - Ordinary authenticated users must not gain Super Admin privileges; the Super Admin allowlist is stored in `super_admins`.
@@ -76,6 +78,6 @@ After deployment, verify with a real test clinic and test accounts:
 
 A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks, verifies public API adapter wiring, exercises demo-request endpoint behavior with mocked database/email services, and checks baseline security safeguards. The security tests assert that manager endpoints authenticate users and scope clinic data to membership-derived clinic IDs, Super Admin routes verify the allowlist before privileged operations, public pages contain no server secrets, dashboard pages avoid known unsafe HTML sinks, and the tracked demo-request migration enables RLS without direct client policies.
 
-These automated checks validate source-level safeguards and mocked endpoint behavior. They do not test browser behavior, the actual Supabase RLS policies for `clinics`, `clinic_settings`, `clinic_members`, `super_admins`, or `appointment_requests`, email delivery, or production deployment. Only the `demo_requests` migration is currently tracked in this repository; verify that migration has been applied and independently inspect the other table policies in the target Supabase project.
+These automated checks validate source-level safeguards and mocked endpoint behavior, including the least-privilege grant migrations and server-only appointment writes. They do not test browser behavior, authenticated requests using real manager/Super Admin JWTs, email delivery, or production deployment. The connected Supabase project has been inspected directly and its current RLS/grant metadata verified; a real login-based manager/Super Admin end-to-end test is still required.
 
 A live Cloudflare/Supabase end-to-end verification has not yet been completed, so do not treat a GitHub commit or a passing CI workflow as proof of production deployment.

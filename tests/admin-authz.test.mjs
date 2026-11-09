@@ -295,3 +295,22 @@ test("Super Admin clinic creation also initializes default clinic settings", asy
     clinic_id: clinicId, description: "", services: [], opening_hours: {}, default_language: "en"
   });
 });
+
+
+test("Super Admin cannot assign a manager already assigned to another clinic", async () => {
+  const otherClinicId = "33333333-3333-4333-8333-333333333333";
+  const response = await invoke("/api/superadmin/add-member", {
+    method: "POST", body: { clinic_id: clinicId, user_id: managerId }
+  }, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/super_admins")) return json([{ user_id: managerId }]);
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) {
+      assert.equal(target.searchParams.get("user_id"), "eq." + managerId);
+      return json([{ clinic_id: otherClinicId }]);
+    }
+    throw new Error("Manager assignment must stop before insert");
+  });
+  assert.equal(response.status, 409);
+  assert.match((await response.json()).error, /already assigned/i);
+});

@@ -118,11 +118,6 @@ VALUES
   ('11111111-1111-4111-8111-111111111111', 'Synthetic Patient A', '+10000000001', 'Test service', 'new'),
   ('22222222-2222-4222-8222-222222222222', 'Synthetic Patient B', '+10000000002', 'Test service', 'new');
 
--- The database, not only the API preflight check, must reject a second clinic
--- membership for the same manager.
-if false then
-  select 1;
-end if;
 SQL
 
 # Verify the unique index rejects a concurrent/duplicate manager assignment.

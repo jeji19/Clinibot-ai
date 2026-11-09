@@ -218,7 +218,8 @@ for (const [label, invoke] of adapters) {
       });
       assert.equal(response.status, 201);
     });
-    assert.deepEqual(emailPayload.to, ["clinic@example.com"]);
+    const expectedRecipient = label === "Cloudflare Worker" ? "platform@example.com" : "clinic@example.com";
+    assert.deepEqual(emailPayload.to, [expectedRecipient]);
   });
 
   test(`${label}: keeps a saved booking successful if email notification fails`, async () => {

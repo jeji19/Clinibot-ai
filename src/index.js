@@ -716,10 +716,20 @@ async function handleAdminSettings(request, env) {
       return json({ clinic, settings: currentSettings });
     }
 
-    const body = await request.json();
-    const description = typeof body.description === "string" ? body.description.trim().slice(0, 2000) : "";
-    const default_language = typeof body.default_language === "string" && ["en","ru"].includes(body.default_language) ? body.default_language : "en";
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
+    if (body.description !== undefined && (typeof body.description !== "string" || body.description.length > 2000)) {
+      return json({ error: "Clinic description must be text up to 2,000 characters." }, 400);
+    }
+    const description = typeof body.description === "string" ? body.description.trim() : "";
+    if (body.default_language !== undefined && !["en", "ru"].includes(body.default_language)) {
+      return json({ error: "Default language must be English or Russian." }, 400);
+    }
+    const default_language = body.default_language || "en";
     if (!Array.isArray(body.services) || body.services.length > 50) return json({ error: "Add up to 50 valid services." }, 400);
+    if (body.opening_hours !== undefined && (!body.opening_hours || typeof body.opening_hours !== "object" || Array.isArray(body.opening_hours))) {
+      return json({ error: "Opening hours must be provided as a day-to-hours object." }, 400);
+    }
     const services = [];
     for (const item of body.services) {
       const name = typeof item?.name === "string" ? item.name.trim() : "";
@@ -731,11 +741,15 @@ async function handleAdminSettings(request, env) {
     }
     const allowedDays = ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"];
     const opening_hours = {};
-    if (body.opening_hours && typeof body.opening_hours === "object" && !Array.isArray(body.opening_hours)) {
-      for (const day of allowedDays) {
-        const value = typeof body.opening_hours[day] === "string" ? body.opening_hours[day].trim().slice(0, 60) : "";
-        if (value) opening_hours[day] = value;
-      }
+    for (const day of allowedDays) {
+      const raw = body.opening_hours?.[day];
+      if (raw !== undefined && typeof raw !== "string") return json({ error: "Opening hours for " + day + " must be text." }, 400);
+      const value = typeof raw === "string" ? raw.trim() : "";
+      if (value.length > 60) return json({ error: "Opening hours for " + day + " are too long." }, 400);
+      if (value) opening_hours[day] = value;
+    }
+    if (body.opening_hours && Object.keys(body.opening_hours).some(day => !allowedDays.includes(day))) {
+      return json({ error: "Opening hours contain an unsupported day." }, 400);
     }
     const saveResponse = await fetch(new URL("/rest/v1/clinic_settings?on_conflict=clinic_id", env.SUPABASE_URL), {
       method: "POST",

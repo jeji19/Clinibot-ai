@@ -196,6 +196,31 @@ for (const [label, invoke] of adapters) {
     });
   });
 
+  test(`${label}: sends booking notifications to the clinic-specific email`, async () => {
+    let emailPayload;
+    await withMockFetch(async (url, options = {}) => {
+      if (String(url).includes("api.resend.com")) {
+        emailPayload = JSON.parse(options.body);
+        return Response.json({ id: "email-1" });
+      }
+      const target = new URL(String(url));
+      if (target.pathname.endsWith("/rest/v1/clinics")) {
+        return Response.json([{ id: "clinic-1", name: "North Clinic", is_active: true, notification_email: "clinic@example.com" }]);
+      }
+      if (target.pathname.endsWith("/rest/v1/clinic_settings")) {
+        return Response.json([{ services: [{ name: "Laser consultation", price: 50 }] }]);
+      }
+      if (target.pathname.endsWith("/rest/v1/appointment_requests")) return new Response(null, { status: 201 });
+      throw new Error("Unexpected request: " + target.pathname);
+    }, async () => {
+      const response = await invoke(validBody, {
+        ...env, RESEND_API_KEY: "test-resend-key", RESEND_TO_EMAIL: "platform@example.com"
+      });
+      assert.equal(response.status, 201);
+    });
+    assert.deepEqual(emailPayload.to, ["clinic@example.com"]);
+  });
+
   test(`${label}: keeps a saved booking successful if email notification fails`, async () => {
     await withMockFetch(async url => {
       if (String(url).includes("api.resend.com")) return new Response("mail unavailable", { status: 503 });

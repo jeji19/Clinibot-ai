@@ -56,7 +56,7 @@ The tracked `wrangler.jsonc` currently names the Worker `clinibot-ai`, while the
 
 ## Supabase RLS audit
 
-A read-only metadata audit is available at `supabase/audits/20261109_rls_audit.sql`. Run it in the Supabase SQL Editor using a project owner/admin role. It reports whether the six application tables exist, whether RLS is enabled/forced, the policies attached to them (including their `USING` and `WITH CHECK` expressions), and explicit grants for `anon`, `authenticated`, and `service_role`.
+A read-only metadata audit is available at `supabase/audits/20261109_rls_audit.sql`. Run it in the Supabase SQL Editor using a project owner/admin role. It reports whether the six application tables exist, whether RLS is enabled/forced, the policies attached to them (including their `USING` and `WITH CHECK` expressions), explicit grants for `anon`, `authenticated`, and `service_role`, and indexes on `clinic_members`.
 
 The audit does not modify the database. It can be rerun to verify the applied changes. Current access model:
 - Clinic managers should only read/update appointment requests belonging to a clinic they are a member of.
@@ -72,7 +72,7 @@ Do not paste API keys, access tokens, patient records, or other secrets into cha
 After deployment, verify with a real test clinic and test accounts:
 
 1. Public clinic page loads and lists only active clinic services.
-2. English and Russian chat responses work, including clinic FAQ and medical-safety fallbacks.
+2. English and Russian chat responses work, including clinic FAQ, medical-safety fallbacks, and the clinic default language for language-neutral messages.
 3. A published service can be selected; an unpublished service is rejected by the server.
 4. Appointment date and time validation works; a request is stored with the correct clinic ID.
 5. The landing-page demo form stores a lead and sends a notification when email is configured.
@@ -84,7 +84,7 @@ After deployment, verify with a real test clinic and test accounts:
 
 ## Automated checks and current verification limits
 
-A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks, verifies public API adapter wiring, exercises demo-request endpoint behavior with mocked database/email services, and checks baseline security safeguards. The security tests assert that manager endpoints authenticate users and scope clinic data to membership-derived clinic IDs, malformed booking and manager-status payloads are rejected, clinic settings inputs are validated, manager sessions are cleared when access is revoked, Super Admin routes verify the allowlist before privileged operations, public pages contain no server secrets, dashboard pages avoid known unsafe HTML sinks, and database migrations enforce one clinic per manager while keeping demo leads server-only.
+A GitHub Actions workflow at `.github/workflows/validate.yml` runs dependency-free JavaScript module syntax checks, verifies public API adapter wiring, exercises demo-request endpoint behavior with mocked database/email services, and checks baseline security safeguards. The security tests assert that manager endpoints authenticate users and scope clinic data to membership-derived clinic IDs, malformed chat, demo-lead, booking, and manager-status payloads are rejected, clinic settings inputs (including duplicate service names) are validated, manager sessions are cleared when access is revoked, Super Admin routes verify the allowlist before privileged operations, public pages contain no server secrets, dashboard pages avoid known unsafe HTML sinks, and database migrations enforce one clinic per manager while keeping demo leads server-only.
 
 These automated checks validate source-level safeguards and mocked endpoint behavior, including the least-privilege grant migrations and server-only appointment writes. They do not test browser behavior, authenticated requests using real manager/Super Admin JWTs, email delivery, or production deployment. The connected Supabase project has been inspected directly and its current RLS/grant metadata verified; a real login-based manager/Super Admin end-to-end test is still required.
 

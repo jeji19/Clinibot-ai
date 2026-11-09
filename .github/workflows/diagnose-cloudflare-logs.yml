@@ -103,20 +103,25 @@ jobs:
             exit 1
           fi
 
-          echo "Cloudflare query completed. Matching events:"
+          echo "Cloudflare query completed. Sanitized diagnostic summary (raw log content is never printed):"
           jq -r '
             (.result.events.events // [])[]
+            | ((.["$metadata"].message // .["$metadata"].error // .source.message // .source // "") | tostring) as $message
             | {
                 timestamp: (.timestamp // .["$metadata"].timestamp // null),
-                level: (.["$metadata"].level // null),
-                message: (.["$metadata"].message // null),
-                error: (.["$metadata"].error // null),
-                source: (.source // null),
-                trigger: (.["$metadata"].trigger // null)
+                category: (
+                  if ($message | test("Resend notification skipped: missing configuration"; "i")) then "notification_skipped_missing_configuration"
+                  elif ($message | test("Resend notification accepted"; "i")) then "resend_request_accepted"
+                  elif ($message | test("Resend notification failed"; "i")) then "resend_request_failed"
+                  elif ($message | test("Resend notification error"; "i")) then "resend_runtime_error"
+                  else "other_matching_resend_event"
+                  end
+                ),
+                http_status: (try ($message | capture("Resend notification failed (?<status>[0-9]{3})").status) catch null)
               }
             | tojson
-          ' /tmp/cf-observability-response.json \
-            | sed -E 's/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/[REDACTED_EMAIL]/g; s/\+?[0-9][0-9 ()-]{7,}[0-9]/[REDACTED_PHONE]/g'
+          ' /tmp/cf-observability-response.json
 
           count="$(jq -r '.result.events.count // 0' /tmp/cf-observability-response.json)"
           echo "Total matching Resend events reported by Cloudflare: $count"
+          echo "Raw messages, patient data, email addresses, phone numbers, and request payloads are intentionally withheld."

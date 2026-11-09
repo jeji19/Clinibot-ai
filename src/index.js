@@ -450,9 +450,11 @@ async function handleAppointment(request, env) {
       return json({ error: `Database rejected the request (HTTP ${insertResponse.status}, code ${code}).` }, 502);
     }
 
-    // Resend's testing sender can deliver only to the account owner's verified email.
-    // Use RESEND_TO_EMAIL until the clinic verifies its own sending domain.
-    const recipient = clinic.notification_email || env.RESEND_TO_EMAIL;
+    // TEMPORARY: Resend's shared testing sender (onboarding@resend.dev)
+    // can deliver only to the Resend account owner's verified email.
+    // Route notifications to RESEND_TO_EMAIL until a verified sending domain is configured.
+    // This is an owner-inbox fallback, not per-clinic email delivery.
+    const recipient = env.RESEND_TO_EMAIL;
     if (env.RESEND_API_KEY && recipient) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {

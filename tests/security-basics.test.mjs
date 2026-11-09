@@ -242,6 +242,9 @@ test("public product and chat copy contain no unsupported Arabic-language string
 
 test("Cloudflare production deployment is manual, target-checked, and smoke-tested", async () => {
   const workflow = await read(".github/workflows/deploy-cloudflare.yml");
+  const wrangler = JSON.parse(await read("wrangler.jsonc"));
+  assert.equal(wrangler.name, "clinibot-ai1");
+  assert.match(workflow, /default: clinibot-ai1/);
   assert.match(workflow, /workflow_dispatch/);
   assert.match(workflow, /confirm_production == true/);
   assert.match(workflow, /CLOUDFLARE_API_TOKEN/);

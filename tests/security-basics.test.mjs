@@ -254,3 +254,22 @@ test("Cloudflare production deployment is manual, target-checked, and smoke-test
   assert.match(workflow, /__unpublished_smoke_test__/);
   assert.doesNotMatch(workflow, /push:\s*\n\s*branches:/);
 });
+
+
+test("landing page claims stay within verified language and booking capabilities", async () => {
+  const landing = await read("public/landing.html");
+  assert.match(landing, /English and Russian/);
+  assert.match(landing, /for your team to review/);
+  assert.match(landing, /Human-reviewed appointments/);
+  assert.doesNotMatch(landing, /24\/7|Always available online|day and night|круглосуточно|Всегда доступен онлайн/i);
+  assert.doesNotMatch(landing, /Language conversations|Общение на разных языках/);
+});
+
+test("privacy engineering inventory identifies providers and unresolved retention", async () => {
+  const inventory = await read("docs/DATA_FLOW_INVENTORY.md");
+  for (const provider of ["Cloudflare Workers", "Supabase", "Google Gemini API", "Resend"]) {
+    assert.ok(inventory.includes(provider), "Missing provider from data-flow inventory: " + provider);
+  }
+  assert.match(inventory, /Retention and deletion — unresolved/);
+  assert.match(inventory, /not a privacy notice, legal opinion, or compliance certification/i);
+});

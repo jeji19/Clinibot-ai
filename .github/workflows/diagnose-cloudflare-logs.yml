@@ -54,7 +54,7 @@ jobs:
             --argjson from "$from_ms" \
             --argjson to "$now_ms" \
             '{
-              queryId: "clinibot-ai-resend-diagnostic",
+              queryId: "clinibot-ai-appointment-diagnostic",
               timeframe: {from: $from, to: $to},
               view: "events",
               limit: 100,

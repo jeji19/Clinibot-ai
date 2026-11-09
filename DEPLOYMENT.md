@@ -44,6 +44,19 @@ The application uses the service-role key only in server-side functions. Manager
 
 The tracked `wrangler.jsonc` currently names the Worker `clinibot-ai`, while the previously supplied live hostname is `clinibot-ai1.albizrahemran.workers.dev`. Confirm which Worker is the intended production target in Cloudflare before running a deployment command. Do not change the configured Worker name based on the hostname alone.
 
+## Supabase RLS audit
+
+A read-only metadata audit is available at `supabase/audits/20261109_rls_audit.sql`. Run it in the Supabase SQL Editor using a project owner/admin role. It reports whether the six application tables exist, whether RLS is enabled/forced, the policies attached to them (including their `USING` and `WITH CHECK` expressions), and explicit grants for `anon`, `authenticated`, and `service_role`.
+
+The audit does not modify the database. Review its output against the intended access model before changing any policies:
+- Clinic managers should only read/update appointment requests belonging to a clinic they are a member of.
+- Clinic managers should only read/update settings for their membership-derived clinic.
+- Ordinary authenticated users must not gain Super Admin privileges; the Super Admin allowlist is stored in `super_admins`.
+- Demo leads must not be directly readable by anonymous users or clinic managers.
+- Public endpoints use server-side service credentials; those credentials must never be exposed to browsers.
+
+Do not paste API keys, access tokens, patient records, or other secrets into chat. Share only the audit output with sensitive identifiers and values redacted if a policy review is needed.
+
 ## Production verification checklist
 
 After deployment, verify with a real test clinic and test accounts:

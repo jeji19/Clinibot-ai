@@ -367,7 +367,8 @@ async function handleAppointment(request, env) {
     return json({ error: "Appointment service is not configured." }, 503);
   }
   try {
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     // Honeypot: quietly discard automated booking submissions.
     if (typeof body.website === "string" && body.website.trim()) {
       return json({ success: true, message: "Your appointment request was received." }, 201);

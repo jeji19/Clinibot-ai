@@ -447,7 +447,7 @@ async function handleAppointment(request, env) {
 
     // Resend's testing sender can deliver only to the account owner's verified email.
     // Use RESEND_TO_EMAIL until the clinic verifies its own sending domain.
-    const recipient = env.RESEND_TO_EMAIL;
+    const recipient = clinic.notification_email || env.RESEND_TO_EMAIL;
     if (env.RESEND_API_KEY && recipient) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {

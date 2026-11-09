@@ -63,6 +63,8 @@ jobs:
         run: node --test tests/admin-authz.test.mjs
       - name: Test baseline security safeguards
         run: node --test tests/security-basics.test.mjs
+      - name: Test guarded production deployment workflow
+        run: node --test tests/deploy-workflow.test.mjs
 
   supabase-bootstrap:
     runs-on: ubuntu-latest

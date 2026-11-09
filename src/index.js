@@ -644,7 +644,8 @@ async function handleAdminStatus(request, env) {
     if (!token) return json({ error: "Please sign in again." }, 401);
     const access = await resolveAdminClinicId(token, env);
     if (access.error) return json({ error: access.error }, access.status);
-    const body = await request.json();
+    const body = await readJsonObject(request);
+    if (!body) return json({ error: "Invalid JSON request body." }, 400);
     const id = body.id;
     const status = body.status;
     if ((typeof id !== "number" && typeof id !== "string") || !["new", "confirmed", "rejected", "completed"].includes(status)) return json({ error: "Invalid request or status." }, 400);

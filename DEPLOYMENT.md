@@ -54,6 +54,12 @@ Appointment requests are not calendar bookings: the clinic team must review each
 
 The tracked `wrangler.jsonc` now names the Worker `clinibot-ai1`, matching the previously supplied `clinibot-ai1.albizrahemran.workers.dev` hostname. Cloudflare documents the production route format as `<worker-name>.<account-subdomain>.workers.dev` and requires the Worker name to match the Wrangler configuration for Git-connected builds ([workers.dev naming](https://developers.cloudflare.com/workers/configuration/routing/workers-dev/), [Git integration name requirement](https://developers.cloudflare.com/workers/ci-cd/builds/)). A guarded, manual production deployment workflow is available at `.github/workflows/deploy-cloudflare.yml`. It requires an explicit `confirm_production=true`, verifies the selected name against `wrangler.jsonc`, requires the `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` GitHub Actions secrets, and runs public smoke tests after deployment. It is not triggered by ordinary pushes. The connected tools do not currently provide Cloudflare deployment access, and the workflow has not been run.
 
+To enable the guarded workflow, add these GitHub Actions repository secrets (do not paste them into chat or commit them):
+- `CLOUDFLARE_API_TOKEN`: a narrowly scoped Cloudflare API token with the **Edit Cloudflare Workers** permission for the target account.
+- `CLOUDFLARE_ACCOUNT_ID`: the target Cloudflare account ID.
+
+Then open GitHub Actions → **Deploy CliniBot AI Worker** → **Run workflow**, set `confirm_production` to true, and keep `worker_name` as `clinibot-ai1`. The workflow verifies the Wrangler target before deploying and then checks public clinic info, chat, and rejection of an unpublished service. A successful CI validation run alone does not deploy the Worker.
+
 ## Supabase RLS audit
 
 A read-only metadata audit is available at `supabase/audits/20261109_rls_audit.sql`. Run it in the Supabase SQL Editor using a project owner/admin role. It reports whether the six application tables exist, whether RLS is enabled/forced, the policies attached to them (including their `USING` and `WITH CHECK` expressions), explicit grants for `anon`, `authenticated`, and `service_role`, and indexes on `clinic_members`.

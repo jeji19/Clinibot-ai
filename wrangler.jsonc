@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "clinibot-ai",
+  "name": "clinibot-ai1",
   "main": "src/index.js",
   "compatibility_date": "2026-11-08",
   "observability": {

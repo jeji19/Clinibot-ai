@@ -172,3 +172,16 @@ test("Cloudflare Pages and Netlify chat adapters reject malformed JSON payloads"
     }
   }
 });
+
+
+test("zero-priced services are labeled in the patient's detected language", async () => {
+  const english = await invokeChat("What services and prices do you offer?", "ru");
+  assert.equal(english.response.status, 200);
+  assert.match(english.data.reply, /Free/);
+  assert.doesNotMatch(english.data.reply, /Бесплатно/);
+
+  const russian = await invokeChat("Какие услуги и цены?", "en");
+  assert.equal(russian.response.status, 200);
+  assert.match(russian.data.reply, /Бесплатно/);
+  assert.doesNotMatch(russian.data.reply, /Free/);
+});

@@ -260,3 +260,38 @@ test("Non-Super Admin cannot deactivate a clinic", async () => {
   });
   assert.equal(response.status, 403);
 });
+
+
+test("Super Admin clinic creation also initializes default clinic settings", async () => {
+  let clinicPayload;
+  let settingsPayload;
+  const response = await invoke("/api/superadmin/clinics", {
+    method: "POST", body: { name: "Aurora Dermatology", slug: "aurora-dermatology", plan: "pro" }
+  }, async (url, options = {}) => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/super_admins")) return json([{ user_id: managerId }]);
+    if (target.pathname.endsWith("/rest/v1/clinics")) {
+      assert.equal(options.method, "POST");
+      assert.equal(options.headers.Authorization, "Bearer valid-token");
+      clinicPayload = JSON.parse(options.body);
+      return json([{ id: clinicId, name: clinicPayload.name, slug: clinicPayload.slug }], 201);
+    }
+    if (target.pathname.endsWith("/rest/v1/clinic_settings")) {
+      assert.equal(options.method, "POST");
+      assert.equal(target.searchParams.get("on_conflict"), "clinic_id");
+      assert.equal(options.headers.Authorization, "Bearer valid-token");
+      settingsPayload = JSON.parse(options.body);
+      return new Response(null, { status: 201 });
+    }
+    throw new Error("Unexpected upstream request: " + target.pathname);
+  });
+  const data = await response.json();
+  assert.equal(response.status, 201);
+  assert.equal(data.success, true);
+  assert.equal(data.settings_ready, true);
+  assert.equal(clinicPayload.slug, "aurora-dermatology");
+  assert.deepEqual(settingsPayload, {
+    clinic_id: clinicId, description: "", services: [], opening_hours: {}, default_language: "en"
+  });
+});

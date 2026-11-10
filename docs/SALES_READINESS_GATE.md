@@ -12,7 +12,7 @@ The repository currently implements:
 - Appointment **requests** (not confirmed bookings), stored for the relevant clinic.
 - A clinic manager dashboard to review requests and update their status.
 - Clinic settings for description, default language, services/prices, opening hours, and notification email.
-- Email notification routing to the clinic's configured notification email, with a platform fallback.
+- Appointment requests are stored for clinic staff review. The currently deployed Cloudflare Worker routes email alerts to the platform inbox; clinic-specific email delivery is blocked pending a verified Resend sending domain. The Pages/Netlify adapters use the configured clinic notification email when available.
 - Super Admin workflows for creating clinics and assigning one manager per clinic.
 - Medical safety responses that direct clinical questions to qualified staff and urgent cases to emergency care.
 
@@ -36,13 +36,13 @@ A paid pilot may be offered only after every P0 item below is completed and evid
 
 ### P0 — must pass
 
-- [ ] Deploy the intended commit to the confirmed production Worker using the guarded deployment workflow.
-- [ ] Confirm the deployed Worker name, environment variables, Supabase connection, Gemini configuration (if AI answers are enabled), and Resend configuration.
+- [x] Deploy the current Worker source to the production Worker using the guarded deployment workflow (run [42781453004](https://github.com/jeji19/Clinibot-ai/actions/runs/42781453004), Worker `clinibot-ai1`, version `2c079bfa-28fe-4fa6-b064-c20935769803`). Re-run after any subsequent Worker-source changes.
+- [ ] Confirm the deployed Worker name, environment variables, Supabase connection, Cloud.ru/Gemini configuration (if generative AI answers are enabled), and Resend configuration.
 - [ ] Configure a clinic-facing custom domain or production route and verify HTTPS.
 - [ ] Run a real browser end-to-end test using a dedicated synthetic clinic, dedicated manager account, and entirely synthetic patient details.
 - [ ] Verify clinic onboarding from start to finish: create clinic, create/assign manager, manager login, save settings, publish services, and open the public clinic link.
 - [ ] Verify English and Russian FAQ answers are grounded in the clinic's saved information; unknown questions must not invent prices, services, hours, or availability.
-- [ ] Verify a valid appointment request is stored against the correct clinic, appears in that clinic manager dashboard only, and triggers the configured clinic notification email.
+- [ ] Verify a valid appointment request is stored against the correct clinic, appears in that clinic manager dashboard only, and triggers a notification to that clinic’s own verified email address. Current Worker email routing is platform-inbox-only, so this gate remains open.
 - [ ] Verify manager A cannot see or change clinic B's records; verify manager session expiry/revocation and logout.
 - [ ] Verify invalid, unpublished, and malformed appointment submissions are rejected without creating records.
 - [ ] Verify medical/urgent prompts return safe escalation guidance and do not call the generative model where deterministic safety handling applies.
@@ -74,7 +74,7 @@ Use a synthetic clinic and record pass/fail evidence for each step:
 5. Test visitor asks a question in Russian; answer matches saved clinic data.
 6. Ask for an unknown service/price; assistant does not invent an answer.
 7. Submit a request for a published service; it is stored and visible only to the correct manager.
-8. Confirm the clinic notification email is delivered.
+8. Confirm the clinic-specific notification email is delivered. Until the verified sender domain is configured, the deployed Worker sends notifications to the platform inbox only.
 9. Submit an unpublished service; request is rejected and no record is created.
 10. Manager updates request status; updated status persists after refresh.
 11. Attempt cross-clinic access with a second manager; access is denied.
@@ -88,7 +88,7 @@ Sell a supervised, setup-assisted pilot first. Do not present draft price tiers 
 
 ## Current launch blockers known from repository review
 
-- Cloudflare deployment workflow exists but has not been run; GitHub CI success is not evidence of production deployment.
+- Production Worker deployment is verified for source commit `24e25aa821299d25160bcfd10b2e0bc05413ba98`; the latest Pages/Netlify currency-adapter parity changes do not modify Worker source. Cloudflare Git-connected preview builds still fail with an authentication error and need separate repair.
 - Production custom domain/route is not yet confirmed.
 - No real browser-based manager/Super Admin end-to-end test is evidenced.
 - Billing and subscription enforcement are not implemented.

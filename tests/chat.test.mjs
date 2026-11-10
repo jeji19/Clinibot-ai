@@ -250,3 +250,12 @@ for (const [label, invoke] of [["Cloudflare Pages", invokePagesChat], ["Netlify"
     assert.match(explicitRussian.data.reply, /Добро пожаловать/);
   });
 }
+
+
+test("all chat deployment adapters target the current stable Gemini Flash model", async () => {
+  for (const path of ["../src/index.js", "../functions/api/chat.js", "../netlify/functions/chat.mjs"]) {
+    const adapter = await readFile(new URL(path, import.meta.url), "utf8");
+    assert.match(adapter, /gemini-3\\.8-flash:generateContent/);
+    assert.doesNotMatch(adapter, /gemini-3\\.6-flash:generateContent/);
+  }
+});

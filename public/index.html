@@ -171,6 +171,8 @@ const bookingStatus=document.getElementById('bookingStatus');
 const serviceField=document.getElementById('service');
 const languageField=document.getElementById('language');
 let clinicServices=[];
+let clinicCurrencyCode=null;
+function displayClinicPrice(value){if(value===null||value===undefined||value==='')return '';const amount=Number(value);if(!Number.isFinite(amount))return String(value);if(!/^[A-Z]{3}$/.test(String(clinicCurrencyCode||'')))return String(value);try{return new Intl.NumberFormat(languageField.value==='ru'?'ru-RU':'en-US',{style:'currency',currency:clinicCurrencyCode}).format(amount)}catch{return String(value)+' '+clinicCurrencyCode}}
 function applyBookingLanguage(){
  const ru=languageField.value==='ru';
  const labels={
@@ -188,7 +190,7 @@ function applyBookingLanguage(){
  if(serviceField.options.length>1){
   for(let i=1;i<serviceField.options.length;i++){
    const item=clinicServices.find(x=>x.name===serviceField.options[i].value);
-   if(item)serviceField.options[i].textContent=item.name+(item.price===0?(ru?' — Бесплатно':' — Free'):(item.price===null?'':' — '+item.price));
+   if(item)serviceField.options[i].textContent=item.name+(item.price===0?(ru?' — Бесплатно':' — Free'):(item.price===null?'':' — '+displayClinicPrice(item.price)));
   }
  }
 }
@@ -199,10 +201,11 @@ async function loadClinicServices(){
   const response=await fetch(clinicInfoEndpoint+'?clinic='+encodeURIComponent(clinicSlugForApp),{headers:{'Accept':'application/json'}});
   const data=await response.json();
   if(!response.ok)throw new Error(data.error||'Could not load clinic services.');
+  clinicCurrencyCode=data.currency_code||null;
   clinicServices=(Array.isArray(data.services)?data.services:[]).filter(item=>item&&typeof item.name==='string'&&item.name.trim());
   serviceField.replaceChildren(new Option(languageField.value==='ru'?'Выберите услугу':'Choose a service',''));
   for(const item of clinicServices){
-   const price=item.price===0?(languageField.value==='ru'?' — Бесплатно':' — Free'):(item.price===null?'':' — '+item.price);
+   const price=item.price===0?(languageField.value==='ru'?' — Бесплатно':' — Free'):(item.price===null?'':' — '+displayClinicPrice(item.price));
    serviceField.add(new Option(item.name+price,item.name));
   }
   applyBookingLanguage();

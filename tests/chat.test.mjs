@@ -334,6 +334,6 @@ test("clinic service prices are formatted in the configured currency in English 
 
   const unconfigured = await invokeChat("What services and prices do you offer?", "en", { services });
   assert.equal(unconfigured.response.status, 200);
-  assert.match(unconfigured.data.reply, /: 50(?:\\n|$)/);
+  assert.match(unconfigured.data.reply, /Laser consultation: 50/);
   assert.doesNotMatch(unconfigured.data.reply, /\$50/);
 });

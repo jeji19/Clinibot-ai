@@ -60,6 +60,35 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 .hp-field{position:absolute!important;left:-9999px!important;opacity:0!important}
 @media(max-width:760px){.lead-grid{grid-template-columns:1fr;gap:28px}.lead-form{padding:22px}.lead-fields{grid-template-columns:1fr}.lead-field.full{grid-column:auto}}
 
+
+/* Motion design: subtle, accessible and dependency-free */
+@media (prefers-reduced-motion: no-preference) {
+  .hero .eyebrow,.hero h1,.hero-copy,.hero .actions,.hero .micro {animation:clini-rise .75s both;opacity:0}
+  .hero .eyebrow{animation-delay:.08s}.hero h1{animation-delay:.18s}.hero-copy{animation-delay:.3s}
+  .hero .actions{animation-delay:.42s}.hero .micro{animation-delay:.52s}
+  .hero:after{animation:clini-orbit 18s linear infinite}
+  .demo{animation:clini-float 6s ease-in-out infinite}
+  .demo .bubble{animation:clini-chat-in .55s both}
+  .demo .bubble:nth-of-type(2){animation-delay:.25s}.demo .bubble:nth-of-type(3){animation-delay:.5s}
+  .demo .bubble:nth-of-type(4){animation-delay:.75s}.demo .bubble:nth-of-type(5){animation-delay:1s}
+  .demo .bubble:nth-of-type(6){animation-delay:1.25s}
+  .trustitem strong{transition:color .3s,transform .3s}
+  .trustitem:hover strong{color:#fff;transform:translateY(-3px)}
+  .button{transition:transform .25s ease,filter .25s ease,box-shadow .25s ease}
+  .button:hover{box-shadow:0 14px 32px #090f1b45}
+  .motion-ready .reveal{opacity:0;transform:translateY(24px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.7,.2,1)}
+  .motion-ready .reveal.is-visible{opacity:1;transform:none}
+  .motion-ready .card.reveal:nth-child(2),.motion-ready .step.reveal:nth-child(2){transition-delay:.1s}
+  .motion-ready .card.reveal:nth-child(3),.motion-ready .step.reveal:nth-child(3){transition-delay:.2s}
+  .motion-ready .card.reveal:nth-child(5){transition-delay:.1s}
+  .motion-ready .card.reveal:nth-child(6){transition-delay:.2s}
+}
+@keyframes clini-rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes clini-chat-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes clini-float{0%,100%{transform:translateY(14px)}50%{transform:translateY(2px)}}
+@keyframes clini-orbit{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
 </style>
 </head>
 <body>
@@ -240,6 +269,26 @@ ru:{
       button.textContent = translateStatus("Request my free demo ↗");
     }
   });
+})();
+</script>
+
+
+<script>
+(() => {
+  const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduceMotion || !('IntersectionObserver' in window)) return;
+  const targets = document.querySelectorAll('.section-head,.card,.story-photo,.story-copy,.step,.lead-copy,.lead-form,.band-inner');
+  targets.forEach(el => el.classList.add('reveal'));
+  document.body.classList.add('motion-ready');
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
+  targets.forEach(el => observer.observe(el));
 })();
 </script>
 

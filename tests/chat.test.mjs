@@ -62,7 +62,7 @@ const env = {
   ASSETS: { fetch: async () => new Response("not found", { status: 404 }) }
 };
 
-async function invokeChat(message, defaultLanguage) {
+async function invokeChat(message, defaultLanguage, options = {}) {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async url => {
     const target = new URL(String(url));
@@ -72,9 +72,10 @@ async function invokeChat(message, defaultLanguage) {
     if (target.pathname.endsWith("/rest/v1/clinic_settings")) {
       return Response.json([{
         description: "A dermatology clinic",
-        services: [{ name: "Skin consultation", price: 0 }],
+        services: options.services || [{ name: "Skin consultation", price: 0 }],
         opening_hours: {},
-        default_language: defaultLanguage
+        default_language: defaultLanguage,
+        currency_code: options.currencyCode || null
       }]);
     }
     throw new Error("Unexpected upstream request: " + target.pathname);
@@ -318,4 +319,21 @@ test("Cloud.ru provider handles free-form chat through its OpenAI-compatible API
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+
+test("clinic service prices are formatted in the configured currency in English and Russian", async () => {
+  const services = [{ name: "Laser consultation", price: 50 }];
+  const english = await invokeChat("What services and prices do you offer?", "en", { currencyCode: "USD", services });
+  assert.equal(english.response.status, 200);
+  assert.match(english.data.reply, /\$50\.00/);
+
+  const russian = await invokeChat("Какие услуги и цены?", "ru", { currencyCode: "USD", services });
+  assert.equal(russian.response.status, 200);
+  assert.match(russian.data.reply, /50,00\s*\$/);
+
+  const unconfigured = await invokeChat("What services and prices do you offer?", "en", { services });
+  assert.equal(unconfigured.response.status, 200);
+  assert.match(unconfigured.data.reply, /: 50(?:\\n|$)/);
+  assert.doesNotMatch(unconfigured.data.reply, /\$50/);
 });

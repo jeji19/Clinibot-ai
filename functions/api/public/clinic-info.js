@@ -24,7 +24,7 @@ export async function onRequestGet({ request, env }) {
     if (!clinicResponse.ok || !Array.isArray(clinics)) return json({ error: "Could not load clinic information." }, 502);
     if (!clinics[0]) return json({ error: "This clinic link is unavailable or inactive." }, 404);
     const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
-    settingsUrl.searchParams.set("select", "services");
+    settingsUrl.searchParams.set("select", "services,country_code,currency_code");
     settingsUrl.searchParams.set("clinic_id", "eq." + clinics[0].id);
     settingsUrl.searchParams.set("limit", "1");
     const settingsResponse = await fetch(settingsUrl, { headers, signal: AbortSignal.timeout(12000) });
@@ -36,7 +36,7 @@ export async function onRequestGet({ request, env }) {
         (item.price === null || item.price === undefined || item.price === "" ? null :
           (Number.isFinite(Number(item.price)) && Number(item.price) >= 0 ? Number(item.price) : null)) }))
       .slice(0, 50) : [];
-    return json({ clinic: { name: clinics[0].name }, services });
+    return json({ clinic: { name: clinics[0].name }, country_code: rows[0]?.country_code || null, currency_code: rows[0]?.currency_code || null, services });
   } catch (error) {
     console.error("Public clinic info error:", error?.message);
     return json({ error: "Clinic information is temporarily unavailable." }, 500);

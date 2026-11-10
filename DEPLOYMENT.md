@@ -105,7 +105,7 @@ Add these GitHub Actions secrets:
 - `CLOUDFLARE_DIAGNOSTICS_TOKEN`: a narrowly scoped token for Workers Observability.
 - `CLOUDFLARE_ACCOUNT_ID`: the account ID already used by the deployment workflow.
 
-**Permission caveat:** Cloudflare's current API reference lists `Workers Observability Write` as the accepted permission for the telemetry query endpoint, even though this workflow only reads log results. A token with only `Workers Observability Read` may receive HTTP 403. Do not add Worker script edit, account administration, billing, DNS, or user-management permissions for this diagnostics workflow. Run GitHub Actions → **Diagnose CliniBot AI Worker Logs** → **Run workflow** and keep the default 48-hour lookback. The workflow is manual-only and is not run automatically on pushes.
+**Permission caveat:** Cloudflare's current API reference lists `Workers Observability Write` as the accepted permission for the telemetry query endpoint, even though this workflow only reads log results. A token with only `Workers Observability Read` may receive HTTP 403. Do not add Worker script edit, account administration, billing, DNS, or user-management permissions for this diagnostics workflow. The workflow runs automatically when its workflow definition is updated on `main`, and it can also be started manually from GitHub Actions → **Diagnose CliniBot AI Worker Logs**. It uses a 48-hour lookback by default. Each successful run writes only sanitized timestamps, event categories, HTTP status codes, and event count to `diagnostics/latest.json`; raw log messages and chat content are never saved.
 
 
 ## Cloud.ru AI provider (prepared, not yet activated)

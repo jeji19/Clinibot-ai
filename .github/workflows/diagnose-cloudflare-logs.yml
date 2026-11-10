@@ -32,7 +32,7 @@ jobs:
         id: range
         shell: bash
         env:
-          LOOKBACK_HOURS: ${{ inputs.lookback_hours }}
+          LOOKBACK_HOURS: ${{ inputs.lookback_hours || '48' }}
         run: |
           set -euo pipefail
           if [[ ! "$LOOKBACK_HOURS" =~ ^[0-9]+$ ]] || (( LOOKBACK_HOURS < 1 || LOOKBACK_HOURS > 168 )); then

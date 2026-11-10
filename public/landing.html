@@ -61,6 +61,44 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 @media(max-width:760px){.lead-grid{grid-template-columns:1fr;gap:28px}.lead-form{padding:22px}.lead-fields{grid-template-columns:1fr}.lead-field.full{grid-column:auto}}
 
 
+
+/* Premium visual layer: cinematic photography, depth and continuous motion */
+.hero{isolation:isolate;background-attachment:scroll;background-position:center 42%;background-size:cover}
+.hero:before{background:linear-gradient(90deg,#101b2df2 0%,#142238d9 43%,#1422388a 100%),linear-gradient(0deg,#142238 0%,transparent 52%)}
+.hero:after{right:-155px;top:110px;width:520px;height:520px;border-color:#e4c28e66;box-shadow:0 0 0 28px #d5b47b18,0 0 0 62px #d5b47b10,0 0 90px #d5b47b18;pointer-events:none}
+.hero-image-collage{position:absolute;z-index:0;right:3.5%;top:15%;width:45%;height:72%;pointer-events:none;perspective:1100px}
+.hero-image-collage .photo-main{position:absolute;right:2%;top:2%;width:72%;height:82%;overflow:hidden;border:1px solid #ffffff70;border-radius:18px;box-shadow:0 35px 90px #050b1780;transform:rotate(3deg);animation:clini-photo-drift 9s ease-in-out infinite}
+.hero-image-collage .photo-main img,.hero-image-collage .photo-small img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(.82) contrast(1.04)}
+.hero-image-collage .photo-main:after,.hero-image-collage .photo-small:after{content:"";position:absolute;inset:0;background:linear-gradient(145deg,#e4c28e30,transparent 55%,#101b2d55)}
+.hero-image-collage .photo-small{position:absolute;left:0;bottom:3%;width:39%;height:39%;overflow:hidden;border:4px solid #fffdfa;border-radius:13px;box-shadow:0 24px 55px #050b176e;transform:rotate(-7deg);animation:clini-photo-drift 7s ease-in-out -2s infinite reverse}
+.hero-image-collage .visual-chip{position:absolute;right:0;bottom:5%;padding:11px 15px;border:1px solid #ffffff65;border-radius:10px;background:#17263bd9;color:#fff;box-shadow:0 15px 35px #050b1760;backdrop-filter:blur(12px);font-size:11px;letter-spacing:.3px;animation:clini-chip-float 5s ease-in-out infinite}
+.hero-image-collage .visual-chip b{display:block;color:#e4c28e;font-size:15px;letter-spacing:.2px}
+.demo{position:relative;z-index:2;backdrop-filter:blur(12px);box-shadow:0 35px 100px #050b17b8,0 0 0 1px #ffffff35}
+.demo:before{content:"";position:absolute;inset:0 0 auto;height:2px;background:linear-gradient(90deg,transparent,#e4c28e,transparent);z-index:3;animation:clini-scan 4.5s ease-in-out infinite}
+.demo-top{background:linear-gradient(115deg,#17263b,#243b58)}
+.chat{background:radial-gradient(ellipse at 100% 0%,#e4c28e30,transparent 45%),linear-gradient(135deg,#fffdfa,#f0e9de)}
+.bubble{transition:transform .25s,box-shadow .25s}
+.bubble:hover{transform:translateY(-2px);box-shadow:0 9px 22px #17263b15}
+.card{background:linear-gradient(145deg,#fffdfa,#f7f1e8);box-shadow:0 12px 34px #17263b08}
+.card:hover{transform:translateY(-9px) scale(1.012);box-shadow:0 24px 48px #17263b18}
+.ico{transition:transform .55s cubic-bezier(.2,.8,.2,1),background .3s}
+.card:hover .ico{transform:rotateY(180deg) scale(1.08);background:#f1e5d2}
+.story-photo{overflow:hidden}
+.story-photo:before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,#14223825,transparent 55%);z-index:1;pointer-events:none}
+.story-photo{background-position:center;animation:clini-image-breathe 18s ease-in-out infinite alternate}
+.band{background-position:center 45%}
+.band:before{background:linear-gradient(100deg,#101b2df5,#142238d9 58%,#142238a8)}
+.trustbar{box-shadow:0 16px 45px #101b2d20}
+.lead-form{transition:transform .35s,box-shadow .35s}
+.lead-form:focus-within{transform:translateY(-4px);box-shadow:0 24px 55px #17263b14}
+@keyframes clini-photo-drift{0%,100%{translate:0 0;rotate:0deg}50%{translate:0 -13px;rotate:1deg}}
+@keyframes clini-chip-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+@keyframes clini-scan{0%,100%{opacity:.25;transform:scaleX(.35)}50%{opacity:1;transform:scaleX(1)}}
+@keyframes clini-image-breathe{from{background-size:100%}to{background-size:108%}}
+@media(max-width:850px){.hero-image-collage{right:-9%;top:16%;width:65%;height:55%;opacity:.32}.hero-image-collage .photo-small,.hero-image-collage .visual-chip{display:none}.hero-image-collage .photo-main{width:100%;height:100%;right:0;top:0}.demo{z-index:2}}
+@media(max-width:560px){.hero-image-collage{right:-24%;top:17%;width:88%;height:38%;opacity:.22}.hero:after{width:300px;height:300px;right:-175px;top:155px}.demo{box-shadow:0 22px 60px #050b1780}}
+@media(prefers-reduced-motion:reduce){.hero-image-collage *, .demo:before,.story-photo{animation:none!important}}
+
 /* Motion design: subtle, accessible and dependency-free */
 @media (prefers-reduced-motion: no-preference) {
   .hero .eyebrow,.hero h1,.hero-copy,.hero .actions,.hero .micro {animation:clini-rise .75s both;opacity:0}
@@ -94,7 +132,7 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 <body>
 <header><div class="wrap nav"><a class="brand" href="/landing.html"><span class="brand-mark">✧</span><span>CliniBot AI<small>Your intelligent clinic assistant</small></span></a><nav class="navlinks"><a href="#features">Features</a><a href="#why">Why CliniBot</a><a href="#how">How it works</a><select id="siteLanguage" aria-label="Select website language" style="padding:9px 10px;border:1px solid #ffffff80;border-radius:5px;background:#142238;color:#fff;font:12px inherit"><option value="en">EN</option><option value="ru">RU</option></select><a class="button" href="#demo-request">Book a demo ↗</a></nav></div></header>
 <main>
-<section class="hero"><div class="wrap hero-grid">
+<section class="hero"><div class="hero-image-collage" aria-hidden="true"><div class="photo-main"><img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1100&q=88" alt="" fetchpriority="high"></div><div class="photo-small"><img src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=700&q=85" alt="" loading="lazy"></div><div class="visual-chip"><b>Thoughtful care</b>Powered by CliniBot AI</div></div><div class="wrap hero-grid">
 <div><div class="eyebrow">The future of clinic communication</div><h1>A warmer welcome.<br>A <em>smarter</em> clinic.</h1><p class="hero-copy">Meet the AI receptionist that helps your clinic answer routine questions in English and Russian and collect appointment requests for your team to review.</p><div class="actions"><a class="button" href="#demo-request">Discover CliniBot <span>↗</span></a><a class="button outline" href="/?clinic=Clinibot-demo-2026-x93k">Explore live demo <span>▷</span></a></div><div class="micro"><span>✦</span> Built for modern clinics · Your team stays in control</div></div>
 <div class="demo"><div class="demo-top"><div class="demo-brand"><span class="bot-mark">✧</span><span>CliniBot assistant</span></div><span class="live">Online</span></div><div class="chat"><div class="chat-label">A conversation, made simple</div><div class="bubble bot">Hello! Welcome to our clinic. How can I help you today?</div><div class="bubble user">I'd like to book a consultation.</div><div class="bubble bot">Of course. Which service are you interested in?</div><div class="demo-actions"><span>Skin consultation</span><span>Laser consultation</span><span>Other</span></div><div class="bubble user">Can I request a time?</div><div class="bubble bot">Absolutely. I can collect your preferred date and contact details for our team.</div></div><div class="demo-foot"><span>Illustrative conversation</span><span>Human-confirmed appointments</span></div></div>
 </div></section>

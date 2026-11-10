@@ -1,6 +1,10 @@
 name: Diagnose CliniBot AI Worker Logs
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-cloudflare-logs.yml"
   workflow_dispatch:
     inputs:
       lookback_hours:
@@ -10,7 +14,7 @@ on:
         default: "48"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: clinibot-cloudflare-diagnostics
@@ -21,6 +25,9 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
       - name: Validate diagnostic inputs
         id: range
         shell: bash
@@ -125,3 +132,33 @@ jobs:
           count="$(jq -r '.result.events.count // 0' /tmp/cf-observability-response.json)"
           echo "Total chat events reported by Cloudflare: $count"
           echo "Raw messages, API keys, patient data, and request payloads are intentionally withheld."
+
+          mkdir -p diagnostics
+          jq -c '{
+            generated_at: (now | todateiso8601),
+            total_chat_events: (.result.events.count // 0),
+            events: [
+              (.result.events.events // [])[]
+              | ((.["$metadata"].message // .["$metadata"].error // .source.message // .source // "") | tostring) as $message
+              | {
+                  timestamp: (.timestamp // .["$metadata"].timestamp // null),
+                  category: (
+                    if ($message | test("Cloud\\.ru AI error"; "i")) then "cloudru_upstream_error"
+                    elif ($message | test("Gemini error"; "i")) then "gemini_upstream_error"
+                    elif ($message | test("Chat error"; "i")) then "chat_handler_error"
+                    else "other_chat_event"
+                    end
+                  ),
+                  http_status: (try ($message | capture("(?:Cloud\\.ru AI|Gemini) error (?<status>[0-9]{3})").status) catch null)
+                }
+            ]
+          }' /tmp/cf-observability-response.json > diagnostics/latest.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add diagnostics/latest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update sanitized AI diagnostics report"
+            git push
+          fi
+          echo "Sanitized report saved to diagnostics/latest.json on the main branch."

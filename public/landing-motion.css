@@ -143,3 +143,73 @@
   .cards .card, .cards .card .ico, .story-photo, .motion-gallery .gallery-tile img,
   .how, .demo-lead, .lead-form, .trustitem strong { animation: none !important; }
 }
+
+
+/* CINEMATIC V5 — unmistakable movement on touch screens */
+@media (prefers-reduced-motion: no-preference) {
+  .hero-image-collage { opacity:1 !important; }
+  .hero-image-collage .photo-main {
+    animation: v5-photo-float 5.5s ease-in-out infinite !important;
+    will-change: transform;
+  }
+  .hero-image-collage .photo-main img {
+    animation: v5-image-zoom 8s ease-in-out infinite alternate !important;
+    will-change: transform;
+  }
+  .hero-image-collage .photo-small {
+    animation: v5-small-float 4.2s ease-in-out infinite !important;
+    will-change: transform;
+  }
+  .hero-image-collage .photo-third {
+    animation: v5-third-float 6s ease-in-out infinite !important;
+    will-change: transform;
+  }
+  .hero-ambient .aurora.one { opacity:.42 !important; animation-duration:8s !important; }
+  .hero-ambient .aurora.two { opacity:.34 !important; animation-duration:10s !important; }
+  .hero-ambient .light-line { animation-duration:6s !important; }
+  .hero:after { animation: v5-ring-pulse 5s ease-in-out infinite !important; }
+  .demo { animation: v5-demo-hover 4.5s ease-in-out infinite !important; }
+  .cards .card {
+    animation: v5-card-float 4.8s ease-in-out infinite !important;
+    will-change: transform;
+  }
+  .cards .card:nth-child(2n) { animation-delay:-2.4s !important; }
+  .cards .card:nth-child(3n) { animation-delay:-1.2s !important; }
+  .cards .card .ico { animation: v5-icon-spin 5s ease-in-out infinite !important; }
+  .motion-marquee .marquee-track { animation-duration:19s !important; }
+  .marquee-card img { animation-duration:8s !important; }
+  .gallery-tile img { animation-duration:9s !important; }
+  .gallery-tile:nth-child(2) { animation: v5-tile-hover 6s ease-in-out infinite; }
+  .gallery-tile:nth-child(3) { animation: v5-tile-hover 6s ease-in-out -3s infinite; }
+  .story-photo { animation: v5-story-zoom 9s ease-in-out infinite alternate !important; }
+  .step { animation: v5-step-float 5s ease-in-out infinite; }
+  .step:nth-child(2) { animation-delay:-2.5s; }
+  .lead-form:before { animation-duration:2.8s !important; }
+}
+@keyframes v5-photo-float { 0%,100%{transform:translate3d(0,0,0) rotate(4deg)} 50%{transform:translate3d(0,-24px,0) rotate(1deg)} }
+@keyframes v5-image-zoom { from{transform:scale(1)} to{transform:scale(1.2)} }
+@keyframes v5-small-float { 0%,100%{transform:translate3d(0,0,0) rotate(-7deg)} 50%{transform:translate3d(0,-18px,0) rotate(-2deg)} }
+@keyframes v5-third-float { 0%,100%{transform:translate3d(0,0,0) rotate(-8deg)} 50%{transform:translate3d(0,-20px,0) rotate(-2deg)} }
+@keyframes v5-ring-pulse { 0%,100%{scale:.92;opacity:.4} 50%{scale:1.12;opacity:.95} }
+@keyframes v5-demo-hover { 0%,100%{translate:0 10px} 50%{translate:0 -8px} }
+@keyframes v5-card-float { 0%,100%{translate:0 0;box-shadow:0 12px 34px #17263b08} 50%{translate:0 -12px;box-shadow:0 25px 48px #17263b20} }
+@keyframes v5-icon-spin { 0%,100%{rotate:0deg;scale:1} 50%{rotate:14deg;scale:1.16} }
+@keyframes v5-tile-hover { 0%,100%{translate:0 0} 50%{translate:0 -10px} }
+@keyframes v5-story-zoom { from{background-size:100% 100%;background-position:45% center} to{background-size:120% 120%;background-position:58% center} }
+@keyframes v5-step-float { 0%,100%{translate:0 0} 50%{translate:0 -8px} }
+@media(max-width:850px) and (prefers-reduced-motion:no-preference) {
+  .hero-image-collage { opacity:.88 !important; top:10% !important; }
+  .hero-image-collage .photo-main { animation-duration:4.5s !important; }
+  .hero-image-collage .photo-small { display:block !important; }
+  .hero-image-collage .visual-chip { display:block !important; }
+}
+@media(max-width:560px) and (prefers-reduced-motion:no-preference) {
+  .hero-image-collage { opacity:.72 !important; }
+  .hero-image-collage .photo-small { width:32% !important; height:30% !important; }
+  .motion-marquee .marquee-track { animation-duration:15s !important; }
+  .marquee-card { width:210px !important; height:132px !important; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .hero-image-collage *, .hero-ambient *, .demo, .cards .card, .cards .card .ico,
+  .motion-marquee .marquee-track, .gallery-tile, .story-photo, .step { animation:none !important; }
+}

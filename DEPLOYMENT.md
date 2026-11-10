@@ -21,7 +21,9 @@ Set these values in the deployment platform's environment/secrets settings. Neve
 | `SUPABASE_URL` | Chat, public clinic info, bookings, demo leads, admin | Project URL, origin or project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Chat FAQ, public clinic info, appointment storage, demo leads | Server-side secret only; never expose to browser code |
 | `SUPABASE_ANON_KEY` | Admin authentication and authenticated manager/Super Admin operations | Public project key; database RLS still matters |
-| `GEMINI_API_KEY` | Free-form AI chat replies | Optional; FAQ and safety responses work without it |
+| `CLOUDRU_API_KEY` | Preferred free-form AI chat provider | Optional until Cloud.ru is provisioned; when set, it takes priority over Gemini. Store only as a server-side secret. |
+| `CLOUDRU_MODEL` | Cloud.ru model selection | Optional; defaults to `Qwen/Qwen3.6-35B-A3B`. |
+| `GEMINI_API_KEY` | Legacy free-form AI chat fallback | Optional; used only when `CLOUDRU_API_KEY` is not configured. FAQ and safety responses work without either provider. |
 | `RESEND_API_KEY` | Email notifications | Optional; requests are stored even if email delivery fails |
 | `RESEND_TO_EMAIL` | Email notification destination | The current Worker config defaults this to the platform inbox |
 
@@ -104,3 +106,10 @@ Add these GitHub Actions secrets:
 - `CLOUDFLARE_ACCOUNT_ID`: the account ID already used by the deployment workflow.
 
 **Permission caveat:** Cloudflare's current API reference lists `Workers Observability Write` as the accepted permission for the telemetry query endpoint, even though this workflow only reads log results. A token with only `Workers Observability Read` may receive HTTP 403. Do not add Worker script edit, account administration, billing, DNS, or user-management permissions for this diagnostics workflow. Run GitHub Actions → **Diagnose CliniBot AI Worker Logs** → **Run workflow** and keep the default 48-hour lookback. The workflow is manual-only and is not run automatically on pushes.
+
+
+## Cloud.ru AI provider (prepared, not yet activated)
+
+The Worker, Cloudflare Pages, and Netlify chat adapters support Cloud.ru Evolution Foundation Models through its OpenAI-compatible Chat Completions endpoint. When `CLOUDRU_API_KEY` is present, it takes priority over Gemini. The default model is `Qwen/Qwen3.6-35B-A3B`; override it with `CLOUDRU_MODEL` only after confirming that the model is enabled in the Cloud.ru project.
+
+Required Worker secret: `CLOUDRU_API_KEY`. Optional Worker variable: `CLOUDRU_MODEL=Qwen/Qwen3.6-35B-A3B`. Keep the key server-side; never place it in public assets, browser code, GitHub source, or chat messages. The provider branch has automated mocked tests, but it is not production-active until a Cloud.ru account, model access, API key, and live English/Russian response tests have been completed. Do not remove the Gemini key until the Cloud.ru provider has passed live tests. Do not send real patient data during provider validation; use synthetic demo prompts only.

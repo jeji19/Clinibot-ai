@@ -169,16 +169,179 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 }
 @media(prefers-reduced-motion:reduce){.hero:after{animation:none!important}.demo{transition:none}}
 
+
+/* CINEMATIC MOTION SYSTEM — lightweight CSS, no paid libraries */
+:root{--motion-cyan:#7ee7e1;--motion-violet:#a99aff;--motion-glass:#ffffff12}
+html{scroll-padding-top:90px}
+body{overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 12% 20%,#d8c49b1c,transparent 38%),radial-gradient(ellipse at 90% 65%,#7e9cb51a,transparent 34%)}
+header{backdrop-filter:blur(14px);transition:background .35s,border-color .35s}
+header.scrolled{position:fixed;background:#101c2df0;border-color:#ffffff24;box-shadow:0 12px 35px #07101d55}
+.navlinks a:not(.button){position:relative}
+.navlinks a:not(.button):after{content:"";position:absolute;left:0;right:100%;bottom:-8px;height:1px;background:var(--gold2);transition:right .35s}
+.navlinks a:not(.button):hover:after{right:0}
+.hero{min-height:850px;background-size:110% 110%;animation:clini-hero-pan 26s ease-in-out infinite alternate}
+.hero:before{background:linear-gradient(110deg,#071426ef 0%,#142238c4 42%,#1422385c 100%),linear-gradient(0deg,#142238 0%,transparent 58%);animation:clini-overlay-breathe 12s ease-in-out infinite alternate}
+.hero-ambient{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+.hero-ambient .aurora{position:absolute;width:48vw;height:48vw;min-width:300px;min-height:300px;border-radius:50%;filter:blur(65px);opacity:.22;mix-blend-mode:screen}
+.hero-ambient .aurora.one{background:#55b9c7;right:7%;top:12%;animation:clini-aurora-one 17s ease-in-out infinite alternate}
+.hero-ambient .aurora.two{background:#b28bdf;left:28%;bottom:-24%;animation:clini-aurora-two 21s ease-in-out infinite alternate}
+.hero-ambient .light-line{position:absolute;inset:-50% auto -50% 42%;width:1px;background:linear-gradient(transparent,#e4c28e66,transparent);transform:rotate(28deg);animation:clini-light-sweep 11s linear infinite}
+.hero-image-collage{right:1%;top:10%;width:49%;height:78%;transform-style:preserve-3d}
+.hero-image-collage .photo-main{border-radius:24px;animation:clini-photo-drift 8s ease-in-out infinite,clini-photo-glow 6s ease-in-out infinite alternate}
+.hero-image-collage .photo-main img{animation:clini-image-zoom 19s ease-in-out infinite alternate}
+.hero-image-collage .photo-small{animation:clini-photo-drift 7s ease-in-out -2s infinite reverse,clini-small-tilt 13s ease-in-out infinite}
+.hero-image-collage .photo-third{position:absolute;left:9%;top:3%;width:30%;height:28%;overflow:hidden;border:3px solid #fffdfa;border-radius:15px;box-shadow:0 22px 55px #050b177e;transform:rotate(-8deg);animation:clini-third-float 9s ease-in-out infinite}
+.hero-image-collage .photo-third img{width:100%;height:100%;object-fit:cover;display:block;animation:clini-image-zoom 16s ease-in-out infinite alternate-reverse}
+.hero-image-collage .photo-third:after{content:"";position:absolute;inset:0;background:linear-gradient(145deg,#e4c28e30,transparent 60%)}
+.hero-image-collage .orbit{position:absolute;right:-5%;top:14%;width:90%;aspect-ratio:1;border:1px solid #e4c28e45;border-radius:50%;transform:rotateX(68deg) rotateZ(-20deg);animation:clini-orbit 24s linear infinite}
+.hero-image-collage .orbit:before,.hero-image-collage .orbit:after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:#e4c28e;box-shadow:0 0 22px #e4c28e;top:13%;left:14%}
+.hero-image-collage .orbit:after{width:6px;height:6px;top:auto;left:auto;right:8%;bottom:18%;background:var(--motion-cyan);box-shadow:0 0 20px var(--motion-cyan)}
+.visual-chip{backdrop-filter:blur(16px)!important}
+.hero .micro{display:inline-flex;align-items:center;padding:9px 13px;border:1px solid #ffffff25;border-radius:99px;background:#ffffff0c;backdrop-filter:blur(12px)}
+.hero .micro span{animation:clini-sparkle 2.5s ease-in-out infinite}
+.demo{border-radius:20px;transform-style:preserve-3d}
+.demo-top{position:relative;overflow:hidden}
+.demo-top:after{content:"";position:absolute;inset:0;background:linear-gradient(110deg,transparent 20%,#ffffff18 48%,transparent 72%);transform:translateX(-120%);animation:clini-glass-sheen 7s ease-in-out infinite}
+.live:before{animation:clini-live-pulse 1.7s ease-in-out infinite;box-shadow:0 0 0 0 #62c58c70}
+.demo-actions span{transition:transform .25s,background .25s,box-shadow .25s;animation:clini-pill-float 4s ease-in-out infinite}
+.demo-actions span:nth-child(2){animation-delay:-1.2s}.demo-actions span:nth-child(3){animation-delay:-2.2s}
+.demo-actions span:hover{transform:translateY(-4px);background:#fff;box-shadow:0 8px 20px #17263b16}
+.trustbar{overflow:hidden}
+.trustitem{position:relative;transition:background .35s}
+.trustitem:before{content:"";position:absolute;inset:auto 20% 0;height:1px;background:linear-gradient(90deg,transparent,var(--gold2),transparent);transform:scaleX(0);transition:transform .4s}
+.trustitem:hover{background:#ffffff08}.trustitem:hover:before{transform:scaleX(1)}
+.motion-marquee{position:relative;overflow:hidden;padding:28px 0 34px;background:#101c2d;color:#fff;border-bottom:1px solid #d4b27a55}
+.motion-marquee:before,.motion-marquee:after{content:"";position:absolute;z-index:2;top:0;bottom:0;width:9%;pointer-events:none}
+.motion-marquee:before{left:0;background:linear-gradient(90deg,#101c2d,transparent)}
+.motion-marquee:after{right:0;background:linear-gradient(270deg,#101c2d,transparent)}
+.marquee-label{display:flex;justify-content:space-between;gap:15px;align-items:center;margin:0 auto 17px;width:min(1160px,calc(100% - 44px));font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#d8c39f}
+.marquee-label span:last-child{color:#91a5b7;letter-spacing:1px}
+.marquee-track{display:flex;width:max-content;gap:15px;animation:clini-marquee 38s linear infinite;will-change:transform}
+.motion-marquee:hover .marquee-track{animation-play-state:paused}
+.marquee-card{position:relative;width:245px;height:145px;overflow:hidden;border:1px solid #ffffff30;border-radius:13px;background:#24364b}
+.marquee-card img{width:100%;height:100%;object-fit:cover;display:block;opacity:.82;transition:transform .7s,opacity .7s;animation:clini-image-zoom 18s ease-in-out infinite alternate}
+.marquee-card:hover img{transform:scale(1.13);opacity:1}
+.marquee-card span{position:absolute;left:13px;bottom:11px;padding:5px 9px;border:1px solid #ffffff50;border-radius:99px;background:#101c2dbb;backdrop-filter:blur(8px);font-size:10px;color:white;letter-spacing:.4px}
+.marquee-card:nth-child(2n) img{animation-delay:-5s}.marquee-card:nth-child(3n) img{animation-delay:-9s}
+.motion-gallery{padding:92px 0;background:#eae4d9;overflow:hidden}
+.motion-gallery .gallery-head{display:flex;justify-content:space-between;align-items:end;gap:25px;margin-bottom:34px}
+.motion-gallery h2{font-size:clamp(34px,4vw,50px);font-weight:500;line-height:1.08;margin:10px 0 0;max-width:600px}
+.motion-gallery .gallery-head p{max-width:340px;color:#77736d;font-size:13px;margin:0}
+.gallery-grid{display:grid;grid-template-columns:1.15fr .85fr .85fr;gap:15px;align-items:stretch}
+.gallery-tile{position:relative;min-height:360px;overflow:hidden;border-radius:16px;background:#1b2b40;isolation:isolate;box-shadow:0 18px 50px #17263b20}
+.gallery-tile:first-child{min-height:430px}
+.gallery-tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s cubic-bezier(.2,.7,.2,1);animation:clini-image-zoom 23s ease-in-out infinite alternate}
+.gallery-tile:nth-child(2) img{animation-delay:-7s}.gallery-tile:nth-child(3) img{animation-delay:-13s}
+.gallery-tile:after{content:"";position:absolute;inset:0;background:linear-gradient(0deg,#081426e8 0%,transparent 70%);z-index:1}
+.gallery-tile:hover img{transform:scale(1.1) rotate(1deg)}
+.gallery-caption{position:absolute;z-index:2;left:22px;right:22px;bottom:22px;color:#fff}
+.gallery-caption small{display:block;color:#e4c28e;text-transform:uppercase;font-size:9px;letter-spacing:2px;margin-bottom:6px}
+.gallery-caption strong{font:500 24px/1.15 "Playfair Display",Georgia,serif}
+.gallery-tile:first-child .gallery-caption strong{font-size:30px}
+.card,.step{border-radius:13px;transform-style:preserve-3d}
+.card:before,.step:before{content:"";position:absolute;inset:0;border-radius:inherit;padding:1px;background:linear-gradient(135deg,#d9bb8b80,transparent 40%,#8bc6ca55);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .4s;pointer-events:none}
+.card:hover:before,.step:hover:before{opacity:1}
+.card .ico{animation:clini-icon-bob 5s ease-in-out infinite}
+.card:nth-child(2n) .ico{animation-delay:-2s}
+.story-photo{background-size:cover!important}
+.story-photo:after{mix-blend-mode:screen}
+.story-copy .check b{transition:transform .35s,box-shadow .35s}
+.story-copy .check:hover b{transform:rotate(360deg) scale(1.12);box-shadow:0 0 0 6px #c8a36a20}
+.step{overflow:hidden;transition:transform .4s,box-shadow .4s}
+.step:after{content:"";position:absolute;right:-45px;top:-55px;width:150px;height:150px;border:1px solid #c8a36a35;border-radius:50%;box-shadow:0 0 0 18px #c8a36a0a,0 0 0 38px #c8a36a08;animation:clini-orbit 30s linear infinite}
+.step:hover{transform:translateY(-8px);box-shadow:0 24px 55px #17263b17}
+.band{background-size:110% 110%;animation:clini-band-pan 25s ease-in-out infinite alternate}
+.band:after{content:"";position:absolute;right:-90px;top:-170px;width:430px;height:430px;border:1px solid #e4c28e55;border-radius:50%;box-shadow:0 0 0 28px #e4c28e10,0 0 0 58px #e4c28e08;animation:clini-orbit 32s linear infinite}
+.band-inner{z-index:1}
+.band .button{position:relative;overflow:hidden}
+.band .button:after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent,#ffffff80,transparent);transform:translateX(-130%);animation:clini-button-shine 5s ease-in-out infinite}
+.lead-form{border-radius:16px;position:relative;overflow:hidden}
+.lead-form:before{content:"";position:absolute;left:0;top:0;width:100%;height:3px;background:linear-gradient(90deg,#c8a36a,#7ec9ca,#a99aff,#c8a36a);background-size:200% 100%;animation:clini-gradient-flow 5s linear infinite}
+footer{position:relative;overflow:hidden}
+footer:before{content:"";position:absolute;left:-20%;top:0;width:40%;height:1px;background:linear-gradient(90deg,transparent,#e4c28e,transparent);animation:clini-light-sweep 12s linear infinite}
+.scroll-progress{position:fixed;z-index:20;top:0;left:0;width:100%;height:3px;transform-origin:left;background:linear-gradient(90deg,#e4c28e,#7ee7e1,#a99aff);transform:scaleX(0);pointer-events:none}
+@keyframes clini-hero-pan{from{background-position:48% 48%;background-size:108% 108%}to{background-position:54% 52%;background-size:116% 116%}}
+@keyframes clini-overlay-breathe{from{opacity:.9}to{opacity:1}}
+@keyframes clini-aurora-one{from{transform:translate3d(0,0,0) scale(.85)}to{transform:translate3d(-16%,18%,0) scale(1.2)}}
+@keyframes clini-aurora-two{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(20%,-18%,0) scale(.8)}}
+@keyframes clini-light-sweep{from{transform:translateX(-90vw) rotate(28deg)}to{transform:translateX(100vw) rotate(28deg)}}
+@keyframes clini-photo-glow{from{box-shadow:0 30px 85px #050b1770,0 0 0 1px #ffffff30}to{box-shadow:0 42px 110px #050b17b0,0 0 38px #e4c28e25}}
+@keyframes clini-image-zoom{from{transform:scale(1)}to{transform:scale(1.13)}}
+@keyframes clini-small-tilt{0%,100%{rotate:-7deg}50%{rotate:-3deg}}
+@keyframes clini-third-float{0%,100%{translate:0 0;rotate:-8deg}50%{translate:0 -16px;rotate:-4deg}}
+@keyframes clini-sparkle{0%,100%{opacity:.5;transform:scale(.85)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes clini-glass-sheen{0%,65%{transform:translateX(-120%)}90%,100%{transform:translateX(120%)}}
+@keyframes clini-live-pulse{0%,100%{box-shadow:0 0 0 0 #62c58c70}50%{box-shadow:0 0 0 7px #62c58c00}}
+@keyframes clini-pill-float{0%,100%{translate:0 0}50%{translate:0 -3px}}
+@keyframes clini-icon-bob{0%,100%{translate:0 0}50%{translate:0 -4px}}
+@keyframes clini-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@keyframes clini-band-pan{from{background-position:48% center;background-size:105% 105%}to{background-position:54% center;background-size:115% 115%}}
+@keyframes clini-button-shine{0%,65%{transform:translateX(-130%)}90%,100%{transform:translateX(130%)}}
+@keyframes clini-gradient-flow{to{background-position:200% 0}}
+@media(max-width:850px){
+ .hero{min-height:unset;background-size:cover;animation:none}
+ .hero-ambient .aurora{opacity:.16}
+ .hero-image-collage{right:-8%;top:11%;width:78%;height:48%}
+ .hero-image-collage .photo-third{display:none}
+ .hero-image-collage .orbit{right:-15%;width:105%}
+ .gallery-grid{grid-template-columns:1fr 1fr}
+ .gallery-tile:first-child{grid-column:1/-1;min-height:340px}
+ .gallery-tile{min-height:270px}
+ .motion-gallery{padding:68px 0}
+ .band{animation:none;background-size:cover}
+}
+@media(max-width:560px){
+ .hero{background-size:cover}
+ .hero-ambient .aurora{filter:blur(45px);opacity:.13}
+ .hero-image-collage{right:-22%;top:9%;width:105%;height:390px}
+ .hero-image-collage .orbit{display:none}
+ .motion-marquee{padding:22px 0 26px}
+ .marquee-label{width:calc(100% - 30px);font-size:9px;letter-spacing:1.2px}
+ .marquee-label span:last-child{display:none}
+ .marquee-card{width:190px;height:120px}
+ .marquee-track{gap:10px;animation-duration:28s}
+ .motion-gallery{padding:58px 0}
+ .motion-gallery .gallery-head{display:block}
+ .motion-gallery .gallery-head p{margin-top:12px}
+ .gallery-grid{grid-template-columns:1fr;gap:12px}
+ .gallery-tile,.gallery-tile:first-child{grid-column:auto;min-height:280px}
+ .gallery-tile:first-child{min-height:340px}
+ .gallery-caption strong,.gallery-tile:first-child .gallery-caption strong{font-size:24px}
+ .band:after{width:260px;height:260px;right:-160px;top:-110px}
+}
+@media(prefers-reduced-motion:reduce){
+ .hero,.hero:before,.hero-ambient *,.hero-image-collage *,.demo-top:after,.demo-actions span,.marquee-track,.marquee-card img,.gallery-tile img,.card .ico,.step:after,.band, .band:after,.band .button:after,.lead-form:before,footer:before{animation:none!important}
+ .marquee-track{transform:none}
+}
+
 </style>
 </head>
 <body>
 <header><div class="wrap nav"><a class="brand" href="/landing.html"><span class="brand-mark">✧</span><span>CliniBot AI<small>Your intelligent clinic assistant</small></span></a><nav class="navlinks"><a href="#features">Features</a><a href="#why">Why CliniBot</a><a href="#how">How it works</a><select id="siteLanguage" aria-label="Select website language" style="padding:9px 10px;border:1px solid #ffffff80;border-radius:5px;background:#142238;color:#fff;font:12px inherit"><option value="en">EN</option><option value="ru">RU</option></select><a class="button" href="#demo-request">Book a demo ↗</a></nav></div></header>
 <main>
-<section class="hero"><div class="hero-image-collage" aria-hidden="true"><div class="photo-main"><img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1100&q=88" alt="" fetchpriority="high"></div><div class="photo-small"><img src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=700&q=85" alt="" loading="lazy"></div><div class="visual-chip"><b>Thoughtful care</b>Powered by CliniBot AI</div></div><div class="wrap hero-grid">
+<section class="hero"><div class="hero-ambient" aria-hidden="true"><span class="aurora one"></span><span class="aurora two"></span><span class="light-line"></span></div><div class="hero-image-collage" aria-hidden="true"><div class="photo-main"><img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1100&q=88" alt="" fetchpriority="high"></div><div class="photo-small"><img src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=700&q=85" alt="" loading="lazy"></div><div class="photo-third"><img src="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=700&q=85" alt="" loading="lazy"></div><div class="orbit"></div><div class="visual-chip"><b>Thoughtful care</b>Powered by CliniBot AI</div></div><div class="wrap hero-grid">
 <div><div class="eyebrow">The future of clinic communication</div><h1>A warmer welcome.<br>A <em>smarter</em> clinic.</h1><p class="hero-copy">Meet the AI receptionist that helps your clinic answer routine questions in English and Russian and collect appointment requests for your team to review.</p><div class="actions"><a class="button" href="#demo-request">Discover CliniBot <span>↗</span></a><a class="button outline" href="/?clinic=Clinibot-demo-2026-x93k">Explore live demo <span>▷</span></a></div><div class="micro"><span>✦</span> Built for modern clinics · Your team stays in control</div></div>
 <div class="demo"><div class="demo-top"><div class="demo-brand"><span class="bot-mark">✧</span><span>CliniBot assistant</span></div><span class="live">Online</span></div><div class="chat"><div class="chat-label">A conversation, made simple</div><div class="bubble bot">Hello! Welcome to our clinic. How can I help you today?</div><div class="bubble user">I'd like to book a consultation.</div><div class="bubble bot">Of course. Which service are you interested in?</div><div class="demo-actions"><span>Skin consultation</span><span>Laser consultation</span><span>Other</span></div><div class="bubble user">Can I request a time?</div><div class="bubble bot">Absolutely. I can collect your preferred date and contact details for our team.</div></div><div class="demo-foot"><span>Illustrative conversation</span><span>Human-confirmed appointments</span></div></div>
 </div></section>
 <div class="trustbar"><div class="wrap trustgrid"><div class="trustitem"><strong>EN + RU</strong><span>English and Russian</span></div><div class="trustitem"><strong>Clinic FAQs</strong><span>Answers from approved information</span></div><div class="trustitem"><strong>Requests</strong><span>Human-reviewed appointments</span></div><div class="trustitem"><strong>Human-led</strong><span>Clinical decisions stay human</span></div></div></div>
+
+<section class="motion-marquee" aria-label="CliniBot visual showcase">
+<div class="marquee-label"><span>Care meets intelligent technology</span><span>Designed for the modern clinic experience</span></div>
+<div class="marquee-track" aria-hidden="true">
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Modern spaces</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Human connection</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Digital care</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Clinical precision</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Thoughtful service</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Better experiences</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1629909613654-28e377c37b09?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Modern spaces</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Human connection</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Digital care</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Clinical precision</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Thoughtful service</span></div>
+<div class="marquee-card"><img src="https://images.unsplash.com/photo-1631815588090-d4bfec5b1ccb?auto=format&fit=crop&w=650&q=82" alt="" loading="lazy"><span>Better experiences</span></div>
+</div></section>
 <section class="content" id="features"><div class="wrap"><div class="section-head"><div class="kicker">Thoughtfully designed for clinics</div><h2>Every patient deserves a prompt, clear answer.</h2><p>From the first question to the appointment request, CliniBot helps make every interaction feel effortless.</p></div><div class="cards">
 <article class="card"><div class="ico">✧</div><h3>Natural conversations</h3><p>A welcoming assistant that responds in a clear, professional and conversational way.</p></article>
 <article class="card"><div class="ico">◎</div><h3>Multilingual support</h3><p>Communicate with patients in English and Russian.</p></article>
@@ -188,6 +351,14 @@ footer{padding:26px 0;background:#101c2d;color:#b8c0ca;font-size:11px}footer .wr
 <article class="card"><div class="ico">◈</div><h3>Simple management</h3><p>Review incoming requests and patient contact details from a dedicated dashboard.</p></article>
 </div></div></section>
 <section class="story" id="why"><div class="story-photo" role="img" aria-label="Bright modern clinical workspace"></div><div class="story-copy"><div class="kicker">A better first impression</div><h2>Technology that feels personal.</h2><p>Patients want clear information and an easy way to reach your clinic. CliniBot helps your team stay available while preserving the personal care that matters.</p><div class="checks"><div class="check"><b>✓</b> Consistent answers from clinic-approved information</div><div class="check"><b>✓</b> Appointment requests ready for team review</div><div class="check"><b>✓</b> Clinical judgment remains with qualified professionals</div><div class="check"><b>✓</b> A dedicated view for managing new requests</div></div></div></section>
+
+<section class="motion-gallery" aria-label="CliniBot experience gallery"><div class="wrap">
+<div class="gallery-head"><div><div class="kicker">A more vivid clinic experience</div><h2>Every detail, in motion.</h2></div><p>A calm, premium digital experience that feels as thoughtful as the care your clinic provides.</p></div>
+<div class="gallery-grid">
+<article class="gallery-tile"><img src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1200&q=88" alt="Healthcare professional in a modern clinic" loading="lazy"><div class="gallery-caption"><small>Always within reach</small><strong>A welcoming first interaction, day or night.</strong></div></article>
+<article class="gallery-tile"><img src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=86" alt="Medical team discussing patient care" loading="lazy"><div class="gallery-caption"><small>Human-led care</small><strong>Your team stays in control.</strong></div></article>
+<article class="gallery-tile"><img src="https://images.unsplash.com/photo-1551076805-e1869033e561?auto=format&fit=crop&w=900&q=86" alt="Modern medical technology" loading="lazy"><div class="gallery-caption"><small>Intelligent workflow</small><strong>Less friction. Clearer communication.</strong></div></article>
+</div></div></section>
 <section class="content how" id="how"><div class="wrap"><div class="section-head"><div class="kicker">Getting started</div><h2>Three simple steps to a smarter front desk.</h2><p>Start with your clinic's information. CliniBot takes care of the first conversation.</p></div><div class="steps"><div class="step"><div class="step-num">01</div><h3>Personalize your clinic</h3><p>Add your clinic details, approved services and opening hours.</p></div><div class="step"><div class="step-num">02</div><h3>Share your assistant</h3><p>Give patients a simple link to ask questions and send appointment requests.</p></div><div class="step"><div class="step-num">03</div><h3>Stay in the loop</h3><p>Your team reviews each request and contacts the patient to confirm availability.</p></div></div></div></section>
 
 <section class="demo-lead" id="demo-request"><div class="wrap lead-grid">
@@ -369,6 +540,21 @@ ru:{
     });
   }, { threshold: 0.12, rootMargin: '0px 0px -35px 0px' });
   targets.forEach(el => observer.observe(el));
+})();
+</script>
+
+
+<script>
+(() => {
+ const header=document.querySelector('header');
+ const progress=document.createElement('div');progress.className='scroll-progress';document.body.appendChild(progress);
+ let ticking=false;
+ const update=()=>{const max=document.documentElement.scrollHeight-window.innerHeight;progress.style.transform='scaleX('+(max>0?window.scrollY/max:0)+')';if(header)header.classList.toggle('scrolled',window.scrollY>24);ticking=false};
+ window.addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(update);ticking=true}},{passive:true});update();
+ const track=document.querySelector('.marquee-track');
+ if(track && !window.matchMedia('(prefers-reduced-motion: reduce)').matches){track.addEventListener('touchstart',()=>track.style.animationPlayState='paused',{passive:true});track.addEventListener('touchend',()=>track.style.animationPlayState='running',{passive:true})}
+ const gallery=document.querySelectorAll('.gallery-tile');
+ if('IntersectionObserver' in window){const io=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('is-visible');io.unobserve(e.target)}}),{threshold:.15});gallery.forEach(el=>io.observe(el))}
 })();
 </script>
 

@@ -35,10 +35,10 @@ Do not submit unnecessary medical history, diagnoses, payment-card data, governm
 ### 4. Purposes and recipients
 Information may be used to answer routine questions, route urgent or clinical questions to a human, transmit appointment requests to the relevant clinic, authenticate clinic staff, operate and secure the service, and respond to demo inquiries.
 
-The current codebase integrates Cloudflare Workers, Supabase, Google Gemini API, and Resend. The precise legal entities, processing terms, data locations, subprocessors, retention periods, and international-transfer safeguards must be verified against the actual accounts and contracts before this notice is finalized.
+The current codebase integrates Cloudflare Workers, Supabase, Cloud.ru Foundation Models (preferred generative provider when configured), optional Google Gemini API fallback, and Resend. The precise legal entities, processing terms, data locations, subprocessors, retention periods, and international-transfer safeguards must be verified against the actual accounts and contracts before this notice is finalized.
 
 ### 5. AI processing
-When generative fallback is used, a visitor's message and relevant clinic context may be sent to Google Gemini API to generate a response. Do not promise that a provider does not retain or use data unless verified from the applicable account configuration and contractual terms. The assistant is not a clinician and must not be relied on for medical decisions or emergencies.
+When generative chat is used, a visitor's message and relevant clinic context may be sent to Cloud.ru Foundation Models when configured, or to Google Gemini API when the Cloud.ru key is absent. Do not promise that a provider does not retain or use data unless verified from the applicable account configuration and contractual terms. The assistant is not a clinician and must not be relied on for medical decisions or emergencies.
 
 ### 6. Appointment requests
 Submitting a request does not create a confirmed appointment. Clinic staff review the request and contact the visitor to confirm availability. Appointment details may be stored in the service database and included in an email notification to the clinic's configured notification address.

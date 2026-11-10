@@ -76,7 +76,15 @@ async function handleChat(request, env) {
     };
 
 
-function formatClinicPrice(value, currencyCode, language = "en") {\n  const amount = Number(value);\n  if (!Number.isFinite(amount)) return String(value);\n  if (!/^[A-Z]{3}$/.test(String(currencyCode || ""))) return String(value);\n  try { return new Intl.NumberFormat(language === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: currencyCode }).format(amount); }\n  catch { return String(value) + " " + currencyCode; }\n}\n\nfunction detectClinicLanguage(message, defaultLanguage = "en") {
+function formatClinicPrice(value, currencyCode, language = "en") {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  if (!/^[A-Z]{3}$/.test(String(currencyCode || ""))) return String(value);
+  try { return new Intl.NumberFormat(language === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: currencyCode }).format(amount); }
+  catch { return String(value) + " " + currencyCode; }
+}
+
+function detectClinicLanguage(message, defaultLanguage = "en") {
   const value = String(message || "");
   if (/[\u0400-\u04FF]/.test(value)) return "ru";
   if (/[A-Za-z]/.test(value)) return "en";

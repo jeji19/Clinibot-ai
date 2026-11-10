@@ -54,7 +54,7 @@ jobs:
             --argjson from "$from_ms" \
             --argjson to "$now_ms" \
             '{
-              queryId: "clinibot-ai-appointment-diagnostic",
+              queryId: "clinibot-ai-gemini-diagnostic",
               timeframe: {from: $from, to: $to},
               view: "events",
               limit: 100,
@@ -72,7 +72,7 @@ jobs:
                     key: "$metadata.trigger",
                     operation: "includes",
                     type: "string",
-                    value: "/api/appointment"
+                    value: "/api/chat"
                   }
                 ]
               }
@@ -111,20 +111,16 @@ jobs:
             | {
                 timestamp: (.timestamp // .["$metadata"].timestamp // null),
                 category: (
-                  if ($message | test("Resend notification skipped: missing configuration"; "i")) then "notification_skipped_missing_configuration"
-                  elif ($message | test("Resend notification accepted"; "i")) then "resend_request_accepted"
-                  elif ($message | test("Resend notification failed"; "i")) then "resend_request_failed"
-                  elif ($message | test("Resend notification error"; "i")) then "resend_runtime_error"
-                  elif ($message | test("Supabase insert failed"; "i")) then "appointment_database_insert_failed"
-                  elif ($message | test("Appointment error"; "i")) then "appointment_handler_error"
-                  else "other_appointment_event"
+                  if ($message | test("Gemini error"; "i")) then "gemini_upstream_error"
+                  elif ($message | test("Chat error"; "i")) then "chat_handler_error"
+                  else "other_chat_event"
                   end
                 ),
-                http_status: (try ($message | capture("Resend notification failed (?<status>[0-9]{3})").status) catch null)
+                http_status: (try ($message | capture("Gemini error (?<status>[0-9]{3})").status) catch null)
               }
             | tojson
           ' /tmp/cf-observability-response.json
 
           count="$(jq -r '.result.events.count // 0' /tmp/cf-observability-response.json)"
-          echo "Total appointment events reported by Cloudflare: $count"
-          echo "Raw messages, patient data, email addresses, phone numbers, and request payloads are intentionally withheld."
+          echo "Total chat events reported by Cloudflare: $count"
+          echo "Raw messages, API keys, patient data, and request payloads are intentionally withheld."

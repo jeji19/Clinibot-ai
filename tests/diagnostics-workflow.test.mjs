@@ -32,5 +32,6 @@ test("Cloudflare diagnostics limit output to sanitized categories", () => {
 test("deployment documentation explains the exact observability permission caveat", () => {
   assert.match(deployment, /Workers Observability Write/);
   assert.match(deployment, /Diagnose CliniBot AI Worker Logs/);
-  assert.match(deployment, /manual-only/);
+  assert.match(deployment, /diagnostics\/latest\.json/);
+  assert.match(deployment, /48-hour lookback/);
 });

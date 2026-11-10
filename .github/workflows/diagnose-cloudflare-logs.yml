@@ -54,7 +54,7 @@ jobs:
             --argjson from "$from_ms" \
             --argjson to "$now_ms" \
             '{
-              queryId: "clinibot-ai-gemini-diagnostic",
+              queryId: "clinibot-ai-provider-diagnostic",
               timeframe: {from: $from, to: $to},
               view: "events",
               limit: 100,
@@ -111,12 +111,13 @@ jobs:
             | {
                 timestamp: (.timestamp // .["$metadata"].timestamp // null),
                 category: (
-                  if ($message | test("Gemini error"; "i")) then "gemini_upstream_error"
+                  if ($message | test("Cloud\\.ru AI error"; "i")) then "cloudru_upstream_error"
+                  elif ($message | test("Gemini error"; "i")) then "gemini_upstream_error"
                   elif ($message | test("Chat error"; "i")) then "chat_handler_error"
                   else "other_chat_event"
                   end
                 ),
-                http_status: (try ($message | capture("Gemini error (?<status>[0-9]{3})").status) catch null)
+                http_status: (try ($message | capture("(?:Cloud\\.ru AI|Gemini) error (?<status>[0-9]{3})").status) catch null)
               }
             | tojson
           ' /tmp/cf-observability-response.json

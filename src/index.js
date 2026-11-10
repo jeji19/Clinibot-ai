@@ -520,38 +520,48 @@ async function handleAppointment(request, env) {
       return json({ error: `Database rejected the request (HTTP ${insertResponse.status}, code ${code}).` }, 502);
     }
 
-    // TEMPORARY: Resend's shared testing sender (onboarding@resend.dev)
-    // can deliver only to the Resend account owner's verified email.
-    // Route notifications to RESEND_TO_EMAIL until a verified sending domain is configured.
-    // This is an owner-inbox fallback, not per-clinic email delivery.
-    const recipient = env.RESEND_TO_EMAIL;
+    // Use clinic-specific delivery only with an explicitly configured sender on a
+    // verified platform-owned Resend domain. Otherwise keep the safe owner-inbox fallback.
+    const configuredSender = typeof env.RESEND_FROM_EMAIL === "string" ? env.RESEND_FROM_EMAIL.trim() : "";
+    const validEmail = value => typeof value === "string" &&
+      value.length <= 254 &&
+      /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value);
+    const hasPlatformSender = validEmail(configuredSender);
+    const clinicRecipient = validEmail(clinic.notification_email) ? clinic.notification_email.trim() : "";
+    const platformRecipient = validEmail(env.RESEND_TO_EMAIL) ? env.RESEND_TO_EMAIL.trim() : "";
+    const recipient = hasPlatformSender && clinicRecipient ? clinicRecipient : platformRecipient;
+    const sender = hasPlatformSender
+      ? `CliniBot AI <${configuredSender}>`
+      : "CliniBot AI <onboarding@resend.dev>";
     if (env.RESEND_API_KEY && recipient) {
       try {
         const emailResponse = await fetch("https://api.resend.com/emails", {
           method: "POST",
           headers: { "Authorization": "Bearer " + env.RESEND_API_KEY, "Content-Type": "application/json" },
           body: JSON.stringify({
-            from: "CliniBot AI <onboarding@resend.dev>",
+            from: sender,
             to: [recipient],
             subject: `New CliniBot appointment request — ${clinic.name}`,
-            text: `A new appointment request was received for ${clinic.name}.\nPatient: ${patient_name}\nPhone: ${patient_phone}\nService: ${service}\nPreferred date: ${preferred_date}\nPreferred time: ${preferred_time}\nLanguage: ${language}\nStatus: new\nPlease review it in your CliniBot dashboard.`
+            text: `A new appointment request was received for ${clinic.name}.\\nPatient: ${patient_name}\\nPhone: ${patient_phone}\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
           }),
           signal: AbortSignal.timeout(10000)
         });
-        const resendBody = (await emailResponse.text()).slice(0, 400);
         if (!emailResponse.ok) {
-          console.error("Resend notification failed", emailResponse.status, resendBody);
+          console.error("Resend notification failed", emailResponse.status);
         } else {
-          console.log("Resend notification accepted", emailResponse.status, resendBody);
+          console.log("Resend notification accepted", emailResponse.status);
         }
       } catch (emailError) {
         console.error("Resend notification error", emailError?.message);
       }
     } else {
-      console.error("Resend notification skipped: missing configuration", {
+      console.error("Resend notification skipped: missing or invalid configuration", {
         hasApiKey: Boolean(env.RESEND_API_KEY),
-        hasRecipient: Boolean(recipient)
+        hasClinicRecipient: Boolean(clinicRecipient),
+        hasPlatformRecipient: Boolean(platformRecipient),
+        hasVerifiedSenderConfigured: hasPlatformSender
       });
+    }
     }
     return json({ success: true, clinic: clinic.name, message: "Your appointment request was received. The clinic team must confirm availability." }, 201);
   } catch (error) {

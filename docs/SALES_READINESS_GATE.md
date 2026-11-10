@@ -37,7 +37,7 @@ A paid pilot may be offered only after every P0 item below is completed and evid
 ### P0 — must pass
 
 - [x] Deploy the current Worker source to the production Worker using the guarded deployment workflow (run [42781453004](https://github.com/jeji19/Clinibot-ai/actions/runs/42781453004), Worker `clinibot-ai1`, version `2c079bfa-28fe-4fa6-b064-c20935769803`). Re-run after any subsequent Worker-source changes.
-- [ ] Confirm the deployed Worker name, environment variables, Supabase connection, Gemini configuration (if AI answers are enabled), and Resend configuration.
+- [ ] Confirm the deployed Worker name, environment variables, Supabase connection, Cloud.ru/Gemini configuration (if generative AI answers are enabled), and Resend configuration.
 - [ ] Configure a clinic-facing custom domain or production route and verify HTTPS.
 - [ ] Run a real browser end-to-end test using a dedicated synthetic clinic, dedicated manager account, and entirely synthetic patient details.
 - [ ] Verify clinic onboarding from start to finish: create clinic, create/assign manager, manager login, save settings, publish services, and open the public clinic link.

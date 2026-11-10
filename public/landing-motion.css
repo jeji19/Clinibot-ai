@@ -1,0 +1,59 @@
+/* CliniBot — animated surface treatment for previously flat sections */
+:root{--surface-ink:#142238;--surface-gold:#e4c28e;--surface-blue:#5e83a7}
+@media (prefers-reduced-motion:no-preference){
+  .trustbar,.how,.story,.band,.demo-lead{isolation:isolate;position:relative;overflow:hidden}
+  .trustbar:before,.how:before,.story:before,.band:after,.demo-lead:before{
+    content:"";position:absolute;inset:-35%;z-index:-1;pointer-events:none;opacity:.7;
+    background:
+      radial-gradient(ellipse at 18% 28%,#d8b77b35 0,transparent 27%),
+      radial-gradient(ellipse at 82% 68%,#6f94b833 0,transparent 30%),
+      radial-gradient(ellipse at 54% 8%,#ffffff75 0,transparent 32%);
+    background-size:140% 140%;animation:clini-surface-drift 19s ease-in-out infinite alternate
+  }
+  .how:before{opacity:.8;background:
+      radial-gradient(ellipse at 12% 78%,#d4b27a40 0,transparent 28%),
+      radial-gradient(ellipse at 88% 15%,#8caac533 0,transparent 30%),
+      linear-gradient(125deg,#fff8 0%,transparent 48%,#d7c5a22b 100%)}
+  .story:before{opacity:.65;background:
+      radial-gradient(ellipse at 80% 12%,#e4c28e55 0,transparent 32%),
+      radial-gradient(ellipse at 18% 88%,#7896b533 0,transparent 32%)}
+  .demo-lead:before{opacity:.8;background:
+      radial-gradient(ellipse at 8% 18%,#d9bc8c45 0,transparent 28%),
+      radial-gradient(ellipse at 90% 82%,#6f94b82c 0,transparent 32%)}
+  .band:after{inset:-55%;opacity:.35;background:
+      repeating-linear-gradient(115deg,transparent 0 58px,#e4c28e13 59px 60px),
+      radial-gradient(ellipse at 70% 40%,#e4c28e42,transparent 34%);
+      animation:clini-band-shimmer 24s linear infinite}
+  .trustbar:after,.how:after,.demo-lead:after{
+    content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.22;
+    background-image:linear-gradient(#9d845b18 1px,transparent 1px),linear-gradient(90deg,#9d845b18 1px,transparent 1px);
+    background-size:44px 44px;mask-image:linear-gradient(120deg,#000,transparent 72%)
+  }
+  .trustitem{position:relative;overflow:hidden;transition:background .35s,transform .35s}
+  .trustitem:before{content:"";position:absolute;inset:0;background:linear-gradient(115deg,transparent,#ffffff15,transparent);transform:translateX(-120%);transition:transform .7s}
+  .trustitem:hover:before{transform:translateX(120%)}
+  .step,.lead-form{position:relative;overflow:hidden}
+  .step:before,.lead-form:before{
+    content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;padding:1px;
+    background:linear-gradient(125deg,#d4b47d99,transparent 32%,#7896b855 68%,#d4b47d88);
+    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
+    -webkit-mask-composite:xor;mask-composite:exclude;opacity:.7
+  }
+  .step:after{content:"";position:absolute;width:180px;height:180px;right:-110px;top:-110px;border:1px solid #c8a36a35;border-radius:50%;box-shadow:0 0 0 18px #c8a36a0c,0 0 0 38px #c8a36a08;transition:transform .7s}
+  .step:hover:after{transform:scale(1.3) rotate(25deg)}
+  .lead-form{background:linear-gradient(145deg,#fffdfaeb,#f1e9dceb);backdrop-filter:blur(18px);box-shadow:0 24px 70px #17263b13, inset 0 1px #fff}
+  .card,.step{backdrop-filter:blur(10px)}
+  .section-head .kicker{display:inline-flex;align-items:center;gap:9px}
+  .section-head .kicker:before,.section-head .kicker:after{content:"";height:1px;width:22px;background:linear-gradient(90deg,transparent,#c8a36a)}
+  .section-head .kicker:after{transform:rotate(180deg)}
+  .story-photo{box-shadow:inset 0 0 0 1px #fff4}
+}
+.trustbar{background-color:#142238;background-image:radial-gradient(ellipse at 15% 50%,#54718d44,transparent 42%),linear-gradient(115deg,#101c2d,#1b304a 52%,#142238)}
+.how{background-color:#f1ece4;background-image:radial-gradient(ellipse at 8% 12%,#e6d4b855,transparent 35%),radial-gradient(ellipse at 94% 88%,#c5d3dc66,transparent 38%),linear-gradient(135deg,#f8f5ef,#ece5d9)}
+.story{background-color:#eee8de;background-image:linear-gradient(115deg,#f5efe5,#e7e0d5 52%,#f1e9dd)}
+.demo-lead{background-color:#fffdfa;background-image:radial-gradient(ellipse at 0 0,#e6d6b755,transparent 38%),radial-gradient(ellipse at 100% 100%,#c7d5df55,transparent 38%),linear-gradient(135deg,#fffdfa,#f5f0e8)}
+.band{background-color:#142238;background-image:radial-gradient(ellipse at 78% 12%,#b18c5b55,transparent 32%),linear-gradient(120deg,#101b2d,#1b3049 58%,#142238)}
+@keyframes clini-surface-drift{0%{transform:translate3d(-2%,-1%,0) rotate(-3deg) scale(1)}100%{transform:translate3d(2%,2%,0) rotate(3deg) scale(1.08)}}
+@keyframes clini-band-shimmer{from{transform:translateX(-3%) rotate(0)}to{transform:translateX(3%) rotate(8deg)}}
+@media(max-width:700px){.trustbar:after,.how:after,.demo-lead:after{background-size:32px 32px;opacity:.13}.lead-form{box-shadow:0 16px 40px #17263b12}}
+@media(prefers-reduced-motion:reduce){.trustbar:before,.how:before,.story:before,.band:after,.demo-lead:before{animation:none!important}}

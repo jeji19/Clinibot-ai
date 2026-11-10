@@ -56,7 +56,7 @@ async function handleChat(request, env) {
     if (!clinic) return json({ error: "This clinic link is unavailable or inactive." }, 404);
 
     const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
-    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language");
+    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language,currency_code");
     settingsUrl.searchParams.set("clinic_id", "eq." + clinic.id);
     settingsUrl.searchParams.set("limit", "1");
     const settingsResponse = await fetch(settingsUrl, { headers: serviceHeaders, signal: AbortSignal.timeout(12000) });
@@ -71,9 +71,18 @@ async function handleChat(request, env) {
       description: settings.description || "",
       services: Array.isArray(settings.services) ? settings.services : [],
       opening_hours: settings.opening_hours && typeof settings.opening_hours === "object" ? settings.opening_hours : {},
-      default_language: ["en", "ru"].includes(settings.default_language) ? settings.default_language : "en"
+      default_language: ["en", "ru"].includes(settings.default_language) ? settings.default_language : "en",
+      currency_code: settings.currency_code || null
     };
 
+
+function formatClinicPrice(value, currencyCode, language = "en") {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  if (!/^[A-Z]{3}$/.test(String(currencyCode || ""))) return String(value);
+  try { return new Intl.NumberFormat(language === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: currencyCode }).format(amount); }
+  catch { return String(value) + " " + currencyCode; }
+}
 
 function detectClinicLanguage(message, defaultLanguage = "en") {
   const value = String(message || "");
@@ -184,7 +193,7 @@ function detectClinicFaqReply(message, clinicInfo) {
     const selectedServices = words.services && requestedService ? [requestedService] : clinicInfo.services;
     if (selectedServices.length) {
       for (const service of selectedServices) {
-        const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : String(service.price);
+        const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : formatClinicPrice(service.price, clinicInfo.currency_code, lang);
         lines.push("- " + localizedServiceName(service) + ": " + price);
       }
     } else lines.push(labels.unavailable);

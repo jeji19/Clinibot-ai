@@ -259,3 +259,40 @@ test("all chat deployment adapters target the current stable Gemini Flash model"
     assert.ok(!adapter.includes("gemini-3.6-flash:generateContent"));
   }
 });
+
+
+test("Cloud.ru provider handles free-form chat through its OpenAI-compatible API", async () => {
+  const originalFetch = globalThis.fetch;
+  let captured;
+  globalThis.fetch = async (url, options = {}) => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/rest/v1/clinics")) {
+      return Response.json([{ id: "clinic-1", name: "North Clinic", slug: "north-clinic", is_active: true }]);
+    }
+    if (target.pathname.endsWith("/rest/v1/clinic_settings")) {
+      return Response.json([{ description: "A dermatology clinic", services: [], opening_hours: {}, default_language: "en" }]);
+    }
+    if (target.hostname === "foundation-models.api.cloud.ru") {
+      captured = { target, options, body: JSON.parse(options.body) };
+      return Response.json({ choices: [{ message: { content: "A skin consultation assesses your skin concerns, while a dermal fillers consultation discusses injectable treatment options with a qualified professional." } }] });
+    }
+    throw new Error("Unexpected upstream request: " + target.href);
+  };
+  try {
+    const response = await worker.default.fetch(new Request("https://example.test/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Could you explain the difference between a skin consultation and a dermal fillers consultation?", clinic_slug: "north-clinic" })
+    }), { ...env, CLOUDRU_API_KEY: "test-cloudru-key", CLOUDRU_MODEL: "Qwen/Qwen3.6-35B-A3B" });
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.match(data.reply, /skin consultation assesses/i);
+    assert.equal(captured.target.pathname, "/v1/chat/completions");
+    assert.equal(captured.options.headers.Authorization, "Bearer test-cloudru-key");
+    assert.equal(captured.body.model, "Qwen/Qwen3.6-35B-A3B");
+    assert.equal(captured.body.messages[0].role, "system");
+    assert.equal(captured.body.messages[1].role, "user");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

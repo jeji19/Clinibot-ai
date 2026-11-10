@@ -79,7 +79,8 @@ for (const [label, invoke] of adapters) {
       }
       if (target.pathname.endsWith("/rest/v1/clinic_settings")) {
         assert.equal(target.searchParams.get("clinic_id"), "eq.clinic-1");
-        return Response.json([{ services: [
+        assert.equal(target.searchParams.get("select"), "services,country_code,currency_code");
+        return Response.json([{ country_code: "US", currency_code: "USD", services: [
           { name: " Laser consultation ", price: "50" },
           { name: "Skin consultation", price: 0 },
           { name: "Unknown price", price: null },
@@ -93,7 +94,8 @@ for (const [label, invoke] of adapters) {
       assert.equal(response.status, 200);
       assert.deepEqual(await response.json(), {
         clinic: { name: "North Clinic" },
-        ...(label === "Cloudflare Worker" ? { country_code: null, currency_code: null } : {}),
+        country_code: "US",
+        currency_code: "USD",
         services: [
           { name: "Laser consultation", price: 50 },
           { name: "Skin consultation", price: 0 },

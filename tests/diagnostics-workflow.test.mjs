@@ -5,9 +5,11 @@ import { readFileSync } from "node:fs";
 const workflow = readFileSync(".github/workflows/diagnose-cloudflare-logs.yml", "utf8");
 const deployment = readFileSync("DEPLOYMENT.md", "utf8");
 
-test("Cloudflare diagnostics are manual-only and read logs from the intended Worker", () => {
+test("Cloudflare diagnostics run on workflow changes and can be manually dispatched", () => {
   assert.match(workflow, /workflow_dispatch:/);
-  assert.doesNotMatch(workflow, /^\s*(push|pull_request|schedule):/m);
+  assert.match(workflow, /push:\s*\n\s*branches: \[main\]/);
+  assert.match(workflow, /contents: write/);
+  assert.match(workflow, /diagnostics\/latest\.json/);
   assert.match(workflow, /clinibot-ai1/);
   assert.match(workflow, /\$metadata\.trigger/);
   assert.match(workflow, /\/api\/chat/);
@@ -17,6 +19,7 @@ test("Cloudflare diagnostics are manual-only and read logs from the intended Wor
 });
 
 test("Cloudflare diagnostics limit output to sanitized categories", () => {
+  assert.match(workflow, /cloudru_upstream_error/);
   assert.match(workflow, /gemini_upstream_error/);
   assert.match(workflow, /chat_handler_error/);
   assert.match(workflow, /Gemini error/);

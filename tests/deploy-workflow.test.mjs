@@ -25,7 +25,9 @@ test("production deployment validates Worker target and Cloudflare credentials",
 test("deployment performs public smoke tests and rejects unpublished services", () => {
   assert.ok(workflow.includes("Smoke-test public clinic info and chat"));
   assert.ok(workflow.includes("/api/public/clinic-info"));
+  assert.ok(workflow.includes(".currency_code == \"USD\""));
   assert.ok(workflow.includes("/api/chat"));
+  assert.ok(workflow.includes("contains(\"$\")"));
   assert.ok(workflow.includes("Verify unpublished services cannot be booked"));
   assert.ok(workflow.includes('[[ "$status" != "400" ]]'));
 });

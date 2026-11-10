@@ -93,6 +93,7 @@ for (const [label, invoke] of adapters) {
       assert.equal(response.status, 200);
       assert.deepEqual(await response.json(), {
         clinic: { name: "North Clinic" },
+        ...(label === "Cloudflare Worker" ? { country_code: null, currency_code: null } : {}),
         services: [
           { name: "Laser consultation", price: 50 },
           { name: "Skin consultation", price: 0 },

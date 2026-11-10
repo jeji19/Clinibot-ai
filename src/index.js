@@ -87,7 +87,7 @@ async function handleChat(request, env) {
     if (!clinic) return json({ error: "This clinic link is unavailable or inactive." }, 404);
 
     const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
-    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language");
+    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language,country_code,currency_code");
     settingsUrl.searchParams.set("clinic_id", "eq." + clinic.id);
     settingsUrl.searchParams.set("limit", "1");
     const settingsResponse = await fetch(settingsUrl, { headers: serviceHeaders, signal: AbortSignal.timeout(12000) });
@@ -102,7 +102,9 @@ async function handleChat(request, env) {
       description: settings.description || "",
       services: Array.isArray(settings.services) ? settings.services : [],
       opening_hours: settings.opening_hours && typeof settings.opening_hours === "object" ? settings.opening_hours : {},
-      default_language: ["en", "ru"].includes(settings.default_language) ? settings.default_language : "en"
+      default_language: ["en", "ru"].includes(settings.default_language) ? settings.default_language : "en",
+      country_code: settings.country_code || null,
+      currency_code: settings.currency_code || null
     };
 
 
@@ -150,6 +152,14 @@ function detectClinicAppointmentIntent(message, defaultLanguage = "en") {
   return lang === "ru"
     ? "Конечно! Чтобы отправить запрос на запись, нажмите кнопку «Request an appointment», выберите услугу, дату и время и укажите контактные данные. Клиника проверит запрос и подтвердит запись."
     : "Of course! To request an appointment, tap “Request an appointment”, choose the service, date and time, and enter your contact details. The clinic team will review your request and confirm availability.";
+}
+
+function formatClinicPrice(value, currencyCode, language = "en") {
+  const amount = Number(value);
+  if (!Number.isFinite(amount)) return String(value);
+  if (!/^[A-Z]{3}$/.test(String(currencyCode || ""))) return String(value);
+  try { return new Intl.NumberFormat(language === "ru" ? "ru-RU" : "en-US", { style: "currency", currency: currencyCode }).format(amount); }
+  catch { return String(value) + " " + currencyCode; }
 }
 
 function detectClinicFaqReply(message, clinicInfo) {
@@ -214,7 +224,7 @@ function detectClinicFaqReply(message, clinicInfo) {
     const selectedServices = words.services && requestedService ? [requestedService] : clinicInfo.services;
     if (selectedServices.length) {
       for (const service of selectedServices) {
-        const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : String(service.price);
+        const price = service.price === 0 ? labels.free : service.price === null || service.price === undefined || service.price === "" ? labels.unavailable : formatClinicPrice(service.price, clinicInfo.currency_code, lang);
         lines.push("- " + localizedServiceName(service) + ": " + price);
       }
     } else lines.push(labels.unavailable);
@@ -407,7 +417,7 @@ async function handlePublicClinicInfo(request, env) {
     if (!clinicResponse.ok || !Array.isArray(clinics)) return json({ error: "Could not load clinic information." }, 502);
     if (!clinics[0]) return json({ error: "This clinic link is unavailable or inactive." }, 404);
     const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
-    settingsUrl.searchParams.set("select", "services");
+    settingsUrl.searchParams.set("select", "services,country_code,currency_code");
     settingsUrl.searchParams.set("clinic_id", "eq." + clinics[0].id);
     settingsUrl.searchParams.set("limit", "1");
     const settingsResponse = await fetch(settingsUrl, { headers, signal: AbortSignal.timeout(12000) });
@@ -419,7 +429,7 @@ async function handlePublicClinicInfo(request, env) {
         (item.price === null || item.price === undefined || item.price === "" ? null :
           (Number.isFinite(Number(item.price)) && Number(item.price) >= 0 ? Number(item.price) : null)) }))
       .slice(0, 50) : [];
-    return json({ clinic: { name: clinics[0].name }, services });
+    return json({ clinic: { name: clinics[0].name }, country_code: settingsRows[0]?.country_code || null, currency_code: settingsRows[0]?.currency_code || null, services });
   } catch (error) {
     console.error("Public clinic info error", error?.message);
     return json({ error: "Clinic information is temporarily unavailable." }, 500);
@@ -773,7 +783,7 @@ async function handleAdminSettings(request, env) {
     const clinic = clinics[0];
 
     const settingsUrl = new URL("/rest/v1/clinic_settings", env.SUPABASE_URL);
-    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language");
+    settingsUrl.searchParams.set("select", "description,services,opening_hours,default_language,country_code,currency_code");
     settingsUrl.searchParams.set("clinic_id", "eq." + clinicId);
     settingsUrl.searchParams.set("limit", "1");
 
@@ -781,7 +791,7 @@ async function handleAdminSettings(request, env) {
       const settingsResponse = await fetch(settingsUrl, { headers, signal: AbortSignal.timeout(12000) });
       const settingsRows = await settingsResponse.json().catch(() => []);
       if (!settingsResponse.ok || !Array.isArray(settingsRows)) return json({ error: "Could not load clinic settings." }, 502);
-      const currentSettings = settingsRows[0] || { description: "", services: [], opening_hours: {}, default_language: "en" };
+      const currentSettings = settingsRows[0] || { description: "", services: [], opening_hours: {}, default_language: "en", country_code: null, currency_code: null };
       currentSettings.default_language = ["en", "ru"].includes(currentSettings.default_language) ? currentSettings.default_language : "en";
       return json({ clinic, settings: currentSettings });
     }
@@ -796,6 +806,10 @@ async function handleAdminSettings(request, env) {
       return json({ error: "Default language must be English or Russian." }, 400);
     }
     const default_language = body.default_language || "en";
+    const country_code = body.country_code === "" || body.country_code === null || body.country_code === undefined ? null : String(body.country_code).trim().toUpperCase();
+    const currency_code = body.currency_code === "" || body.currency_code === null || body.currency_code === undefined ? null : String(body.currency_code).trim().toUpperCase();
+    if (country_code !== null && !/^[A-Z]{2}$/.test(country_code)) return json({ error: "Choose a valid country." }, 400);
+    if (currency_code !== null && !/^[A-Z]{3}$/.test(currency_code)) return json({ error: "Choose a valid 3-letter currency." }, 400);
     if (!Array.isArray(body.services) || body.services.length > 50) return json({ error: "Add up to 50 valid services." }, 400);
     if (body.opening_hours !== undefined && (!body.opening_hours || typeof body.opening_hours !== "object" || Array.isArray(body.opening_hours))) {
       return json({ error: "Opening hours must be provided as a day-to-hours object." }, 400);
@@ -828,7 +842,7 @@ async function handleAdminSettings(request, env) {
     const saveResponse = await fetch(new URL("/rest/v1/clinic_settings?on_conflict=clinic_id", env.SUPABASE_URL), {
       method: "POST",
       headers: { ...headers, "Content-Type": "application/json", "Prefer": "resolution=merge-duplicates,return=minimal" },
-      body: JSON.stringify({ clinic_id: clinicId, description, services, opening_hours, default_language, updated_at: new Date().toISOString() }),
+      body: JSON.stringify({ clinic_id: clinicId, description, services, opening_hours, default_language, country_code, currency_code, updated_at: new Date().toISOString() }),
       signal: AbortSignal.timeout(15000)
     });
     if (!saveResponse.ok) {

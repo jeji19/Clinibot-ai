@@ -525,7 +525,7 @@ async function handleAppointment(request, env) {
     const configuredSender = typeof env.RESEND_FROM_EMAIL === "string" ? env.RESEND_FROM_EMAIL.trim() : "";
     const validEmail = value => typeof value === "string" &&
       value.length <= 254 &&
-      /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(value);
+      /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     const hasPlatformSender = validEmail(configuredSender);
     const clinicRecipient = validEmail(clinic.notification_email) ? clinic.notification_email.trim() : "";
     const platformRecipient = validEmail(env.RESEND_TO_EMAIL) ? env.RESEND_TO_EMAIL.trim() : "";
@@ -542,7 +542,7 @@ async function handleAppointment(request, env) {
             from: sender,
             to: [recipient],
             subject: `New CliniBot appointment request — ${clinic.name}`,
-            text: `A new appointment request was received for ${clinic.name}.\\nPatient: ${patient_name}\\nPhone: ${patient_phone}\\nService: ${service}\\nPreferred date: ${preferred_date}\\nPreferred time: ${preferred_time}\\nLanguage: ${language}\\nStatus: new\\nPlease review it in your CliniBot dashboard.`
+            text: `A new appointment request was received for ${clinic.name}.\nPatient: ${patient_name}\nPhone: ${patient_phone}\nService: ${service}\nPreferred date: ${preferred_date}\nPreferred time: ${preferred_time}\nLanguage: ${language}\nStatus: new\nPlease review it in your CliniBot dashboard.`
           }),
           signal: AbortSignal.timeout(10000)
         });
@@ -561,7 +561,6 @@ async function handleAppointment(request, env) {
         hasPlatformRecipient: Boolean(platformRecipient),
         hasVerifiedSenderConfigured: hasPlatformSender
       });
-    }
     }
     return json({ success: true, clinic: clinic.name, message: "Your appointment request was received. The clinic team must confirm availability." }, 201);
   } catch (error) {

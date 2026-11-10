@@ -71,13 +71,13 @@ jobs:
           clinic="Clinibot-demo-2026-x93k"
 
           info="$(curl --silent --show-error --fail --max-time 30 "$base/api/public/clinic-info?clinic=$clinic")"
-          echo "$info" | jq -e '.clinic.name and (.services | type == "array")' >/dev/null
+          echo "$info" | jq -e '.clinic.name and (.services | type == "array") and .currency_code == "USD"' >/dev/null
 
           chat="$(curl --silent --show-error --fail --max-time 30 \
             -H 'Content-Type: application/json' \
             -d "{\"message\":\"What services and prices do you offer?\",\"clinic_slug\":\"$clinic\"}" \
             "$base/api/chat")"
-          echo "$chat" | jq -e '.reply | type == "string" and length > 0' >/dev/null
+          echo "$chat" | jq -e '.reply | type == "string" and length > 0 and contains("$")' >/dev/null
 
       - name: Verify unpublished services cannot be booked
         shell: bash

@@ -15,8 +15,7 @@ This tracker distinguishes work completed in source/CI from production actions t
 
 ## Latest verified deployment
 
-The guarded production workflow completed successfully on 2026-11-10: [run 42781453004](https://github.com/jeji19/Clinibot-ai/actions/runs/42781453004). It deployed Worker `clinibot-ai1` from source commit `24e25aa821299d25160bcfd10b2e0bc05413ba98` and reported version `2c079bfa-28fe-4fa6-b064-c20935769803`. Subsequent currency-adapter parity changes affect Cloudflare Pages and Netlify adapters and tests, not `src/index.js`; the deployed Worker source therefore remains unchanged. Git-connected Cloudflare preview builds separately report an authentication error; that preview integration needs repair but does not invalidate the successful guarded production deployment.
-
+The guarded production workflow completed successfully on 2026-11-10: [run 42781453004](https://github.com/jeji19/Clinibot-ai/actions/runs/42781453004). It deployed Worker `clinibot-ai1` from source commit `24e25aa821299d25160bcfd10b2e0bc05413ba98` and reported version `2c079bfa-28fe-4fa6-b064-c20935769803`. Subsequent currency-adapter parity changes affect Cloudflare Pages and Netlify adapters and tests, not `src/index.js`. The latest repository updates also revise public landing/business copy in `public/`; those static asset changes are merged but are not live until the next guarded Worker deployment. The deploy workflow now checks that the demo clinic returns `currency_code: USD` and that the chat price reply contains a dollar sign (`$`). Git-connected Cloudflare preview builds separately report an authentication error; that preview integration needs repair but does not invalidate the successful guarded production deployment.
 ## Deployment procedure
 
 1. In GitHub repository Settings → Secrets and variables → Actions, add the two Cloudflare secrets above.

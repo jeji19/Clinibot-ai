@@ -54,7 +54,7 @@ async function invokeNetlify(message) {
     return await netlifyModule.default(new Request("https://example.test/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "What services and prices do you offer?", clinic_slug: "north-clinic" })
+      body: JSON.stringify({ message, clinic_slug: "north-clinic" })
     }));
   } finally {
     for (const key of keys) {
@@ -70,7 +70,7 @@ for (const [label, invoke] of [["Cloudflare Pages", invokePages], ["Netlify", in
       const response = await invoke("What services and prices do you offer?");
       assert.equal(response.status, 200);
       const data = await response.json();
-      assert.match(data.reply, /\\$50\\.00/);
+      assert.match(data.reply, /\$50\.00/);
     });
   });
 
@@ -79,7 +79,7 @@ for (const [label, invoke] of [["Cloudflare Pages", invokePages], ["Netlify", in
       const response = await invoke("Какие услуги и цены?");
       assert.equal(response.status, 200);
       const data = await response.json();
-      assert.match(data.reply, /50,00\\s*\\$/);
+      assert.match(data.reply, /50,00\s*\$/);
     });
   });
 }

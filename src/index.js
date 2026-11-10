@@ -257,7 +257,7 @@ function detectClinicFaqReply(message, clinicInfo) {
     const faqReply = detectClinicFaqReply(message, clinicInfo);
     if (faqReply) return json({ reply: faqReply, handled_without_ai: true });
 
-    if (!env.GEMINI_API_KEY) {
+    if (!env.CLOUDRU_API_KEY && !env.GEMINI_API_KEY) {
       const language = detectClinicLanguage(message, clinicInfo.default_language);
       const fallback = {
         ru: "Я могу помочь с опубликованной информацией об услугах, ценах и часах работы. Для других вопросов, пожалуйста, обратитесь к команде клиники.",
@@ -284,6 +284,53 @@ ${JSON.stringify(clinicInfo)}
 Never diagnose, prescribe medication, or recommend a medical procedure as personally suitable. Refer medical questions to qualified clinic staff. For emergencies, advise contacting local emergency services.
 Do not request passwords, payment details, medical records, symptoms or other sensitive information. Keep answers concise and helpful.
 `;
+
+
+    // Prefer the Russia-accessible Cloud.ru OpenAI-compatible endpoint when configured.
+    // Keep Gemini only as a legacy fallback until Cloud.ru is provisioned and verified.
+    if (env.CLOUDRU_API_KEY) {
+      const cloudruModel = typeof env.CLOUDRU_MODEL === "string" && env.CLOUDRU_MODEL.trim()
+        ? env.CLOUDRU_MODEL.trim()
+        : "Qwen/Qwen3.6-35B-A3B";
+      let cloudResponse;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        cloudResponse = await fetch("https://foundation-models.api.cloud.ru/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + env.CLOUDRU_API_KEY
+          },
+          body: JSON.stringify({
+            model: cloudruModel,
+            messages: [
+              { role: "system", content: instructions },
+              { role: "user", content: message }
+            ],
+            temperature: 0.3,
+            max_tokens: 900
+          }),
+          signal: AbortSignal.timeout(20000)
+        });
+        if (cloudResponse.ok || ![429, 500, 502, 503, 504].includes(cloudResponse.status) || attempt === 1) break;
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      if (!cloudResponse.ok) {
+        console.error("Cloud.ru AI error", cloudResponse.status);
+        const language = detectClinicLanguage(message, clinicInfo.default_language);
+        const fallback = {
+          ru: "Извините, ИИ-помощник временно недоступен. Я могу помочь с опубликованной информацией об услугах, ценах и часах работы. Запрос на запись можно отправить через кнопку «Request an appointment» ниже.",
+          en: "Sorry, the AI assistant is temporarily unavailable. I can help with published services, prices and opening hours. You can also submit an appointment request using the “Request an appointment” button below."
+        };
+        return json({ reply: fallback[language] || fallback.en, temporary_issue: true });
+      }
+      const cloudData = await cloudResponse.json();
+      const cloudReply = cloudData.choices?.[0]?.message?.content;
+      if (typeof cloudReply !== "string" || !cloudReply.trim()) {
+        console.error("Cloud.ru AI returned an empty response");
+        return json({ error: "The AI returned an empty response. Please try again." }, 502);
+      }
+      return json({ reply: cloudReply.trim() });
+    }
 
     const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
     const geminiPayload = {

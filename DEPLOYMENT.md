@@ -97,7 +97,7 @@ These automated checks validate source-level safeguards and mocked endpoint beha
 
 ## Cloudflare Worker log diagnostics
 
-A manual, read-only log-inspection workflow is available at `.github/workflows/diagnose-cloudflare-logs.yml`. It queries the Cloudflare Workers Observability Telemetry API for recent `/api/appointment` invocation events from `clinibot-ai1`, including Resend and database errors, and defaults to the previous 48 hours, and redacts email addresses and phone-like values before printing matching events in the GitHub Actions log. It does not deploy or change Worker settings.
+A manual, read-only log-inspection workflow is available at `.github/workflows/diagnose-cloudflare-logs.yml`. It queries the Cloudflare Workers Observability Telemetry API for recent `/api/chat` invocation events from `clinibot-ai1`, classifying Gemini upstream errors by HTTP status and chat-handler errors. It defaults to the previous 48 hours and prints only sanitized categories, timestamps, and status codes; raw log messages, API keys, patient data, and request payloads are withheld. It does not deploy or change Worker settings.
 
 Add these GitHub Actions secrets:
 - `CLOUDFLARE_DIAGNOSTICS_TOKEN`: a narrowly scoped token for Workers Observability.

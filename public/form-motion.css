@@ -58,3 +58,19 @@
   .lead-form,.booking-wrap,.booking-panel,.chat-booking{box-shadow:0 14px 36px #17263b12}
   input:not([type=checkbox]):not([type=radio]):not([type=hidden]),textarea,select{font-size:16px!important}
 }
+
+/* Make the demo form feel alive on touch devices without requiring focus/hover. */
+@media (prefers-reduced-motion:no-preference){
+  .lead-form h3{position:relative;width:fit-content}
+  .lead-form h3:after{
+    content:"";display:block;width:46%;height:2px;margin-top:8px;
+    background:linear-gradient(90deg,#c8a36a,#8eacd3,transparent);
+    transform-origin:left;animation:cb-form-underline 4.5s ease-in-out infinite
+  }
+  .lead-form button[type=submit]{
+    background-image:linear-gradient(110deg,#e6c38d 0%,#bd9457 42%,#e6c38d 65%,#bd9457 100%);
+    background-size:220% 100%;animation:cb-form-button-glide 6s ease-in-out infinite
+  }
+}
+@keyframes cb-form-underline{0%,100%{transform:scaleX(.55);opacity:.65}50%{transform:scaleX(1);opacity:1}}
+@keyframes cb-form-button-glide{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}

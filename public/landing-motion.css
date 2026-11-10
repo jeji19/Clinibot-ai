@@ -57,3 +57,38 @@
 @keyframes clini-band-shimmer{from{transform:translateX(-3%) rotate(0)}to{transform:translateX(3%) rotate(8deg)}}
 @media(max-width:700px){.trustbar:after,.how:after,.demo-lead:after{background-size:32px 32px;opacity:.13}.lead-form{box-shadow:0 16px 40px #17263b12}}
 @media(prefers-reduced-motion:reduce){.trustbar:before,.how:before,.story:before,.band:after,.demo-lead:before{animation:none!important}}
+
+
+/* Visible motion on touch screens: these effects do not depend on hover. */
+@media (prefers-reduced-motion:no-preference){
+  .card{isolation:isolate}
+  .card:before{
+    content:"";position:absolute;z-index:0;inset:0;pointer-events:none;
+    background:linear-gradient(112deg,transparent 28%,#ffffffa8 48%,transparent 66%);
+    transform:translateX(-130%);animation:clini-card-sheen 7s ease-in-out infinite
+  }
+  .card:nth-child(2):before{animation-delay:1.7s}
+  .card:nth-child(3):before{animation-delay:3.4s}
+  .card > *{position:relative;z-index:1}
+  .ico{animation:clini-icon-breathe 4.8s ease-in-out infinite}
+  .card:nth-child(2) .ico{animation-delay:1.2s}
+  .card:nth-child(3) .ico{animation-delay:2.4s}
+  .story-photo{background-size:110% 110%;animation:clini-story-zoom 15s ease-in-out infinite alternate}
+  .story-copy .check b{animation:clini-check-glow 3.6s ease-in-out infinite}
+  .story-copy .check:nth-child(2) b{animation-delay:.45s}
+  .story-copy .check:nth-child(3) b{animation-delay:.9s}
+  .story-copy .check:nth-child(4) b{animation-delay:1.35s}
+  .demo-lead{background-size:180% 180%;animation:clini-demo-bg 16s ease-in-out infinite alternate}
+}
+@keyframes clini-card-sheen{0%,62%,100%{transform:translateX(-130%)}78%{transform:translateX(130%)}}
+@keyframes clini-icon-breathe{0%,100%{transform:translateY(0) scale(1);box-shadow:0 0 0 0 #c8a36a00}50%{transform:translateY(-3px) scale(1.045);box-shadow:0 0 0 7px #c8a36a12}}
+@keyframes clini-story-zoom{from{background-size:100% 100%;background-position:48% center}to{background-size:116% 116%;background-position:54% center}}
+@keyframes clini-check-glow{0%,100%{box-shadow:0 0 0 0 #c8a36a00;transform:scale(1)}50%{box-shadow:0 0 0 5px #c8a36a20;transform:scale(1.07)}}
+@keyframes clini-demo-bg{from{background-position:0% 20%}to{background-position:100% 80%}}
+@media(max-width:700px) and (prefers-reduced-motion:no-preference){
+  .card{min-height:220px}
+  .card:before{animation-duration:6s}
+  .ico{animation-duration:4s}
+  .story-photo{min-height:280px}
+  .demo-lead{background-size:220% 220%}
+}

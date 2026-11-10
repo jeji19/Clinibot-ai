@@ -35,18 +35,18 @@ async function withMockFetch(run) {
   try { await run(); } finally { globalThis.fetch = originalFetch; }
 }
 
-async function invokePages() {
+async function invokePages(message) {
   return pagesModule.onRequestPost({
     request: new Request("https://example.test/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "What services and prices do you offer?", clinic_slug: "north-clinic" })
+      body: JSON.stringify({ message, clinic_slug: "north-clinic" })
     }),
     env: config
   });
 }
 
-async function invokeNetlify() {
+async function invokeNetlify(message) {
   const keys = ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"];
   const previous = Object.fromEntries(keys.map(key => [key, process.env[key]]));
   for (const key of keys) process.env[key] = config[key];
@@ -54,7 +54,7 @@ async function invokeNetlify() {
     return await netlifyModule.default(new Request("https://example.test/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "What services and prices do you offer?", clinic_slug: "north-clinic" })
+      body: JSON.stringify({ message, clinic_slug: "north-clinic" })
     }));
   } finally {
     for (const key of keys) {
@@ -65,12 +65,21 @@ async function invokeNetlify() {
 }
 
 for (const [label, invoke] of [["Cloudflare Pages", invokePages], ["Netlify", invokeNetlify]]) {
-  test(`${label}: formats clinic service prices using the clinic currency`, async () => {
+  test(`${label}: formats USD service prices in English`, async () => {
     await withMockFetch(async () => {
-      const response = await invoke();
+      const response = await invoke("What services and prices do you offer?");
       assert.equal(response.status, 200);
       const data = await response.json();
-      assert.match(data.reply, /\\$50\\.00/);
+      assert.match(data.reply, /\$50\.00/);
+    });
+  });
+
+  test(`${label}: formats USD service prices in Russian`, async () => {
+    await withMockFetch(async () => {
+      const response = await invoke("Какие услуги и цены?");
+      assert.equal(response.status, 200);
+      const data = await response.json();
+      assert.match(data.reply, /50,00\s*\$/);
     });
   });
 }

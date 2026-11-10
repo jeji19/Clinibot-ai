@@ -1,0 +1,60 @@
+/* CliniBot — animated, colorful form and input surfaces (dependency-free) */
+:root{--field-ink:#17263b;--field-gold:#c8a36a;--field-blue:#6f9bbd;--field-violet:#9b8bc7}
+@keyframes cb-field-aurora{0%,100%{transform:translate3d(-3%,-2%,0) rotate(-4deg);opacity:.42}50%{transform:translate3d(3%,3%,0) rotate(4deg);opacity:.8}}
+@keyframes cb-field-border{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes cb-field-focus{0%{box-shadow:0 0 0 0 #c8a36a00,0 4px 12px #17263b08}100%{box-shadow:0 0 0 4px #c8a36a24,0 9px 26px #6f9bbd20}}
+@keyframes cb-field-label{from{transform:translateY(3px);opacity:.65}to{transform:translateY(0);opacity:1}}
+@media(prefers-reduced-motion:no-preference){
+  .lead-form,.booking-wrap,.booking-panel,.chat-booking,.panel:has(input),.panel:has(textarea),#loginForm,#clinicForm,#memberForm{
+    position:relative;isolation:isolate;overflow:hidden;
+    background-image:radial-gradient(ellipse at 8% 8%,#e7d4b655,transparent 42%),radial-gradient(ellipse at 95% 92%,#b9d1e255,transparent 40%),linear-gradient(140deg,#fffdfa,#f3eee6);
+    box-shadow:0 22px 60px #17263b12,inset 0 1px #fff
+  }
+  .lead-form:before,.booking-wrap:before,.booking-panel:before,.chat-booking:before,.panel:has(input):before,.panel:has(textarea):before,#loginForm:before,#clinicForm:before,#memberForm:before{
+    content:"";position:absolute;z-index:-1;inset:-45%;pointer-events:none;
+    background:radial-gradient(ellipse at 25% 35%,#e4c28e48,transparent 30%),radial-gradient(ellipse at 75% 65%,#8eacd34a,transparent 32%),radial-gradient(ellipse at 55% 15%,#b4a4d52a,transparent 26%);
+    animation:cb-field-aurora 13s ease-in-out infinite alternate
+  }
+  .lead-form:after,.booking-wrap:after,.booking-panel:after,.chat-booking:after,.panel:has(input):after,.panel:has(textarea):after{
+    content:"";position:absolute;pointer-events:none;inset:0;border-radius:inherit;opacity:.24;z-index:-1;
+    background-image:linear-gradient(#9d845b16 1px,transparent 1px),linear-gradient(90deg,#9d845b16 1px,transparent 1px);background-size:34px 34px;
+    mask-image:linear-gradient(125deg,#000,transparent 75%)
+  }
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]),textarea,select{
+    transition:border-color .25s,background-color .25s,box-shadow .3s,transform .25s,filter .25s!important;
+    background-color:#fffefa!important;background-image:linear-gradient(135deg,#fffefa,#f6f8fb)!important;
+    border:1px solid #d8cdbd!important;box-shadow:inset 0 1px 3px #17263b08,0 2px 8px #17263b05;
+    color:var(--field-ink)!important
+  }
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]):hover,textarea:hover,select:hover{
+    border-color:#bda77f!important;filter:saturate(1.04)
+  }
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]):focus,textarea:focus,select:focus{
+    outline:none!important;border-color:#b58d57!important;
+    background-image:linear-gradient(125deg,#fffefa,#f2f7fc 55%,#fbf4e9)!important;
+    animation:cb-field-focus .3s ease-out both;transform:translateY(-1px)
+  }
+  input::placeholder,textarea::placeholder{color:#9299a3!important;transition:color .2s,opacity .2s}
+  input:focus::placeholder,textarea:focus::placeholder{color:#b19a76!important;opacity:.8}
+  label{transition:color .2s}
+  label:has(+input:focus),label:has(+textarea:focus),label:has(+select:focus){color:#9b7542!important;animation:cb-field-label .25s ease-out}
+  button[type=submit],.lead-form button,#bookingButton,#chatBookingSubmit,#leadSubmit{
+    position:relative;overflow:hidden;transition:transform .25s,box-shadow .25s,filter .25s
+  }
+  button[type=submit]:not(:disabled):hover,.lead-form button:hover,#bookingButton:hover,#chatBookingSubmit:hover,#leadSubmit:hover{
+    transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 13px 30px #17263b25
+  }
+  button[type=submit]:after,.lead-form button:after,#bookingButton:after,#chatBookingSubmit:after,#leadSubmit:after{
+    content:"";position:absolute;inset:-30% auto -30% -45%;width:28%;transform:skewX(-20deg);
+    background:linear-gradient(90deg,transparent,#fff8,transparent);transition:left .65s;pointer-events:none
+  }
+  button[type=submit]:hover:after,.lead-form button:hover:after,#bookingButton:hover:after,#chatBookingSubmit:hover:after,#leadSubmit:hover:after{left:125%}
+}
+@media(prefers-reduced-motion:reduce){
+  .lead-form:before,.booking-wrap:before,.booking-panel:before,.chat-booking:before,.panel:has(input):before,.panel:has(textarea):before{animation:none!important}
+  input,textarea,select,button{transition:none!important}
+}
+@media(max-width:600px){
+  .lead-form,.booking-wrap,.booking-panel,.chat-booking{box-shadow:0 14px 36px #17263b12}
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]),textarea,select{font-size:16px!important}
+}

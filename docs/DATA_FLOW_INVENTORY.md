@@ -21,7 +21,8 @@ This document records data flows visible in the current repository. Confirm each
 |---|---|---|
 | Cloudflare Workers | Hosts the Worker, public pages, and API handlers | HTTP request metadata and application traffic; review Cloudflare account logging, observability, and retention settings. |
 | Supabase | Database, Auth, and REST API | Clinic configuration, appointment requests, demo leads, user accounts, memberships, and authorization data. |
-| Cloud.ru Foundation Models API | Preferred generative chat provider when `CLOUDRU_API_KEY` is configured | Visitor message and clinic context included in the prompt when the generative path is used. |\n| Google Gemini API | Optional generative fallback when the Cloud.ru key is absent | Visitor message and clinic context included in the prompt when the generative path is used. |
+| Cloud.ru Foundation Models API | Preferred generative chat provider when `CLOUDRU_API_KEY` is configured | Visitor message and clinic context included in the prompt when the generative path is used. |
+| Google Gemini API | Optional generative fallback when the Cloud.ru key is absent | Visitor message and clinic context included in the prompt when the generative path is used. |
 | Resend | Transactional email delivery | Appointment notification content and demo-lead notification content. |
 
 The source uses server-side secrets for Supabase service-role access, Cloud.ru (preferred), optional Gemini fallback, and Resend. These credentials must remain in platform secret storage and must never be embedded in browser assets or shared with clinics.

@@ -152,6 +152,29 @@ test("medical procedure recommendations are redirected to qualified clinic staff
   assert.equal(data.handled_without_ai, true);
 });
 
+test("antibiotic and dosage requests are refused with a medication-specific safety reply in Russian", async () => {
+  const { response, data } = await invokeWithoutUpstream("У меня инфекция. Посоветуйте антибиотик и дозировку без посещения врача.");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /антибиотик|лекарств/i);
+  assert.match(data.reply, /не могу подбирать|не назначает/i);
+  assert.equal(data.handled_without_ai, true);
+});
+
+test("out-of-scope football questions receive a clinic-scope reply in Russian without calling an AI provider", async () => {
+  const { response, data } = await invokeChat("Кто выиграет чемпионат мира по футболу?", "ru");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /виртуальный администратор клиники/i);
+  assert.doesNotMatch(data.reply, /временно недоступен/i);
+  assert.equal(data.handled_without_ai, true);
+});
+
+test("out-of-scope football questions receive a clinic-scope reply in English", async () => {
+  const { response, data } = await invokeChat("Who will win the football World Cup?", "en");
+  assert.equal(response.status, 200);
+  assert.match(data.reply, /clinic's virtual receptionist/i);
+  assert.equal(data.handled_without_ai, true);
+});
+
 test("appointment intent directs patients to the request form without claiming a confirmed booking", async () => {
   const { response, data } = await invokeChat("I'd like to book an appointment", "en");
   assert.equal(response.status, 200);

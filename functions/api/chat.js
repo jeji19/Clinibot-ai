@@ -86,16 +86,26 @@ function detectClinicMedicalIntent(message) {
   const text = String(message || "").toLowerCase();
   const lang = detectClinicLanguage(text);
   const emergency = /(chest pain|can't breathe|cannot breathe|difficulty breathing|shortness of breath|severe bleeding|heavy bleeding|unconscious|fainting|stroke symptoms|severe allergic reaction|анафилакси|сильная боль в груди|не могу дышать|трудно дышать|затруднённое дыхание|затрудненное дыхание|одышка|сильное кровотечение|обильное кровотечение|потерял сознание|потеря сознания|обморок)/i.test(text);
-  const medicalConcern = /(rash|rashes|acne|pimples|spots on (my )?face|skin irritation|itch|itching|swelling|pain|fever|infection|wound|burn|allergy|allergic reaction|hair loss|mole|lesion|symptom|symptoms|what treatment should i use|what procedure.*(recommend|suggest)|which procedure.*(recommend|suggest)|what do you recommend for me|высыпани|сыпь|прыщ|акне|угр|раздражени|зуд|чешется|отёк|отек|боль|температур|инфекц|рана|ожог|аллерги|выпадение волос|родинк|симптом|какую процедуру.*(посовет|рекоменд)|что мне.*(посовет|рекоменд)|что подойдёт|что подойдет)/i.test(text);
+  const medicationRequest = /(antibiotic|antibiotics|medication|medicine|medicines|prescribe|prescription|dosage|dose|painkiller|what drug|which drug|таблетк|лекарств|антибиотик|антибиотики|назначь|назначить|дозировк|дозу|препарат|обезболивающ)/i.test(text);
+  const medicalConcern = medicationRequest || /(rash|rashes|acne|pimples|spots on (my )?face|skin irritation|itch|itching|swelling|pain|fever|infection|wound|burn|allergy|allergic reaction|hair loss|mole|lesion|symptom|symptoms|what treatment should i use|what procedure.*(recommend|suggest)|which procedure.*(recommend|suggest)|what do you recommend for me|высыпани|сыпь|прыщ|акне|угр|раздражени|зуд|чешется|отёк|отек|боль|температур|инфекц|рана|ожог|аллерги|выпадение волос|родинк|симптом|какую процедуру.*(посовет|рекоменд)|что мне.*(посовет|рекоменд)|что подойдёт|что подойдет)/i.test(text);
   if (!emergency && !medicalConcern) return null;
   if (lang === "ru") {
-    return emergency
-      ? "Ваше состояние может требовать срочной медицинской помощи. Пожалуйста, немедленно обратитесь в местную службу экстренной помощи или ближайшее отделение неотложной помощи. ИИ-ассистент не может оценивать такие симптомы."
-      : "Понимаю. По описанию симптомов нельзя безопасно подобрать процедуру онлайн. Рекомендуем обратиться к квалифицированному специалисту клиники для оценки состояния и выбора подходящего решения. ИИ-ассистент не ставит диагнозы и не назначает лечение. Вы можете отправить запрос на консультацию через кнопку «Request an appointment».";
+    if (emergency) return "Ваше состояние может требовать срочной медицинской помощи. Пожалуйста, немедленно обратитесь в местную службу экстренной помощи или ближайшее отделение неотложной помощи. ИИ-ассистент не может оценивать такие симптомы.";
+    if (medicationRequest) return "Я не могу подбирать антибиотики, лекарства или дозировки. Неправильный выбор препарата может быть опасен. Пожалуйста, обратитесь к квалифицированному врачу для оценки состояния и назначения лечения. ИИ-ассистент не ставит диагнозы и не назначает лекарства.";
+    return "Я не могу оценивать симптомы, ставить диагноз или рекомендовать лечение онлайн. Пожалуйста, обратитесь к квалифицированному медицинскому специалисту клиники для индивидуальной оценки. ИИ-ассистент не ставит диагнозы и не назначает лечение. Для консультации можно отправить запрос через кнопку «Request an appointment».";
   }
-  return emergency
-    ? "Your symptoms may require urgent medical attention. Please contact local emergency services or go to the nearest emergency department now. The AI assistant cannot assess emergencies."
-    : "I understand your concern. It would not be safe to recommend a procedure based on a chat message. Please consult a qualified clinic professional who can assess your situation and discuss suitable options. The AI assistant cannot diagnose conditions or prescribe treatment. You can request a consultation using the “Request an appointment” button.";
+  if (emergency) return "Your symptoms may require urgent medical attention. Please contact local emergency services or go to the nearest emergency department now. The AI assistant cannot assess emergencies.";
+  if (medicationRequest) return "I can't select antibiotics, medicines or doses. The wrong medication can be harmful. Please consult a qualified clinician for an assessment and appropriate treatment. The AI assistant does not diagnose or prescribe medication.";
+  return "I can't assess symptoms, diagnose a condition or recommend treatment online. Please consult a qualified clinic professional for an individual assessment. The AI assistant does not diagnose or prescribe treatment. You can request a consultation using the “Request an appointment” button.";
+}
+function detectClinicOutOfScopeIntent(message, defaultLanguage = "en") {
+  const text = String(message || "").toLowerCase();
+  const lang = detectClinicLanguage(text, defaultLanguage);
+  const unrelatedTopic = /(football|soccer|world cup|basketball|tennis|cricket|politics|election|weather|stock market|cryptocurrency|recipe|cooking|video game|programming|write code|championship|футбол|чемпионат мира|баскетбол|теннис|крикет|политик|выбор|погод|прогноз погоды|рецепт|готовить|видеоигр|программирован|написать код)/i.test(text);
+  if (!unrelatedTopic) return null;
+  return lang === "ru"
+    ? "Я виртуальный администратор клиники и могу помочь с опубликованными услугами, ценами, часами работы и запросом на запись. По вопросам вне работы клиники я не смогу помочь."
+    : "I'm the clinic's virtual receptionist. I can help with published services, prices, opening hours and appointment requests, but I can't assist with topics outside the clinic.";
 }
 
 function detectClinicAppointmentIntent(message, defaultLanguage = "en") {
@@ -225,6 +235,9 @@ function detectClinicFaqReply(message, clinicInfo) {
 
     const faqReply = detectClinicFaqReply(message, clinicInfo);
     if (faqReply) return json({ reply: faqReply, handled_without_ai: true });
+
+    const outOfScopeReply = detectClinicOutOfScopeIntent(message, clinicInfo.default_language);
+    if (outOfScopeReply) return json({ reply: outOfScopeReply, handled_without_ai: true });
 
     if (!env.CLOUDRU_API_KEY && !env.GEMINI_API_KEY) {
       const language = detectClinicLanguage(message, clinicInfo.default_language);

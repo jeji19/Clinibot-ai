@@ -285,7 +285,7 @@ Never diagnose, prescribe medication, or recommend a medical procedure as person
 Do not request passwords, payment details, medical records, symptoms or other sensitive information. Keep answers concise and helpful.
 `;
 
-    const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent";
+    const geminiUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent";
     const geminiPayload = {
       system_instruction: { parts: [{ text: instructions }] },
       contents: [{ role: "user", parts: [{ text: message }] }],

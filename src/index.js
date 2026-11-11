@@ -33,9 +33,15 @@ function secureAssetResponse(response) {
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+const MAX_JSON_BODY_BYTES = 64 * 1024;
+
 async function readJsonObject(request) {
   try {
-    const body = await request.json();
+    const declaredLength = Number(request.headers.get("Content-Length"));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) return null;
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_JSON_BODY_BYTES) return null;
+    const body = JSON.parse(raw);
     return body && typeof body === "object" && !Array.isArray(body) ? body : null;
   } catch {
     return null;

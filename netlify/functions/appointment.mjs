@@ -1,3 +1,18 @@
+const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+async function readJsonObject(request) {
+  try {
+    const declaredLength = Number(request.headers.get("Content-Length"));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) return null;
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_JSON_BODY_BYTES) return null;
+    const body = JSON.parse(raw);
+    return body && typeof body === "object" && !Array.isArray(body) ? body : null;
+  } catch {
+    return null;
+  }
+}
+
 export default async (req) => {
   const headers = {
     "Content-Type": "application/json",
@@ -15,7 +30,7 @@ export default async (req) => {
   if (!supabaseUrl || !key) return json({ error: "Appointment service is not configured." }, 503);
 
   try {
-    const body = await req.json().catch(() => null);
+    const body = await readJsonObject(req);
     if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid JSON request body." }, 400);
     if (typeof body.website === "string" && body.website.trim()) {
       return json({ success: true, message: "Your appointment request was received." }, 201);

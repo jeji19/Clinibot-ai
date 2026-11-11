@@ -395,3 +395,73 @@ test("admin status rejects JSON request bodies larger than the shared 64 KiB lim
     assert.equal(response.status, 400);
   } finally { globalThis.fetch = originalFetch; }
 });
+
+const otherClinicId = "33333333-3333-4333-8333-333333333333";
+
+test("manager cannot update an appointment belonging to another clinic", async () => {
+  let updateQuery;
+  const response = await invoke("/api/admin/appointment-status", {
+    method: "POST",
+    body: { id: 902, status: "confirmed", clinic_id: otherClinicId }
+  }, async (url, options = {}) => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    if (target.pathname.endsWith("/rest/v1/appointment_requests")) {
+      updateQuery = target.searchParams.get("clinic_id");
+      assert.equal(options.method, "PATCH");
+      assert.equal(options.headers.Authorization, "Bearer valid-token");
+      // PostgREST returns no representation when the row belongs to another clinic.
+      return json([]);
+    }
+    throw new Error("Unexpected upstream request: " + target.pathname);
+  });
+  assert.equal(response.status, 404);
+  assert.equal(updateQuery, "eq." + clinicId);
+});
+
+test("manager cannot read another clinic's appointments by forging a clinic_id query", async () => {
+  let appointmentQuery;
+  const response = await invoke("/api/admin/appointments?clinic_id=" + otherClinicId, {}, async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    if (target.pathname.endsWith("/rest/v1/appointment_requests")) {
+      appointmentQuery = target.searchParams.get("clinic_id");
+      return json([{ id: 17, clinic_id: clinicId, status: "new" }]);
+    }
+    throw new Error("Unexpected upstream request: " + target.pathname);
+  });
+  assert.equal(response.status, 200);
+  assert.equal(appointmentQuery, "eq." + clinicId);
+  const data = await response.json();
+  assert.ok(data.appointments.every(item => item.clinic_id === clinicId));
+});
+
+test("manager settings writes ignore a forged clinic_id and use membership clinic", async () => {
+  let savedSettings;
+  const response = await invoke("/api/admin/settings", {
+    method: "PUT",
+    body: {
+      clinic_id: otherClinicId,
+      description: "Manager A settings",
+      default_language: "en",
+      services: [{ name: "Consultation", price: 25 }],
+      opening_hours: {}
+    }
+  }, async (url, options = {}) => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    if (target.pathname.endsWith("/rest/v1/clinics")) return json([{ id: clinicId, name: "North Clinic", slug: "north-clinic" }]);
+    if (target.pathname.endsWith("/rest/v1/clinic_settings")) {
+      assert.equal(options.method, "POST");
+      savedSettings = JSON.parse(options.body);
+      return new Response(null, { status: 201 });
+    }
+    throw new Error("Unexpected upstream request: " + target.pathname);
+  });
+  assert.equal(response.status, 200);
+  assert.equal(savedSettings.clinic_id, clinicId);
+  assert.notEqual(savedSettings.clinic_id, otherClinicId);
+});

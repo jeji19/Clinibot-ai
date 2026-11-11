@@ -380,7 +380,12 @@ test("clinic settings rejects malformed opening-hours values without saving", as
 test("admin status rejects JSON request bodies larger than the shared 64 KiB limit", async () => {
   const oversized = JSON.stringify({ id: 17, status: "confirmed", padding: "x".repeat(70 * 1024) });
   const originalFetch = globalThis.fetch;
-  globalThis.fetch = async () => { throw new Error("Oversized payload must be rejected before upstream calls"); };
+  globalThis.fetch = async url => {
+    const target = new URL(String(url));
+    if (target.pathname.endsWith("/auth/v1/user")) return json({ id: managerId });
+    if (target.pathname.endsWith("/rest/v1/clinic_members")) return json([{ clinic_id: clinicId }]);
+    throw new Error("Oversized payload must be rejected before any database update");
+  };
   try {
     const response = await worker.default.fetch(new Request("https://example.test/api/admin/appointment-status", {
       method: "POST",

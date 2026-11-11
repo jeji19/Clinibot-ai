@@ -36,7 +36,7 @@ A paid pilot may be offered only after every P0 item below is completed and evid
 
 ### P0 — must pass
 
-- [x] Deploy the current Worker source to the production Worker using the guarded deployment workflow (run [42781453004](https://github.com/jeji19/Clinibot-ai/actions/runs/42781453004), Worker `clinibot-ai1`, version `2c079bfa-28fe-4fa6-b064-c20935769803`). Re-run after any subsequent Worker-source changes.
+- [x] Deploy the current Worker source to the production Worker using the guarded deployment workflow (run [42907523403](https://github.com/jeji19/Clinibot-ai/actions/runs/42907523403), Worker `clinibot-ai1`, version `82c4480d-04eb-4f0f-9e15-02b23e74ac71`; V6 landing assets uploaded and smoke tests passed). Re-run after any subsequent Worker-source changes.
 - [ ] Confirm the deployed Worker name, environment variables, Supabase connection, Cloud.ru/Gemini configuration (if generative AI answers are enabled), and Resend configuration.
 - [ ] Configure a clinic-facing custom domain or production route and verify HTTPS.
 - [ ] Run a real browser end-to-end test using a dedicated synthetic clinic, dedicated manager account, and entirely synthetic patient details.
@@ -88,7 +88,7 @@ Sell a supervised, setup-assisted pilot first. Do not present draft price tiers 
 
 ## Current launch blockers known from repository review
 
-- Production Worker deployment is verified for source commit `24e25aa821299d25160bcfd10b2e0bc05413ba98`; the latest Pages/Netlify currency-adapter parity changes do not modify Worker source. Cloudflare Git-connected preview builds still fail with an authentication error and need separate repair.
+- Production Worker deployment is verified for source commit `71b28592e214d75f2bea84aeaf7e16d2f1477f7e`; V6 landing-page design assets are live and public smoke tests passed. Cloudflare Git-connected preview builds have separately reported an authentication error and need separate repair.
 - Production custom domain/route is not yet confirmed.
 - No real browser-based manager/Super Admin end-to-end test is evidenced.
 - Billing and subscription enforcement are not implemented.

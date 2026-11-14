@@ -1,3 +1,18 @@
+const MAX_JSON_BODY_BYTES = 64 * 1024;
+
+async function readJsonObject(request) {
+  try {
+    const declaredLength = Number(request.headers.get("Content-Length"));
+    if (Number.isFinite(declaredLength) && declaredLength > MAX_JSON_BODY_BYTES) return null;
+    const raw = await request.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_JSON_BODY_BYTES) return null;
+    const body = JSON.parse(raw);
+    return body && typeof body === "object" && !Array.isArray(body) ? body : null;
+  } catch {
+    return null;
+  }
+}
+
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
@@ -22,7 +37,7 @@ async function handleChat(request, env) {
     return json({ error: "Clinic information service is not configured." }, 503);
   }
   try {
-    const body = await request.json().catch(() => null);
+    const body = await readJsonObject(request);
     if (!body || typeof body !== "object" || Array.isArray(body)) return json({ error: "Invalid JSON request body." }, 400);
     const message = typeof body.message === "string" ? body.message.trim() : "";
     const clinic_slug = typeof body.clinic_slug === "string" ? body.clinic_slug.trim().toLowerCase() : "my-clinic";

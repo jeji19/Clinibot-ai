@@ -61,6 +61,8 @@ jobs:
         run: node --test tests/chat.test.mjs
       - name: Test manager and Super Admin authorization
         run: node --test tests/admin-authz.test.mjs
+      - name: Test request body size limits across deployment adapters
+        run: node --test tests/request-body-limits.test.mjs
       - name: Test baseline security safeguards
         run: node --test tests/security-basics.test.mjs
       - name: Test guarded production deployment workflow
